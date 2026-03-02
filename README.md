@@ -26,6 +26,10 @@ This project is designed to be used at events with minimal setup: configure your
 
 Coming soon! 📸
 
+## 🌐 Live Demo
+
+Check out the live demo site: [**android-photobooth.web.app**](https://android-photobooth.web.app)
+
 ## Requirements
 
 - Android 7.0 (API level 24) or higher
