@@ -2,6 +2,7 @@ plugins {
     id "com.android.application"
     id "org.jetbrains.kotlin.android"
     id "kotlin-kapt"
+    id "com.google.gms.google-services"
 }
 
 android {
@@ -52,6 +53,18 @@ android {
 }
 
 dependencies {
+    // Firebase BOM
+    implementation platform("com.google.firebase:firebase-bom:32.8.0")
+
+    // Firebase Analytics
+    implementation("com.google.firebase:firebase-analytics")
+
+    // Firebase Crashlytics
+    implementation("com.google.firebase:firebase-crashlytics")
+
+    // Firebase Performance Monitoring
+    implementation("com.google.firebase:firebase-perf")
+
     implementation "androidx.core:core-ktx:1.12.0"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.7.0"
     implementation "androidx.lifecycle:lifecycle-runtime-compose:2.7.0"
@@ -107,4 +120,3 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:1.5.4"
 }
-

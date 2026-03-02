@@ -2,6 +2,7 @@
 *.apk
 *.aab
 *.ap_
+*.aab
 
 # Files for the ART/Dalvik VM
 *.dex
@@ -41,24 +42,12 @@ proguard/
 .externalNativeBuild
 .cxx/
 
-# Google Services
-# google-services.json
+# Firebase crashlytics keystore
+firebase-crashlytics-keystore.properties
 
-# Freeline
-freeline.py
-freeline/
-
-# fastlane
-fastlane/report.xml
-
-# Version control
-vcs.xml
-
-# lint
-lint/
-
-# Android Profiling
-*.hprof
+# Android Test results
+test-results/
+androidTest-results/
 
 # MacOS
 .DS_Store
@@ -67,6 +56,7 @@ lint/
 Thumbs.db
 Desktop.ini
 
-# Gradle wrapper distribution (large binary)
-gradle-*.zip
-CLAUDE.md 
+# Temporary files
+*.tmp
+*.swp
+*~
