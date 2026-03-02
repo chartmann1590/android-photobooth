@@ -1,0 +1,71 @@
+# Built application files
+*.apk
+*.aab
+*.ap_
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+release/
+
+# Gradle files
+.gradle/
+build/
+local.properties
+
+# Signing files
+.signing/
+
+# Proguard folder
+proguard/
+
+# Log Files
+*.log
+
+# IntelliJ
+*.iml
+.idea/
+
+# Keystore files
+*.jks
+*.keystore
+
+# External native build folder
+.externalNativeBuild
+.cxx/
+
+# Google Services
+# google-services.json
+
+# Freeline
+freeline.py
+freeline/
+
+# fastlane
+fastlane/report.xml
+
+# Version control
+vcs.xml
+
+# lint
+lint/
+
+# Android Profiling
+*.hprof
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Gradle wrapper distribution (large binary)
+gradle-*.zip
