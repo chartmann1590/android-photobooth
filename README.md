@@ -26,9 +26,11 @@ This project is designed to be used at events with minimal setup: configure your
 
 Coming soon! 📸
 
-## 🌐 Live Demo
+## 🌐 Landing Page
 
-Check out the live demo site: [**android-photobooth.web.app**](https://android-photobooth.web.app)
+Visit the landing page to learn more about the app: [**android-photobooth.web.app**](https://android-photobooth.web.app)
+
+*Note: This is a marketing/landing page showcasing the app features. To use the actual photobooth app, you'll need to build and install the APK on an Android device.*
 
 ## Requirements
 
