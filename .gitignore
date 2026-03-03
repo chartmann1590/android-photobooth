@@ -60,3 +60,17 @@ Desktop.ini
 *.tmp
 *.swp
 *~
+
+# Firebase config (contains API keys)
+app/google-services.json
+google-services.json
+
+# Heap dumps
+*.hprof
+
+# Gradle distribution zips
+gradle-*-bin.zip
+gradle-*-all.zip
+
+# Claude Code
+CLAUDE.md
