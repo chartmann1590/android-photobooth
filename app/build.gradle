@@ -3,6 +3,8 @@ plugins {
     id "org.jetbrains.kotlin.android"
     id "kotlin-kapt"
     id "com.google.gms.google-services"
+    id "com.google.firebase.crashlytics"
+    id "com.google.firebase.firebase-perf"
 }
 
 android {
@@ -111,6 +113,9 @@ dependencies {
     // SMTP (JavaMail for Android)
     implementation "com.sun.mail:android-mail:1.6.7"
     implementation "com.sun.mail:android-activation:1.6.7"
+
+    // EXIF
+    implementation "androidx.exifinterface:exifinterface:1.3.7"
 
     // Printing
     implementation "androidx.print:print:1.0.0"

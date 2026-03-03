@@ -51,14 +51,18 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.example.photobooth.camera.CameraCaptureManager
 import com.example.photobooth.camera.CaptureUiState
 import com.example.photobooth.camera.CaptureViewModel
+import com.example.photobooth.settings.SettingsRepository
 import com.example.photobooth.ui.theme.DarkBackground
 import com.example.photobooth.ui.theme.Gold
 import com.example.photobooth.ui.theme.Rose
 import com.example.photobooth.ui.theme.RoseLight
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import java.util.Locale
 
 @Composable
@@ -69,15 +73,38 @@ fun CaptureScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val captureViewModel: CaptureViewModel = viewModel()
+    val settingsRepo = remember { SettingsRepository(context) }
 
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
     val cameraManager = remember { CameraCaptureManager(context) }
     var tts by remember { mutableStateOf<TextToSpeech?>(null) }
     var countdown by remember { mutableIntStateOf(0) }
+    var useFrontCamera by remember { mutableStateOf(true) }
+    var eventName by remember { mutableStateOf("Event") }
+    var selectedFrameId by remember { mutableStateOf<Long?>(null) }
 
     val uiState by captureViewModel.uiState.collectAsStateWithLifecycle()
 
+    // Load settings once
+    LaunchedEffect(Unit) {
+        val settings = settingsRepo.settingsFlow.first()
+        useFrontCamera = settings.camera.useFrontCamera
+        eventName = settings.event.eventName
+        selectedFrameId = settings.event.selectedFrameId
+    }
+
     val isCountingDown = uiState is CaptureUiState.CountingDown
+
+    // Reset to Idle when returning from Gallery
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                captureViewModel.resetToIdle()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     DisposableEffect(Unit) {
         tts = TextToSpeech(context) {
@@ -90,12 +117,12 @@ fun CaptureScreen(
         }
     }
 
-    LaunchedEffect(previewView) {
+    LaunchedEffect(previewView, useFrontCamera) {
         val view = previewView ?: return@LaunchedEffect
         cameraManager.bindToLifecycle(
             lifecycleOwner = lifecycleOwner,
             previewView = view,
-            useFrontCamera = true,
+            useFrontCamera = useFrontCamera,
         )
     }
 
@@ -117,8 +144,9 @@ fun CaptureScreen(
                 captureViewModel.saveCapturedPhoto(
                     context = context,
                     uri = uri,
-                    eventName = "Event",
+                    eventName = eventName,
                     templateId = null,
+                    selectedFrameId = selectedFrameId,
                     onComplete = onFinishedCapture,
                 )
             } catch (_: Exception) {

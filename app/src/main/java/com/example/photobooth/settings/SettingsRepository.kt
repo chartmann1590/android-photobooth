@@ -121,6 +121,11 @@ class SettingsRepository(private val context: Context) {
             eventName = this[Keys.EVENT_NAME] ?: EventSettings().eventName,
             filenamePattern = this[Keys.FILENAME_PATTERN] ?: EventSettings().filenamePattern,
             currentTemplateId = this[Keys.CURRENT_TEMPLATE_ID]?.toLongOrNull(),
+            selectedFrameId = this[Keys.SELECTED_FRAME_ID]?.toLongOrNull(),
+        )
+
+        val camera = CameraSettings(
+            useFrontCamera = this[Keys.USE_FRONT_CAMERA] ?: true,
         )
 
         val upload = UploadSettings(
@@ -157,6 +162,7 @@ class SettingsRepository(private val context: Context) {
             upload = upload,
             sms = sms,
             smtp = smtp,
+            camera = camera,
         )
     }
 }

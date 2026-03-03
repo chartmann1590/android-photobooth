@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.photobooth.ui.screens.CaptureScreen
+import com.example.photobooth.ui.screens.FrameDesignerScreen
 import com.example.photobooth.ui.screens.GalleryScreen
 import com.example.photobooth.ui.screens.HomeScreen
 import com.example.photobooth.ui.screens.SettingsScreen
@@ -15,6 +16,7 @@ sealed class Screen(val route: String) {
     data object Capture : Screen("capture")
     data object Gallery : Screen("gallery")
     data object Settings : Screen("settings")
+    data object FrameDesigner : Screen("frame_designer")
 }
 
 @Composable
@@ -42,9 +44,14 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
         }
         composable(Screen.Settings.route) {
             SettingsScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onOpenFrameDesigner = { navController.navigate(Screen.FrameDesigner.route) },
+            )
+        }
+        composable(Screen.FrameDesigner.route) {
+            FrameDesignerScreen(
+                onBack = { navController.popBackStack() },
             )
         }
     }
 }
-

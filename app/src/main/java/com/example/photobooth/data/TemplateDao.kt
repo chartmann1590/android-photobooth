@@ -16,5 +16,11 @@ interface TemplateDao {
 
     @Query("SELECT * FROM templates WHERE id = :id")
     fun getTemplateById(id: Long): Flow<TemplateEntity?>
+
+    @Query("SELECT * FROM templates WHERE id = :id")
+    suspend fun getTemplateByIdSync(id: Long): TemplateEntity?
+
+    @Query("DELETE FROM templates WHERE id = :id")
+    suspend fun deleteById(id: Long)
 }
 

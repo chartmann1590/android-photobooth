@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -41,6 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.photobooth.data.TemplateEntity
 import com.example.photobooth.settings.AllSettings
 import com.example.photobooth.ui.theme.CardSurface
 import com.example.photobooth.ui.theme.CardSurfaceLight
@@ -53,10 +56,12 @@ import com.example.photobooth.ui.theme.TextSecondary
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onOpenFrameDesigner: () -> Unit = {},
 ) {
     val vm: SettingsViewModel = viewModel()
     val state by vm.settings.collectAsState()
     val status by vm.testStatus.collectAsState()
+    val frames by vm.frames.collectAsState()
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = Rose,
@@ -71,7 +76,9 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground),
+            .background(DarkBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding(),
     ) {
         // Top bar
         Row(
@@ -143,6 +150,13 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             EventSettingsSection(state, onEventChange = vm::updateEvent, textFieldColors = textFieldColors)
+            CameraSettingsSection(state, onCameraChange = vm::updateCamera)
+            FrameSettingsSection(
+                state = state,
+                frames = frames,
+                onFrameSelected = vm::updateSelectedFrame,
+                onOpenFrameDesigner = onOpenFrameDesigner,
+            )
             UploadSettingsSection(state, onUploadChange = vm::updateUpload, textFieldColors = textFieldColors)
             SmsSettingsSection(state, onSmsChange = vm::updateSms, onTestSms = vm::testSms, textFieldColors = textFieldColors)
             SmtpSettingsSection(state, onSmtpChange = vm::updateSmtp, onTestEmail = vm::testEmail, textFieldColors = textFieldColors)
@@ -424,6 +438,97 @@ private fun SmtpSettingsSection(
             ),
         ) {
             Text("Test Email / DNS", fontWeight = FontWeight.Medium)
+        }
+    }
+}
+
+@Composable
+private fun CameraSettingsSection(
+    state: AllSettings,
+    onCameraChange: (Boolean) -> Unit,
+) {
+    SettingsCard(
+        title = "Camera",
+        iconRes = android.R.drawable.ic_menu_camera,
+    ) {
+        StyledSwitch(
+            label = "Use front camera",
+            checked = state.camera.useFrontCamera,
+            onCheckedChange = onCameraChange,
+        )
+    }
+}
+
+@Composable
+private fun FrameSettingsSection(
+    state: AllSettings,
+    frames: List<TemplateEntity>,
+    onFrameSelected: (Long?) -> Unit,
+    onOpenFrameDesigner: () -> Unit,
+) {
+    SettingsCard(
+        title = "Frame Overlay",
+        iconRes = android.R.drawable.ic_menu_gallery,
+    ) {
+        // None option
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    if (state.event.selectedFrameId == null) Rose.copy(alpha = 0.2f)
+                    else Color.Transparent,
+                )
+                .clickable { onFrameSelected(null) }
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "None (no frame overlay)",
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (state.event.selectedFrameId == null) Color.White else TextSecondary,
+            )
+        }
+        // Frame list
+        frames.forEach { frame ->
+            val isSelected = state.event.selectedFrameId == frame.id
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(
+                        if (isSelected) Rose.copy(alpha = 0.2f) else Color.Transparent,
+                    )
+                    .clickable { onFrameSelected(frame.id) }
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = frame.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (isSelected) Color.White else TextSecondary,
+                    modifier = Modifier.weight(1f),
+                )
+                if (isSelected) {
+                    Icon(
+                        painter = painterResource(id = android.R.drawable.checkbox_on_background),
+                        contentDescription = "Selected",
+                        tint = Rose,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        ElevatedButton(
+            onClick = onOpenFrameDesigner,
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.elevatedButtonColors(
+                containerColor = Gold,
+                contentColor = Color.Black,
+            ),
+        ) {
+            Text("Manage Frames", fontWeight = FontWeight.Medium)
         }
     }
 }

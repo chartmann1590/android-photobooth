@@ -3,6 +3,8 @@ package com.example.photobooth.ui.screens
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.photobooth.data.AppDatabase
+import com.example.photobooth.data.TemplateEntity
 import com.example.photobooth.settings.AllSettings
 import com.example.photobooth.settings.SettingsRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,6 +30,7 @@ class SettingsViewModel(
 ) : AndroidViewModel(application) {
 
     private val repo = SettingsRepository(application)
+    private val templateDao = AppDatabase.getInstance(application).templateDao()
     private val _testStatus = MutableStateFlow<String?>(null)
     val testStatus: kotlinx.coroutines.flow.StateFlow<String?> = _testStatus
 
@@ -38,11 +41,30 @@ class SettingsViewModel(
             initialValue = AllSettings(),
         )
 
+    val frames: StateFlow<List<TemplateEntity>> =
+        templateDao.getAllTemplates().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList(),
+        )
+
     fun updateEvent(eventName: String, pattern: String) {
         viewModelScope.launch {
             repo.updateEventSettings {
                 it.copy(eventName = eventName, filenamePattern = pattern)
             }
+        }
+    }
+
+    fun updateCamera(useFrontCamera: Boolean) {
+        viewModelScope.launch {
+            repo.updateCameraSettings { it.copy(useFrontCamera = useFrontCamera) }
+        }
+    }
+
+    fun updateSelectedFrame(frameId: Long?) {
+        viewModelScope.launch {
+            repo.updateSelectedFrame(frameId)
         }
     }
 
