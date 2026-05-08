@@ -1,0 +1,47 @@
+package com.example.photobooth
+
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import com.example.photobooth.ui.screens.HomeScreen
+import org.junit.Rule
+import org.junit.Test
+
+class HomeScreenTest {
+
+    @get:Rule
+    val composeTestRule = createComposeRule()
+
+    @Test
+    fun homeScreen_displaysTitleAndButtons() {
+        composeTestRule.setContent {
+            HomeScreen(
+                onStartCapture = {},
+                onOpenGallery = {},
+                onOpenSettings = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("PHOTOBOOTH").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Capture the moment").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Start Photobooth").assertIsDisplayed()
+        composeTestRule.onNodeWithText("View Gallery").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
+    }
+
+    @Test
+    fun homeScreen_startButtonCallback() {
+        var captureClicked = false
+
+        composeTestRule.setContent {
+            HomeScreen(
+                onStartCapture = { captureClicked = true },
+                onOpenGallery = {},
+                onOpenSettings = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("Start Photobooth").performClick()
+        assert(captureClicked)
+    }
+}
