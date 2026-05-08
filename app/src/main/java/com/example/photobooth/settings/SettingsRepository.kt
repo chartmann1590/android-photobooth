@@ -1,12 +1,15 @@
 package com.example.photobooth.settings
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -14,6 +17,20 @@ import kotlinx.coroutines.flow.map
 private val Context.dataStore by preferencesDataStore(name = "photobooth_settings")
 
 class SettingsRepository(private val context: Context) {
+
+    private val masterKey = MasterKey.Builder(context)
+        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+        .build()
+
+    private val encryptedPrefs: SharedPreferences by lazy {
+        EncryptedSharedPreferences.create(
+            context,
+            "photobooth_credentials",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+        )
+    }
 
     private object Keys {
         val EVENT_NAME = stringPreferencesKey("event_name")
@@ -23,19 +40,16 @@ class SettingsRepository(private val context: Context) {
         val UPLOAD_USE_ANON = stringPreferencesKey("upload_use_anon")
         val UPLOAD_ANON_TYPE = stringPreferencesKey("upload_anon_type")
         val IMMICH_BASE_URL = stringPreferencesKey("immich_base_url")
-        val IMMICH_API_TOKEN = stringPreferencesKey("immich_api_token")
         val IMMICH_ALBUM_ID = stringPreferencesKey("immich_album_id")
 
         val SMS_BASE_URL = stringPreferencesKey("sms_base_url")
         val SMS_USERNAME = stringPreferencesKey("sms_username")
-        val SMS_PASSWORD = stringPreferencesKey("sms_password")
         val SMS_USE_CLOUD = stringPreferencesKey("sms_use_cloud")
 
         val SMTP_HOST = stringPreferencesKey("smtp_host")
         val SMTP_PORT = intPreferencesKey("smtp_port")
         val SMTP_USE_SSL = stringPreferencesKey("smtp_use_ssl")
         val SMTP_USERNAME = stringPreferencesKey("smtp_username")
-        val SMTP_PASSWORD = stringPreferencesKey("smtp_password")
         val SMTP_FROM_ADDRESS = stringPreferencesKey("smtp_from_address")
         val SMTP_FROM_NAME = stringPreferencesKey("smtp_from_name")
         val SMTP_SUBJECT_TEMPLATE = stringPreferencesKey("smtp_subject_template")
@@ -45,12 +59,35 @@ class SettingsRepository(private val context: Context) {
         val USE_FRONT_CAMERA = booleanPreferencesKey("use_front_camera")
     }
 
+    private object SecureKeys {
+        const val IMMICH_API_TOKEN = "immich_api_token"
+        const val SMS_PASSWORD = "sms_password"
+        const val SMTP_PASSWORD = "smtp_password"
+    }
+
     val settingsFlow: Flow<AllSettings> = context.dataStore.data.map { prefs ->
         prefs.toAllSettings()
     }
 
     suspend fun getCurrentSettings(): AllSettings =
         context.dataStore.data.map { it.toAllSettings() }.first()
+
+    fun getCurrentSettingsBlocking(): AllSettings {
+        val prefs = runCatching {
+            kotlinx.coroutines.runBlocking {
+                context.dataStore.data.first()
+            }
+        }.getOrNull()
+        return prefs?.toAllSettings() ?: AllSettings()
+    }
+
+    private fun getSecureString(key: String): String {
+        return encryptedPrefs.getString(key, "") ?: ""
+    }
+
+    private fun setSecureString(key: String, value: String) {
+        encryptedPrefs.edit().putString(key, value).apply()
+    }
 
     suspend fun updateEventSettings(block: (EventSettings) -> EventSettings) {
         context.dataStore.edit { prefs ->
@@ -84,8 +121,8 @@ class SettingsRepository(private val context: Context) {
             prefs[Keys.UPLOAD_USE_ANON] = updated.useAnonymousHost.toString()
             prefs[Keys.UPLOAD_ANON_TYPE] = updated.anonymousHostType.name
             prefs[Keys.IMMICH_BASE_URL] = updated.immichBaseUrl
-            prefs[Keys.IMMICH_API_TOKEN] = updated.immichApiToken
             prefs[Keys.IMMICH_ALBUM_ID] = updated.immichAlbumId
+            setSecureString(SecureKeys.IMMICH_API_TOKEN, updated.immichApiToken)
         }
     }
 
@@ -95,8 +132,8 @@ class SettingsRepository(private val context: Context) {
             val updated = block(current)
             prefs[Keys.SMS_BASE_URL] = updated.baseUrl
             prefs[Keys.SMS_USERNAME] = updated.username
-            prefs[Keys.SMS_PASSWORD] = updated.password
             prefs[Keys.SMS_USE_CLOUD] = updated.useCloudServer.toString()
+            setSecureString(SecureKeys.SMS_PASSWORD, updated.password)
         }
     }
 
@@ -108,11 +145,11 @@ class SettingsRepository(private val context: Context) {
             prefs[Keys.SMTP_PORT] = updated.port
             prefs[Keys.SMTP_USE_SSL] = updated.useSslTls.toString()
             prefs[Keys.SMTP_USERNAME] = updated.username
-            prefs[Keys.SMTP_PASSWORD] = updated.password
             prefs[Keys.SMTP_FROM_ADDRESS] = updated.fromAddress
             prefs[Keys.SMTP_FROM_NAME] = updated.fromName
             prefs[Keys.SMTP_SUBJECT_TEMPLATE] = updated.defaultSubjectTemplate
             prefs[Keys.SMTP_BODY_TEMPLATE] = updated.defaultBodyTemplate
+            setSecureString(SecureKeys.SMTP_PASSWORD, updated.password)
         }
     }
 
@@ -134,14 +171,14 @@ class SettingsRepository(private val context: Context) {
                 runCatching { AnonymousHostType.valueOf(it) }.getOrDefault(AnonymousHostType.None)
             } ?: AnonymousHostType.None,
             immichBaseUrl = this[Keys.IMMICH_BASE_URL] ?: "",
-            immichApiToken = this[Keys.IMMICH_API_TOKEN] ?: "",
+            immichApiToken = getSecureString(SecureKeys.IMMICH_API_TOKEN),
             immichAlbumId = this[Keys.IMMICH_ALBUM_ID] ?: "",
         )
 
         val sms = SmsGatewaySettings(
             baseUrl = this[Keys.SMS_BASE_URL] ?: "",
             username = this[Keys.SMS_USERNAME] ?: "",
-            password = this[Keys.SMS_PASSWORD] ?: "",
+            password = getSecureString(SecureKeys.SMS_PASSWORD),
             useCloudServer = (this[Keys.SMS_USE_CLOUD] ?: "false").toBooleanStrictOrNull() ?: false,
         )
 
@@ -150,7 +187,7 @@ class SettingsRepository(private val context: Context) {
             port = this[Keys.SMTP_PORT] ?: SmtpSettings().port,
             useSslTls = (this[Keys.SMTP_USE_SSL] ?: "true").toBooleanStrictOrNull() ?: true,
             username = this[Keys.SMTP_USERNAME] ?: "",
-            password = this[Keys.SMTP_PASSWORD] ?: "",
+            password = getSecureString(SecureKeys.SMTP_PASSWORD),
             fromAddress = this[Keys.SMTP_FROM_ADDRESS] ?: "",
             fromName = this[Keys.SMTP_FROM_NAME] ?: "",
             defaultSubjectTemplate = this[Keys.SMTP_SUBJECT_TEMPLATE] ?: SmtpSettings().defaultSubjectTemplate,
@@ -166,4 +203,3 @@ class SettingsRepository(private val context: Context) {
         )
     }
 }
-

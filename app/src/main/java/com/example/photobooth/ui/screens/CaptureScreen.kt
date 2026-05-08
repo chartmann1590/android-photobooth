@@ -1,6 +1,7 @@
 package com.example.photobooth.ui.screens
 
 import android.speech.tts.TextToSpeech
+import android.widget.Toast
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -33,8 +34,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -53,6 +56,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.example.photobooth.R
 import com.example.photobooth.camera.CameraCaptureManager
 import com.example.photobooth.camera.CaptureUiState
 import com.example.photobooth.camera.CaptureViewModel
@@ -78,14 +82,13 @@ fun CaptureScreen(
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
     val cameraManager = remember { CameraCaptureManager(context) }
     var tts by remember { mutableStateOf<TextToSpeech?>(null) }
-    var countdown by remember { mutableIntStateOf(0) }
-    var useFrontCamera by remember { mutableStateOf(true) }
-    var eventName by remember { mutableStateOf("Event") }
-    var selectedFrameId by remember { mutableStateOf<Long?>(null) }
+    var countdown by rememberSaveable { mutableIntStateOf(0) }
+    var useFrontCamera by rememberSaveable { mutableStateOf(true) }
+    var eventName by rememberSaveable { mutableStateOf(context.getString(R.string.default_event_name)) }
+    var selectedFrameId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     val uiState by captureViewModel.uiState.collectAsStateWithLifecycle()
 
-    // Load settings once
     LaunchedEffect(Unit) {
         val settings = settingsRepo.settingsFlow.first()
         useFrontCamera = settings.camera.useFrontCamera
@@ -95,7 +98,6 @@ fun CaptureScreen(
 
     val isCountingDown = uiState is CaptureUiState.CountingDown
 
-    // Reset to Idle when returning from Gallery
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -126,36 +128,42 @@ fun CaptureScreen(
         )
     }
 
+    LaunchedEffect(uiState) {
+        if (uiState is CaptureUiState.Error) {
+            Toast.makeText(context, (uiState as CaptureUiState.Error).message, Toast.LENGTH_LONG).show()
+        }
+    }
+
     LaunchedEffect(countdown) {
         if (countdown > 0) {
             if (countdown == 1) {
-                tts?.speak("Smile!", TextToSpeech.QUEUE_FLUSH, null, "SMILE_PROMPT")
+                tts?.speak(context.getString(R.string.capture_smile), TextToSpeech.QUEUE_FLUSH, null, "SMILE_PROMPT")
             }
             delay(1000)
             val next = countdown - 1
             captureViewModel.tickCountdown(next)
             countdown = next
         } else if (uiState is CaptureUiState.Capturing) {
-            val view = previewView ?: return@LaunchedEffect
+            previewView ?: return@LaunchedEffect
             val outputDir = context.cacheDir
             val file = java.io.File(outputDir, "capture_${System.currentTimeMillis()}.jpg")
             try {
                 val uri = cameraManager.takePicture(file)
                 captureViewModel.saveCapturedPhoto(
-                    context = context,
                     uri = uri,
                     eventName = eventName,
                     templateId = null,
                     selectedFrameId = selectedFrameId,
                     onComplete = onFinishedCapture,
                 )
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                captureViewModel.resetToIdle()
+                Toast.makeText(context, context.getString(R.string.capture_error) + ": ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Camera preview
         AndroidView(
             factory = { ctx ->
                 PreviewView(ctx).also { previewView = it }
@@ -163,7 +171,6 @@ fun CaptureScreen(
             modifier = Modifier.fillMaxSize(),
         )
 
-        // Top gradient overlay
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -179,7 +186,6 @@ fun CaptureScreen(
                 ),
         )
 
-        // Bottom gradient overlay
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -195,7 +201,6 @@ fun CaptureScreen(
                 ),
         )
 
-        // Top bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -205,7 +210,7 @@ fun CaptureScreen(
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     .background(DarkBackground.copy(alpha = 0.5f))
                     .clickable(
@@ -217,7 +222,7 @@ fun CaptureScreen(
             ) {
                 Icon(
                     painter = painterResource(id = android.R.drawable.ic_menu_close_clear_cancel),
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.capture_back),
                     tint = Color.White,
                     modifier = Modifier.size(20.dp),
                 )
@@ -232,11 +237,11 @@ fun CaptureScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
                 val statusText = when (uiState) {
-                    is CaptureUiState.Idle -> "Ready"
-                    is CaptureUiState.CountingDown -> "Get ready..."
-                    is CaptureUiState.Capturing -> "Capturing..."
-                    is CaptureUiState.Saved -> "Saved!"
-                    is CaptureUiState.Error -> "Error"
+                    is CaptureUiState.Idle -> stringResource(R.string.capture_ready)
+                    is CaptureUiState.CountingDown -> stringResource(R.string.capture_get_ready)
+                    is CaptureUiState.Capturing -> stringResource(R.string.capture_capturing)
+                    is CaptureUiState.Saved -> stringResource(R.string.capture_saved)
+                    is CaptureUiState.Error -> stringResource(R.string.capture_error)
                 }
                 Text(
                     text = statusText,
@@ -250,7 +255,6 @@ fun CaptureScreen(
             }
         }
 
-        // Countdown overlay
         AnimatedVisibility(
             visible = isCountingDown,
             enter = fadeIn() + scaleIn(),
@@ -291,14 +295,13 @@ fun CaptureScreen(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = if (seconds == 1) "Smile!" else "Get ready...",
+                    text = if (seconds == 1) stringResource(R.string.capture_smile) else stringResource(R.string.capture_get_ready),
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White.copy(alpha = 0.9f),
                 )
             }
         }
 
-        // Bottom controls
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -334,7 +337,7 @@ fun CaptureScreen(
             ) {
                 Icon(
                     painter = painterResource(id = android.R.drawable.ic_menu_camera),
-                    contentDescription = "Capture",
+                    contentDescription = stringResource(R.string.capture_button),
                     tint = Color.White,
                     modifier = Modifier.size(32.dp),
                 )
@@ -343,7 +346,7 @@ fun CaptureScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = if (isCountingDown) "" else "Tap to capture",
+                text = if (isCountingDown) "" else stringResource(R.string.capture_tap),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.White.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.example.photobooth.R
 import com.example.photobooth.network.SmtpEmailClient
 import com.example.photobooth.network.SmsGatewayClient
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -129,7 +130,7 @@ class SettingsViewModel(
             }
             try {
                 val client = SmsGatewayClient(current)
-                client.sendSms(listOf("+10000000000"), "Photobooth SMS test")
+                client.sendSms(listOf(current.username), "Photobooth SMS test")
                 _testStatus.value = "Test SMS request sent successfully"
             } catch (e: Exception) {
                 _testStatus.value = "Test SMS failed: ${e.message}"

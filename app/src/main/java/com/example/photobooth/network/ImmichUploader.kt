@@ -10,12 +10,24 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import org.json.JSONObject
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 class ImmichUploader(
     private val settings: UploadSettings,
-    private val client: OkHttpClient = OkHttpClient(),
+    private val client: OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(120, TimeUnit.SECONDS)
+        .writeTimeout(120, TimeUnit.SECONDS)
+        .build(),
 ) : ImageUploader {
     override suspend fun upload(file: File): String = withContext(Dispatchers.IO) {
+        if (!file.exists()) {
+            throw IllegalStateException("File not found: ${file.name}")
+        }
+        if (settings.immichBaseUrl.isBlank()) {
+            throw IllegalStateException("Immich base URL not configured")
+        }
+
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart(
@@ -39,13 +51,16 @@ class ImmichUploader(
 
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
-                throw IllegalStateException("Immich upload failed: ${response.code}")
+                val errorBody = response.body?.string()?.take(200) ?: "No error details"
+                throw IllegalStateException("Immich upload failed: ${response.code} - $errorBody")
             }
             val text = response.body?.string() ?: ""
             val json = JSONObject(text)
-            // Use originalFileName or derived URL as reference; Immich is typically private.
-            json.optString("id")
+            val id = json.optString("id", "")
+            if (id.isBlank()) {
+                throw IllegalStateException("Immich upload succeeded but returned no asset ID")
+            }
+            id
         }
     }
 }
-

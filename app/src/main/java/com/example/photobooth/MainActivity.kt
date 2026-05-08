@@ -27,6 +27,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,7 +46,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.example.photobooth.PhotoboothApp
+import com.example.photobooth.R
 import com.example.photobooth.ui.NavGraph
+import com.example.photobooth.ui.screens.ConsentDialog
 import com.example.photobooth.ui.theme.DarkBackground
 import com.example.photobooth.ui.theme.Gold
 import com.example.photobooth.ui.theme.PhotoboothTheme
@@ -59,10 +64,33 @@ class MainActivity : ComponentActivity() {
         setContent {
             PhotoboothTheme {
                 Surface(color = DarkBackground) {
-                    PermissionGate {
-                        NavGraph()
-                    }
+                    MainEntry()
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainEntry() {
+    val context = LocalContext.current
+    val app = remember { context.applicationContext as PhotoboothApp }
+    var needsConsent by remember { mutableStateOf(false) }
+    var consentChecked by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        needsConsent = app.needsConsent()
+        consentChecked = true
+    }
+
+    when {
+        !consentChecked -> {}
+        needsConsent -> {
+            ConsentDialog(onDecision = { needsConsent = false })
+        }
+        else -> {
+            PermissionGate {
+                NavGraph()
             }
         }
     }
@@ -90,7 +118,6 @@ private fun PermissionGate(content: @Composable () -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     var granted by remember { mutableStateOf(allGranted(context)) }
 
-    // Re-check when resuming (e.g. user returns from system settings)
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -145,14 +172,14 @@ private fun PermissionDeniedScreen(
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Permissions Required",
+            text = stringResource(R.string.permissions_required),
             style = MaterialTheme.typography.headlineMedium,
             color = Color.White,
             fontWeight = FontWeight.Bold,
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Photobooth needs access to your camera and storage to capture and save photos.",
+            text = stringResource(R.string.permissions_rationale),
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary,
             textAlign = TextAlign.Center,
@@ -166,7 +193,7 @@ private fun PermissionDeniedScreen(
                 contentColor = Color.White,
             ),
         ) {
-            Text("Grant Permissions", fontWeight = FontWeight.Medium)
+            Text(stringResource(R.string.grant_permissions), fontWeight = FontWeight.Medium)
         }
         Spacer(modifier = Modifier.height(12.dp))
         ElevatedButton(
@@ -177,7 +204,7 @@ private fun PermissionDeniedScreen(
                 contentColor = Color.Black,
             ),
         ) {
-            Text("Open Settings", fontWeight = FontWeight.Medium)
+            Text(stringResource(R.string.open_settings), fontWeight = FontWeight.Medium)
         }
     }
 }

@@ -1,7 +1,6 @@
 package com.example.photobooth.camera
 
 import android.app.Application
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
@@ -58,25 +57,26 @@ class CaptureViewModel(
     }
 
     fun saveCapturedPhoto(
-        context: Context,
         uri: Uri,
         eventName: String,
         templateId: Long?,
         selectedFrameId: Long?,
         onComplete: (Long?) -> Unit,
     ) {
+        val app = getApplication<Application>()
         viewModelScope.launch {
             try {
-                val outputDir = File(context.filesDir, "photos")
-                if (!outputDir.exists()) {
-                    outputDir.mkdirs()
+                val outputDir = File(app.filesDir, "photos")
+                if (!outputDir.exists() && !outputDir.mkdirs()) {
+                    _uiState.value = CaptureUiState.Error("Failed to create photo directory")
+                    onComplete(null)
+                    return@launch
                 }
 
                 val destFile = File(outputDir, "photo_${System.currentTimeMillis()}.jpg")
 
                 withContext(Dispatchers.IO) {
-                    // Read EXIF rotation from the original file
-                    val exifRotation = context.contentResolver.openInputStream(uri)?.use { stream ->
+                    val exifRotation = app.contentResolver.openInputStream(uri)?.use { stream ->
                         val exif = ExifInterface(stream)
                         exif.getAttributeInt(
                             ExifInterface.TAG_ORIENTATION,
@@ -84,40 +84,40 @@ class CaptureViewModel(
                         )
                     } ?: ExifInterface.ORIENTATION_NORMAL
 
-                    // Decode with downsampling for very large images
-                    val rawBytes = context.contentResolver.openInputStream(uri)?.use {
-                        it.readBytes()
-                    } ?: throw IllegalStateException("Cannot read captured photo")
-
                     val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                    BitmapFactory.decodeByteArray(rawBytes, 0, rawBytes.size, opts)
+                    app.contentResolver.openInputStream(uri)?.use { stream ->
+                        BitmapFactory.decodeStream(stream, null, opts)
+                    }
 
-                    // Downsample if much larger than 1200x1800 target
                     var sampleSize = 1
                     while (opts.outWidth / sampleSize > 2400 || opts.outHeight / sampleSize > 3600) {
                         sampleSize *= 2
                     }
 
                     val decodeOpts = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-                    val rawBitmap = BitmapFactory.decodeByteArray(rawBytes, 0, rawBytes.size, decodeOpts)
-                        ?: throw IllegalStateException("Failed to decode photo")
+                    val rawBitmap = app.contentResolver.openInputStream(uri)?.use { stream ->
+                        BitmapFactory.decodeStream(stream, null, decodeOpts)
+                    } ?: throw IllegalStateException("Failed to decode photo")
 
-                    // Apply EXIF rotation so pixels match actual orientation
-                    val corrected = applyExifRotation(rawBitmap, exifRotation)
-                    if (corrected !== rawBitmap) rawBitmap.recycle()
+                    try {
+                        val corrected = applyExifRotation(rawBitmap, exifRotation)
+                        if (corrected !== rawBitmap) rawBitmap.recycle()
 
-                    // Look up frame overlay path if a frame is selected
-                    val frameOverlayPath = selectedFrameId?.let { id ->
-                        templateDao.getTemplateByIdSync(id)?.backgroundImagePath
+                        val frameOverlayPath = selectedFrameId?.let { id ->
+                            templateDao.getTemplateByIdSync(id)?.backgroundImagePath
+                        }
+
+                        val processed = renderSimple4x6(corrected, frameOverlayPath)
+                        if (processed !== corrected) corrected.recycle()
+
+                        destFile.outputStream().use { out ->
+                            processed.compress(Bitmap.CompressFormat.JPEG, 95, out)
+                        }
+                        processed.recycle()
+                    } catch (e: OutOfMemoryError) {
+                        rawBitmap.recycle()
+                        throw IllegalStateException("Not enough memory to process photo. Try again.")
                     }
-
-                    val processed = renderSimple4x6(corrected, frameOverlayPath)
-                    if (processed !== corrected) corrected.recycle()
-
-                    destFile.outputStream().use { out ->
-                        processed.compress(Bitmap.CompressFormat.JPEG, 95, out)
-                    }
-                    processed.recycle()
                 }
 
                 val entity = PhotoEntity(
@@ -151,7 +151,7 @@ class CaptureViewModel(
                 matrix.postRotate(270f)
                 matrix.preScale(-1f, 1f)
             }
-            else -> return bitmap // NORMAL or UNDEFINED — no rotation needed
+            else -> return bitmap
         }
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }

@@ -36,10 +36,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.photobooth.R
 import com.example.photobooth.ui.theme.CardSurface
 import com.example.photobooth.ui.theme.DarkBackground
 import com.example.photobooth.ui.theme.Gold
@@ -138,7 +140,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "PHOTOBOOTH",
+                    text = stringResource(R.string.home_title),
                     style = MaterialTheme.typography.displaySmall.copy(
                         letterSpacing = 6.sp,
                         fontWeight = FontWeight.Bold,
@@ -148,7 +150,7 @@ fun HomeScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Capture the moment",
+                    text = stringResource(R.string.home_tagline),
                     style = MaterialTheme.typography.titleMedium,
                     color = TextSecondary,
                     textAlign = TextAlign.Center,
@@ -186,7 +188,7 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Start Photobooth",
+                        text = stringResource(R.string.start_photobooth),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                         ),
@@ -213,7 +215,7 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "View Gallery",
+                        text = stringResource(R.string.view_gallery),
                         style = MaterialTheme.typography.titleSmall,
                     )
                 }
@@ -238,7 +240,7 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Settings",
+                        text = stringResource(R.string.settings),
                         style = MaterialTheme.typography.titleSmall,
                     )
                 }

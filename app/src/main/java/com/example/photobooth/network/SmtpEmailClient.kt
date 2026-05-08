@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.InetAddress
 import java.util.Date
+import java.util.Properties
 import javax.activation.DataHandler
 import javax.activation.FileDataSource
 import javax.mail.Message
@@ -15,8 +16,8 @@ import javax.mail.PasswordAuthentication
 import javax.mail.Session
 import javax.mail.Transport
 import javax.mail.internet.InternetAddress
-import javax.mail.internet.MimeBodyPart
 import javax.mail.internet.MimeMessage
+import javax.mail.internet.MimeBodyPart
 import javax.mail.internet.MimeMultipart
 
 class SmtpEmailClient(
@@ -40,13 +41,24 @@ class SmtpEmailClient(
         body: String,
         attachment: File,
     ) = withContext(Dispatchers.IO) {
-        val props = java.util.Properties().apply {
+        if (!attachment.exists()) {
+            throw IllegalStateException("Attachment file not found: ${attachment.name}")
+        }
+
+        val props = Properties().apply {
             put("mail.smtp.host", settings.host)
             put("mail.smtp.port", settings.port.toString())
-            if (settings.useSslTls) {
-                put("mail.smtp.starttls.enable", "true")
-            }
             put("mail.smtp.auth", "true")
+            put("mail.smtp.connectiontimeout", "15000")
+            put("mail.smtp.timeout", "30000")
+
+            if (settings.port == 465) {
+                put("mail.smtp.ssl.enable", "true")
+                put("mail.smtp.ssl.checkserveridentity", "true")
+            } else if (settings.useSslTls) {
+                put("mail.smtp.starttls.enable", "true")
+                put("mail.smtp.ssl.checkserveridentity", "true")
+            }
         }
 
         val session = Session.getInstance(props, object : javax.mail.Authenticator() {
@@ -78,11 +90,9 @@ class SmtpEmailClient(
             }
 
             message.setContent(multipart)
-
             Transport.send(message)
         } catch (e: MessagingException) {
             throw IllegalStateException("Failed to send email: ${e.message}", e)
         }
     }
 }
-

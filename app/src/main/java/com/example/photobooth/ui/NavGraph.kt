@@ -2,6 +2,7 @@ package com.example.photobooth.ui
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -32,14 +33,19 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
         composable(Screen.Capture.route) {
             CaptureScreen(
                 onBack = { navController.popBackStack() },
-                onFinishedCapture = { photoId ->
-                    navController.navigate(Screen.Gallery.route)
-                }
+                onFinishedCapture = { _ ->
+                    navController.navigate(
+                        Screen.Gallery.route,
+                        NavOptions.Builder()
+                            .setPopUpTo(Screen.Capture.route, inclusive = true)
+                            .build(),
+                    )
+                },
             )
         }
         composable(Screen.Gallery.route) {
             GalleryScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Screen.Settings.route) {

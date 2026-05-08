@@ -40,7 +40,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.photobooth.data.TemplateEntity
@@ -51,6 +53,7 @@ import com.example.photobooth.ui.theme.DarkBackground
 import com.example.photobooth.ui.theme.Gold
 import com.example.photobooth.ui.theme.Rose
 import com.example.photobooth.ui.theme.Success
+import com.example.photobooth.R
 import com.example.photobooth.ui.theme.TextSecondary
 
 @Composable
@@ -102,14 +105,14 @@ fun SettingsScreen(
             ) {
                 Icon(
                     painter = painterResource(id = android.R.drawable.ic_menu_close_clear_cancel),
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.capture_back),
                     tint = Color.White,
                     modifier = Modifier.size(18.dp),
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = "Settings",
+                text = stringResource(R.string.settings),
                 style = MaterialTheme.typography.headlineSmall,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
@@ -220,13 +223,13 @@ private fun EventSettingsSection(
     textFieldColors: androidx.compose.material3.TextFieldColors,
 ) {
     SettingsCard(
-        title = "Event",
+        title = stringResource(R.string.settings_event),
         iconRes = android.R.drawable.ic_menu_today,
     ) {
         OutlinedTextField(
             value = state.event.eventName,
             onValueChange = { onEventChange(it, state.event.filenamePattern) },
-            label = { Text("Event name") },
+            label = { Text(stringResource(R.string.settings_event_name)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
@@ -235,7 +238,7 @@ private fun EventSettingsSection(
         OutlinedTextField(
             value = state.event.filenamePattern,
             onValueChange = { onEventChange(state.event.eventName, it) },
-            label = { Text("Filename pattern") },
+            label = { Text(stringResource(R.string.settings_filename_pattern)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
@@ -251,11 +254,11 @@ private fun UploadSettingsSection(
     textFieldColors: androidx.compose.material3.TextFieldColors,
 ) {
     SettingsCard(
-        title = "Upload",
+        title = stringResource(R.string.settings_upload),
         iconRes = android.R.drawable.ic_menu_upload,
     ) {
         StyledSwitch(
-            label = "Use anonymous host (0x0.st)",
+            label = stringResource(R.string.settings_use_anon_host),
             checked = state.upload.useAnonymousHost,
             onCheckedChange = {
                 onUploadChange(it, state.upload.immichBaseUrl, state.upload.immichApiToken, state.upload.immichAlbumId)
@@ -264,7 +267,7 @@ private fun UploadSettingsSection(
         OutlinedTextField(
             value = state.upload.immichBaseUrl,
             onValueChange = { onUploadChange(state.upload.useAnonymousHost, it, state.upload.immichApiToken, state.upload.immichAlbumId) },
-            label = { Text("Immich base URL") },
+            label = { Text(stringResource(R.string.settings_immich_base_url)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
@@ -273,16 +276,17 @@ private fun UploadSettingsSection(
         OutlinedTextField(
             value = state.upload.immichApiToken,
             onValueChange = { onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, it, state.upload.immichAlbumId) },
-            label = { Text("Immich API token") },
+            label = { Text(stringResource(R.string.settings_immich_api_token)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
             singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
         )
         OutlinedTextField(
             value = state.upload.immichAlbumId,
             onValueChange = { onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, state.upload.immichApiToken, it) },
-            label = { Text("Immich album ID") },
+            label = { Text(stringResource(R.string.settings_immich_album_id)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
@@ -299,13 +303,13 @@ private fun SmsSettingsSection(
     textFieldColors: androidx.compose.material3.TextFieldColors,
 ) {
     SettingsCard(
-        title = "SMS Gateway",
+        title = stringResource(R.string.settings_sms_gateway),
         iconRes = android.R.drawable.ic_dialog_email,
     ) {
         OutlinedTextField(
             value = state.sms.baseUrl,
             onValueChange = { onSmsChange(it, state.sms.username, state.sms.password, state.sms.useCloudServer) },
-            label = { Text("Base URL") },
+            label = { Text(stringResource(R.string.settings_base_url)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
@@ -314,7 +318,7 @@ private fun SmsSettingsSection(
         OutlinedTextField(
             value = state.sms.username,
             onValueChange = { onSmsChange(state.sms.baseUrl, it, state.sms.password, state.sms.useCloudServer) },
-            label = { Text("Username") },
+            label = { Text(stringResource(R.string.settings_username)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
@@ -323,14 +327,15 @@ private fun SmsSettingsSection(
         OutlinedTextField(
             value = state.sms.password,
             onValueChange = { onSmsChange(state.sms.baseUrl, state.sms.username, it, state.sms.useCloudServer) },
-            label = { Text("Password") },
+            label = { Text(stringResource(R.string.settings_password)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
             singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
         )
         StyledSwitch(
-            label = "Cloud server mode",
+            label = stringResource(R.string.settings_cloud_server),
             checked = state.sms.useCloudServer,
             onCheckedChange = {
                 onSmsChange(state.sms.baseUrl, state.sms.username, state.sms.password, it)
@@ -344,7 +349,7 @@ private fun SmsSettingsSection(
                 contentColor = Color.Black,
             ),
         ) {
-            Text("Test SMS", fontWeight = FontWeight.Medium)
+            Text(stringResource(R.string.settings_test_sms), fontWeight = FontWeight.Medium)
         }
     }
 }
@@ -357,7 +362,7 @@ private fun SmtpSettingsSection(
     textFieldColors: androidx.compose.material3.TextFieldColors,
 ) {
     SettingsCard(
-        title = "SMTP / Email",
+        title = stringResource(R.string.settings_smtp_email),
         iconRes = android.R.drawable.ic_dialog_email,
     ) {
         Row(
@@ -367,7 +372,7 @@ private fun SmtpSettingsSection(
             OutlinedTextField(
                 value = state.smtp.host,
                 onValueChange = { onSmtpChange(SmtpFieldChange.Host(it)) },
-                label = { Text("SMTP host") },
+                label = { Text(stringResource(R.string.settings_smtp_host)) },
                 modifier = Modifier.weight(2f),
                 shape = RoundedCornerShape(12.dp),
                 colors = textFieldColors,
@@ -376,7 +381,7 @@ private fun SmtpSettingsSection(
             OutlinedTextField(
                 value = state.smtp.port.toString(),
                 onValueChange = { onSmtpChange(SmtpFieldChange.Port(it.toIntOrNull() ?: state.smtp.port)) },
-                label = { Text("Port") },
+                label = { Text(stringResource(R.string.settings_port)) },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
                 colors = textFieldColors,
@@ -384,14 +389,14 @@ private fun SmtpSettingsSection(
             )
         }
         StyledSwitch(
-            label = "Use TLS",
+            label = stringResource(R.string.settings_use_tls),
             checked = state.smtp.useSslTls,
             onCheckedChange = { onSmtpChange(SmtpFieldChange.UseTls(it)) },
         )
         OutlinedTextField(
             value = state.smtp.username,
             onValueChange = { onSmtpChange(SmtpFieldChange.Username(it)) },
-            label = { Text("Username") },
+            label = { Text(stringResource(R.string.settings_username)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
@@ -400,11 +405,12 @@ private fun SmtpSettingsSection(
         OutlinedTextField(
             value = state.smtp.password,
             onValueChange = { onSmtpChange(SmtpFieldChange.Password(it)) },
-            label = { Text("Password") },
+            label = { Text(stringResource(R.string.settings_password)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
             singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -413,7 +419,7 @@ private fun SmtpSettingsSection(
             OutlinedTextField(
                 value = state.smtp.fromAddress,
                 onValueChange = { onSmtpChange(SmtpFieldChange.FromAddress(it)) },
-                label = { Text("From address") },
+                label = { Text(stringResource(R.string.settings_from_address)) },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
                 colors = textFieldColors,
@@ -422,7 +428,7 @@ private fun SmtpSettingsSection(
             OutlinedTextField(
                 value = state.smtp.fromName,
                 onValueChange = { onSmtpChange(SmtpFieldChange.FromName(it)) },
-                label = { Text("From name") },
+                label = { Text(stringResource(R.string.settings_from_name)) },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
                 colors = textFieldColors,
@@ -437,7 +443,7 @@ private fun SmtpSettingsSection(
                 contentColor = Color.Black,
             ),
         ) {
-            Text("Test Email / DNS", fontWeight = FontWeight.Medium)
+            Text(stringResource(R.string.settings_test_email), fontWeight = FontWeight.Medium)
         }
     }
 }
@@ -448,11 +454,11 @@ private fun CameraSettingsSection(
     onCameraChange: (Boolean) -> Unit,
 ) {
     SettingsCard(
-        title = "Camera",
+        title = stringResource(R.string.settings_camera),
         iconRes = android.R.drawable.ic_menu_camera,
     ) {
         StyledSwitch(
-            label = "Use front camera",
+            label = stringResource(R.string.settings_use_front_camera),
             checked = state.camera.useFrontCamera,
             onCheckedChange = onCameraChange,
         )
@@ -467,7 +473,7 @@ private fun FrameSettingsSection(
     onOpenFrameDesigner: () -> Unit,
 ) {
     SettingsCard(
-        title = "Frame Overlay",
+        title = stringResource(R.string.settings_frame_overlay),
         iconRes = android.R.drawable.ic_menu_gallery,
     ) {
         // None option
@@ -484,7 +490,7 @@ private fun FrameSettingsSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "None (no frame overlay)",
+                text = stringResource(R.string.settings_no_frame),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (state.event.selectedFrameId == null) Color.White else TextSecondary,
             )
@@ -512,7 +518,7 @@ private fun FrameSettingsSection(
                 if (isSelected) {
                     Icon(
                         painter = painterResource(id = android.R.drawable.checkbox_on_background),
-                        contentDescription = "Selected",
+                        contentDescription = stringResource(R.string.settings_selected),
                         tint = Rose,
                         modifier = Modifier.size(20.dp),
                     )
@@ -528,7 +534,7 @@ private fun FrameSettingsSection(
                 contentColor = Color.Black,
             ),
         ) {
-            Text("Manage Frames", fontWeight = FontWeight.Medium)
+            Text(stringResource(R.string.settings_manage_frames), fontWeight = FontWeight.Medium)
         }
     }
 }

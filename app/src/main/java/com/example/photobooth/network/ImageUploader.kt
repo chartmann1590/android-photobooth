@@ -8,15 +8,24 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 interface ImageUploader {
     suspend fun upload(file: File): String
 }
 
 class ZeroX0Uploader(
-    private val client: OkHttpClient = OkHttpClient(),
+    private val client: OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS)
+        .build(),
 ) : ImageUploader {
     override suspend fun upload(file: File): String = withContext(Dispatchers.IO) {
+        if (!file.exists()) {
+            throw IllegalStateException("File not found: ${file.name}")
+        }
+
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart(
@@ -40,4 +49,3 @@ class ZeroX0Uploader(
         }
     }
 }
-

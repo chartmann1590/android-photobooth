@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Photobooth</string>
+
+    <!-- Permission screen -->
+    <string name="permissions_required">Permissions Required</string>
+    <string name="permissions_rationale">Photobooth needs access to your camera and storage to capture and save photos.</string>
+    <string name="grant_permissions">Grant Permissions</string>
+    <string name="open_settings">Open Settings</string>
+
+    <!-- Home screen -->
+    <string name="home_title">PHOTOBOOTH</string>
+    <string name="home_tagline">Capture the moment</string>
+    <string name="start_photobooth">Start Photobooth</string>
+    <string name="view_gallery">View Gallery</string>
+    <string name="settings">Settings</string>
+
+    <!-- Capture screen -->
+    <string name="capture_ready">Ready</string>
+    <string name="capture_get_ready">Get ready…</string>
+    <string name="capture_capturing">Capturing…</string>
+    <string name="capture_saved">Saved!</string>
+    <string name="capture_error">Error</string>
+    <string name="capture_smile">Smile!</string>
+    <string name="capture_tap">Tap to capture</string>
+    <string name="capture_back">Back</string>
+    <string name="capture_button">Capture</string>
+
+    <!-- Gallery screen -->
+    <string name="gallery_title">Gallery</string>
+    <string name="gallery_photo_count">%1$d photos</string>
+    <string name="gallery_empty">No photos yet</string>
+    <string name="gallery_empty_subtitle">Start capturing to see them here</string>
+    <string name="gallery_photo">Photo</string>
+    <string name="gallery_uploaded">Uploaded</string>
+    <string name="gallery_selected_photo">Selected photo</string>
+    <string name="gallery_share_sms">Share via SMS</string>
+    <string name="gallery_phone_number">Phone number</string>
+    <string name="gallery_send_sms">Send SMS</string>
+    <string name="gallery_share_email">Share via Email</string>
+    <string name="gallery_email_address">Email address</string>
+    <string name="gallery_send_email">Send Email</string>
+    <string name="gallery_upload">Upload</string>
+    <string name="gallery_print">Print</string>
+    <string name="gallery_close">Close</string>
+    <string name="gallery_uploading">Uploading…</string>
+    <string name="gallery_sending">Sending…</string>
+
+    <!-- Settings screen -->
+    <string name="settings_event">Event</string>
+    <string name="settings_event_name">Event name</string>
+    <string name="settings_filename_pattern">Filename pattern</string>
+    <string name="settings_upload">Upload</string>
+    <string name="settings_use_anon_host">Use anonymous host (0x0.st)</string>
+    <string name="settings_immich_base_url">Immich base URL</string>
+    <string name="settings_immich_api_token">Immich API token</string>
+    <string name="settings_immich_album_id">Immich album ID</string>
+    <string name="settings_sms_gateway">SMS Gateway</string>
+    <string name="settings_base_url">Base URL</string>
+    <string name="settings_username">Username</string>
+    <string name="settings_password">Password</string>
+    <string name="settings_cloud_server">Cloud server mode</string>
+    <string name="settings_test_sms">Test SMS</string>
+    <string name="settings_smtp_email">SMTP / Email</string>
+    <string name="settings_smtp_host">SMTP host</string>
+    <string name="settings_port">Port</string>
+    <string name="settings_use_tls">Use TLS</string>
+    <string name="settings_from_address">From address</string>
+    <string name="settings_from_name">From name</string>
+    <string name="settings_test_email">Test Email / DNS</string>
+    <string name="settings_camera">Camera</string>
+    <string name="settings_use_front_camera">Use front camera</string>
+    <string name="settings_frame_overlay">Frame Overlay</string>
+    <string name="settings_no_frame">None (no frame overlay)</string>
+    <string name="settings_selected">Selected</string>
+    <string name="settings_manage_frames">Manage Frames</string>
+
+    <!-- Frame designer -->
+    <string name="frame_designer_title">Manage Frames</string>
+    <string name="frame_designer_upload">Upload New Frame</string>
+    <string name="frame_designer_name">Frame name</string>
+    <string name="frame_designer_choose_png">Choose PNG</string>
+    <string name="frame_designer_preview">Frame preview</string>
+    <string name="frame_designer_save">Save Frame</string>
+    <string name="frame_designer_existing">Existing Frames</string>
+    <string name="frame_designer_delete">Delete</string>
+    <string name="frame_designer_delete_confirm_title">Delete Frame</string>
+    <string name="frame_designer_delete_confirm_message">Are you sure you want to delete \"%1$s\"? This cannot be undone.</string>
+
+    <!-- Test status messages -->
+    <string name="test_sms_no_url">Set SMS base URL first</string>
+    <string name="test_sms_success">Test SMS request sent successfully</string>
+    <string name="test_sms_failed">Test SMS failed: %1$s</string>
+    <string name="test_smtp_no_host">Set SMTP host first</string>
+    <string name="test_smtp_dns_ok">SMTP DNS test ok: %1$s</string>
+    <string name="test_smtp_dns_failed">SMTP DNS test failed: %1$s</string>
+    <string name="test_smtp_error">SMTP test error: %1$s</string>
+
+    <!-- SMS body template -->
+    <string name="sms_body_template">Your photo from %1$s: %2$s</string>
+    <string name="sms_uploaded_locally">uploaded locally</string>
+
+    <!-- Print job name -->
+    <string name="print_job_name">Photobooth Photo</string>
+
+    <!-- Default values -->
+    <string name="default_event_name">My Event</string>
+    <string name="default_email_subject">Your photo from {eventName}</string>
+    <string name="default_email_body">Thanks for visiting {eventName}!</string>
+    <string name="default_frame_name">Untitled Frame</string>
+
+    <!-- Consent dialog -->
+    <string name="consent_title">Help us improve</string>
+    <string name="consent_body">We\'d like to collect anonymous crash reports and usage data to improve Photobooth. No personal information or photos are ever shared.</string>
+    <string name="consent_privacy_note">You can change this later in Settings. See our Privacy Policy for details.</string>
+    <string name="consent_accept">Allow</string>
+    <string name="consent_decline">No thanks</string>
+
+    <!-- Privacy policy screen -->
+    <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="privacy_policy_content"><![CDATA[
+        <h3>Photobooth Privacy Policy</h3>
+        <p><b>Last updated:</b> May 2026</p>
+        <p>This privacy policy applies to the Photobooth mobile application.</p>
+        <h4>Information We Collect</h4>
+        <p><b>Photos:</b> All photos are stored locally on your device. We do not transmit, access, or store your photos on any external server unless you explicitly configure an upload destination (such as Immich) in the app settings.</p>
+        <p><b>Crash Reports:</b> If you grant consent, we collect anonymous crash reports via Firebase Crashlytics to help us fix bugs. These reports contain device information (model, OS version) and stack traces — no personal data.</p>
+        <p><b>Usage Analytics:</b> If you grant consent, we collect anonymous usage statistics via Firebase Analytics to understand how the app is used (e.g., screen visits, feature usage). No personally identifiable information is collected.</p>
+        <h4>Information You Configure</h4>
+        <p>You may optionally configure:<br/>
+        • SMTP credentials for sending emails<br/>
+        • SMS gateway credentials for sending text messages<br/>
+        • Immich server credentials for photo uploads</p>
+        <p>These credentials are stored locally on your device using encrypted storage. They are never transmitted to us or any third party except the services you explicitly configure.</p>
+        <h4>Data Sharing</h4>
+        <p>We do not sell, trade, or share your personal data with any third parties.</p>
+        <h4>Data Retention</h4>
+        <p>All photos and settings remain on your device until you delete them. Uninstalling the app removes all local data.</p>
+        <h4>Children\'s Privacy</h4>
+        <p>This app does not knowingly collect data from children under 13.</p>
+        <h4>Your Rights</h4>
+        <p>You may opt out of analytics at any time. To do so, navigate to Settings in the app.</p>
+        <h4>Contact</h4>
+        <p>If you have questions about this policy, please contact the developer.</p>
+    ]]></string>
+</resources>

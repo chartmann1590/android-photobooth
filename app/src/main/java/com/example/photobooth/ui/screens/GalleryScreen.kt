@@ -1,5 +1,6 @@
 package com.example.photobooth.ui.screens
 
+import android.graphics.BitmapFactory
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -29,9 +30,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -39,12 +42,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,12 +58,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.print.PrintHelper
 import coil.compose.AsyncImage
+import com.example.photobooth.R
 import com.example.photobooth.data.PhotoEntity
+import com.example.photobooth.gallery.GalleryActionState
 import com.example.photobooth.gallery.GalleryViewModel
 import com.example.photobooth.ui.theme.CardSurface
 import com.example.photobooth.ui.theme.CardSurfaceLight
@@ -73,9 +83,11 @@ fun GalleryScreen(
     val context = LocalContext.current
     val vm: GalleryViewModel = viewModel()
     val photos by vm.photos.collectAsState()
-    var selected by remember { mutableStateOf<PhotoEntity?>(null) }
-    var email by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
+    val actionState by vm.actionState.collectAsState()
+    var selected by rememberSaveable { mutableStateOf<PhotoEntity?>(null) }
+    var email by rememberSaveable { mutableStateOf("") }
+    var phone by rememberSaveable { mutableStateOf("") }
+    var showDeleteConfirm by rememberSaveable { mutableStateOf<PhotoEntity?>(null) }
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = Rose,
@@ -87,13 +99,18 @@ fun GalleryScreen(
         unfocusedTextColor = Color.White,
     )
 
+    LaunchedEffect(actionState) {
+        if (actionState is GalleryActionState.Error) {
+            selected?.let { }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBackground),
     ) {
         Column(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
-            // Top bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -103,7 +120,7 @@ fun GalleryScreen(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(CardSurfaceLight)
                         .clickable(
@@ -115,27 +132,26 @@ fun GalleryScreen(
                 ) {
                     Icon(
                         painter = painterResource(id = android.R.drawable.ic_menu_close_clear_cancel),
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.capture_back),
                         tint = Color.White,
                         modifier = Modifier.size(18.dp),
                     )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = "Gallery",
+                    text = stringResource(R.string.gallery_title),
                     style = MaterialTheme.typography.headlineSmall,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = "${photos.size} photos",
+                    text = stringResource(R.string.gallery_photo_count, photos.size),
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary,
                 )
             }
 
-            // Photo grid
             if (photos.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -152,12 +168,12 @@ fun GalleryScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "No photos yet",
+                            text = stringResource(R.string.gallery_empty),
                             style = MaterialTheme.typography.titleMedium,
                             color = TextSecondary,
                         )
                         Text(
-                            text = "Start capturing to see them here",
+                            text = stringResource(R.string.gallery_empty_subtitle),
                             style = MaterialTheme.typography.bodyMedium,
                             color = TextSecondary.copy(alpha = 0.7f),
                         )
@@ -184,7 +200,7 @@ fun GalleryScreen(
                             Box {
                                 AsyncImage(
                                     model = photo.localPath,
-                                    contentDescription = "Photo",
+                                    contentDescription = stringResource(R.string.gallery_photo),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -209,7 +225,7 @@ fun GalleryScreen(
                                 if (photo.uploadedUrl != null) {
                                     Icon(
                                         painter = painterResource(id = android.R.drawable.ic_menu_upload),
-                                        contentDescription = "Uploaded",
+                                        contentDescription = stringResource(R.string.gallery_uploaded),
                                         tint = Gold,
                                         modifier = Modifier.size(16.dp),
                                     )
@@ -221,13 +237,12 @@ fun GalleryScreen(
             }
         }
 
-        // Photo detail overlay
-        AnimatedVisibility(
-            visible = selected != null,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            selected?.let { photo ->
+        selected?.let { photo ->
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -235,10 +250,12 @@ fun GalleryScreen(
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                        ) { selected = null },
+                        ) {
+                            selected = null
+                            vm.clearActionState()
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
-                    // Landscape: image on left, actions on right
                     Row(
                         modifier = Modifier
                             .fillMaxWidth(0.9f)
@@ -252,7 +269,6 @@ fun GalleryScreen(
                             .padding(20.dp),
                         horizontalArrangement = Arrangement.spacedBy(20.dp),
                     ) {
-                        // Photo preview
                         Card(
                             modifier = Modifier
                                 .weight(1f)
@@ -262,13 +278,12 @@ fun GalleryScreen(
                         ) {
                             AsyncImage(
                                 model = photo.localPath,
-                                contentDescription = "Selected photo",
+                                contentDescription = stringResource(R.string.gallery_selected_photo),
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier.fillMaxSize(),
                             )
                         }
 
-                        // Actions panel
                         Column(
                             modifier = Modifier
                                 .weight(1f)
@@ -281,20 +296,66 @@ fun GalleryScreen(
                                 style = MaterialTheme.typography.headlineSmall,
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            // SMS section
+                            when (actionState) {
+                                is GalleryActionState.Uploading -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp),
+                                            color = Rose,
+                                            strokeWidth = 3.dp,
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.gallery_uploading),
+                                            color = TextSecondary,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                        )
+                                    }
+                                }
+                                is GalleryActionState.Sending -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp),
+                                            color = Rose,
+                                            strokeWidth = 3.dp,
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.gallery_sending),
+                                            color = TextSecondary,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                        )
+                                    }
+                                }
+                                is GalleryActionState.Error -> {
+                                    Text(
+                                        text = (actionState as GalleryActionState.Error).message,
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                }
+                                else -> {}
+                            }
+
                             Text(
-                                text = "Share via SMS",
+                                text = stringResource(R.string.gallery_share_sms),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = TextSecondary,
                             )
                             OutlinedTextField(
                                 value = phone,
                                 onValueChange = { phone = it },
-                                label = { Text("Phone number") },
+                                label = { Text(stringResource(R.string.gallery_phone_number)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = textFieldColors,
@@ -302,6 +363,7 @@ fun GalleryScreen(
                             )
                             FilledTonalButton(
                                 onClick = { vm.sendPhotoBySms(photo, phone) },
+                                enabled = phone.isNotBlank() && actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.filledTonalButtonColors(
@@ -315,21 +377,20 @@ fun GalleryScreen(
                                     modifier = Modifier.size(18.dp),
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Send SMS")
+                                Text(stringResource(R.string.gallery_send_sms))
                             }
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            // Email section
                             Text(
-                                text = "Share via Email",
+                                text = stringResource(R.string.gallery_share_email),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = TextSecondary,
                             )
                             OutlinedTextField(
                                 value = email,
                                 onValueChange = { email = it },
-                                label = { Text("Email address") },
+                                label = { Text(stringResource(R.string.gallery_email_address)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = textFieldColors,
@@ -337,6 +398,7 @@ fun GalleryScreen(
                             )
                             FilledTonalButton(
                                 onClick = { vm.sendPhotoByEmail(photo, email) },
+                                enabled = email.isNotBlank() && actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.filledTonalButtonColors(
@@ -350,17 +412,17 @@ fun GalleryScreen(
                                     modifier = Modifier.size(18.dp),
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Send Email")
+                                Text(stringResource(R.string.gallery_send_email))
                             }
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            // Upload & Print row
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 ElevatedButton(
                                     onClick = { vm.uploadPhoto(photo) },
+                                    enabled = actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.elevatedButtonColors(
@@ -374,16 +436,17 @@ fun GalleryScreen(
                                         modifier = Modifier.size(18.dp),
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Upload")
+                                    Text(stringResource(R.string.gallery_upload))
                                 }
                                 ElevatedButton(
                                     onClick = {
-                                        val helper = androidx.print.PrintHelper(context)
-                                        helper.scaleMode = androidx.print.PrintHelper.SCALE_MODE_FIT
-                                        android.graphics.BitmapFactory.decodeFile(photo.localPath)?.let { bitmap ->
-                                            helper.printBitmap("Photobooth Photo", bitmap)
+                                        val helper = PrintHelper(context)
+                                        helper.scaleMode = PrintHelper.SCALE_MODE_FIT
+                                        BitmapFactory.decodeFile(photo.localPath)?.let { bitmap ->
+                                            helper.printBitmap(context.getString(R.string.print_job_name), bitmap)
                                         }
                                     },
+                                    enabled = actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.elevatedButtonColors(
@@ -397,15 +460,14 @@ fun GalleryScreen(
                                         modifier = Modifier.size(18.dp),
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Print")
+                                    Text(stringResource(R.string.gallery_print))
                                 }
                             }
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            // Close button
                             FilledTonalButton(
-                                onClick = { selected = null },
+                                onClick = { selected = null; vm.clearActionState() },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.filledTonalButtonColors(
@@ -413,12 +475,34 @@ fun GalleryScreen(
                                     contentColor = TextSecondary,
                                 ),
                             ) {
-                                Text("Close")
+                                Text(stringResource(R.string.gallery_close))
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    showDeleteConfirm?.let { photo ->
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = null },
+            title = { Text(stringResource(R.string.frame_designer_delete_confirm_title)) },
+            text = { Text(stringResource(R.string.frame_designer_delete_confirm_message, photo.eventName)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.deletePhoto(photo)
+                    showDeleteConfirm = null
+                    if (selected == photo) selected = null
+                }) {
+                    Text(stringResource(R.string.frame_designer_delete), color = Rose)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = null }) {
+                    Text(stringResource(R.string.gallery_close))
+                }
+            },
+        )
     }
 }

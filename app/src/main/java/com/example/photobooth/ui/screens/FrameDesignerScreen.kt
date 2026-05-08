@@ -30,15 +30,18 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,10 +50,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.photobooth.R
+import com.example.photobooth.data.TemplateEntity
 import com.example.photobooth.ui.theme.CardSurface
 import com.example.photobooth.ui.theme.CardSurfaceLight
 import com.example.photobooth.ui.theme.DarkBackground
@@ -66,8 +72,9 @@ fun FrameDesignerScreen(
     val vm: FrameDesignerViewModel = viewModel()
     val frames by vm.frames.collectAsState()
 
-    var frameName by remember { mutableStateOf("") }
-    var selectedUri by remember { mutableStateOf<Uri?>(null) }
+    var frameName by rememberSaveable { mutableStateOf("") }
+    var selectedUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var showDeleteConfirm by remember { mutableStateOf<TemplateEntity?>(null) }
 
     val imagePicker = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
@@ -114,14 +121,14 @@ fun FrameDesignerScreen(
             ) {
                 Icon(
                     painter = painterResource(id = android.R.drawable.ic_menu_close_clear_cancel),
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.capture_back),
                     tint = Color.White,
                     modifier = Modifier.size(18.dp),
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = "Manage Frames",
+                text = stringResource(R.string.frame_designer_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
@@ -149,7 +156,7 @@ fun FrameDesignerScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(
-                        text = "Upload New Frame",
+                        text = stringResource(R.string.frame_designer_upload),
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold,
@@ -158,7 +165,7 @@ fun FrameDesignerScreen(
                     OutlinedTextField(
                         value = frameName,
                         onValueChange = { frameName = it },
-                        label = { Text("Frame name") },
+                                label = { Text(stringResource(R.string.frame_designer_name)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = textFieldColors,
@@ -179,7 +186,7 @@ fun FrameDesignerScreen(
                             modifier = Modifier.size(18.dp),
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Choose PNG")
+                        Text(stringResource(R.string.frame_designer_choose_png))
                     }
 
                     // Preview
@@ -193,7 +200,7 @@ fun FrameDesignerScreen(
                         ) {
                             AsyncImage(
                                 model = uri,
-                                contentDescription = "Frame preview",
+                                contentDescription = stringResource(R.string.frame_designer_preview),
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier.fillMaxSize(),
                             )
@@ -215,7 +222,7 @@ fun FrameDesignerScreen(
                             contentColor = Color.White,
                         ),
                     ) {
-                        Text("Save Frame", fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.frame_designer_save), fontWeight = FontWeight.Medium)
                     }
                 }
             }
@@ -235,7 +242,7 @@ fun FrameDesignerScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Text(
-                            text = "Existing Frames",
+                            text = stringResource(R.string.frame_designer_existing),
                             style = MaterialTheme.typography.titleMedium,
                             color = Color.White,
                             fontWeight = FontWeight.SemiBold,
@@ -275,14 +282,14 @@ fun FrameDesignerScreen(
                                 )
 
                                 FilledTonalButton(
-                                    onClick = { vm.deleteFrame(frame) },
+                                    onClick = { showDeleteConfirm = frame },
                                     shape = RoundedCornerShape(8.dp),
                                     colors = ButtonDefaults.filledTonalButtonColors(
                                         containerColor = Rose.copy(alpha = 0.2f),
                                         contentColor = Rose,
                                     ),
                                 ) {
-                                    Text("Delete")
+                                    Text(stringResource(R.string.frame_designer_delete))
                                 }
                             }
                         }
@@ -292,5 +299,26 @@ fun FrameDesignerScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
         }
+    }
+
+    showDeleteConfirm?.let { frame ->
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = null },
+            title = { Text(stringResource(R.string.frame_designer_delete_confirm_title)) },
+            text = { Text(stringResource(R.string.frame_designer_delete_confirm_message, frame.name)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.deleteFrame(frame)
+                    showDeleteConfirm = null
+                }) {
+                    Text(stringResource(R.string.frame_designer_delete), color = Rose)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = null }) {
+                    Text(stringResource(R.string.gallery_close))
+                }
+            },
+        )
     }
 }
