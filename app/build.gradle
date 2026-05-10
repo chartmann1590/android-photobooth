@@ -13,6 +13,23 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+def versionPropsFile = rootProject.file("version.properties")
+def versionProps = new Properties()
+if (versionPropsFile.exists()) {
+    versionProps.load(new FileInputStream(versionPropsFile))
+} else {
+    versionProps["VERSION_CODE"] = "1"
+    versionProps["VERSION_NAME"] = "1.0.0"
+}
+
+// Allow CI override via -PversionCode=X -PversionName=X
+def vCode = project.hasProperty("versionCode")
+        ? project.property("versionCode").toInteger()
+        : versionProps["VERSION_CODE"].toInteger()
+def vName = project.hasProperty("versionName")
+        ? project.property("versionName")
+        : versionProps["VERSION_NAME"]
+
 android {
     namespace "com.example.photobooth"
     compileSdk 34
@@ -21,8 +38,8 @@ android {
         applicationId "com.example.photobooth"
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode vCode
+        versionName vName
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -36,6 +53,16 @@ android {
                 storePassword keystoreProperties["storePassword"]
             }
         }
+        // CI signing via environment variables
+        ci {
+            def ciStoreFile = System.getenv("KEYSTORE_FILE")
+            if (ciStoreFile != null) {
+                storeFile file(ciStoreFile)
+                storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
+                keyAlias System.getenv("KEY_ALIAS") ?: ""
+                keyPassword System.getenv("KEY_PASSWORD") ?: ""
+            }
+        }
     }
 
     buildTypes {
@@ -43,7 +70,11 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
-            signingConfig signingConfigs.release
+            signingConfig keystorePropertiesFile.exists()
+                    ? signingConfigs.release
+                    : (System.getenv("KEYSTORE_FILE") != null
+                        ? signingConfigs.ci
+                        : null)
         }
         debug {
             minifyEnabled false
@@ -107,6 +138,7 @@ dependencies {
     implementation "androidx.camera:camera-camera2:$camerax_version"
     implementation "androidx.camera:camera-lifecycle:$camerax_version"
     implementation "androidx.camera:camera-view:$camerax_version"
+    implementation "androidx.camera:camera-video:$camerax_version"
 
     // Coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"

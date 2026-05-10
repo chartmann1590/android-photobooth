@@ -60,7 +60,9 @@ import com.example.photobooth.R
 import com.example.photobooth.camera.CameraCaptureManager
 import com.example.photobooth.camera.CaptureUiState
 import com.example.photobooth.camera.CaptureViewModel
+import com.example.photobooth.camera.PhotoFilter
 import com.example.photobooth.settings.SettingsRepository
+import com.example.photobooth.template.WatermarkConfig
 import com.example.photobooth.ui.theme.DarkBackground
 import com.example.photobooth.ui.theme.Gold
 import com.example.photobooth.ui.theme.Rose
@@ -86,6 +88,13 @@ fun CaptureScreen(
     var useFrontCamera by rememberSaveable { mutableStateOf(true) }
     var eventName by rememberSaveable { mutableStateOf(context.getString(R.string.default_event_name)) }
     var selectedFrameId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var watermarkConfig by remember { mutableStateOf<WatermarkConfig?>(null) }
+    var boothMode by rememberSaveable { mutableStateOf(false) }
+    var boothPhotoCount by rememberSaveable { mutableIntStateOf(4) }
+    var boothPhotosTaken by rememberSaveable { mutableIntStateOf(0) }
+    var showFlash by remember { mutableStateOf(false) }
+    var selectedFilter by rememberSaveable { mutableStateOf(PhotoFilter.NONE) }
+    var cameraId by rememberSaveable { mutableStateOf<String?>(null) }
 
     val uiState by captureViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -94,6 +103,17 @@ fun CaptureScreen(
         useFrontCamera = settings.camera.useFrontCamera
         eventName = settings.event.eventName
         selectedFrameId = settings.event.selectedFrameId
+        watermarkConfig = if (settings.watermark.enabled && settings.watermark.imagePath.isNotBlank()) {
+            WatermarkConfig(
+                imagePath = settings.watermark.imagePath,
+                position = settings.watermark.position,
+                sizePercent = settings.watermark.sizePercent,
+            )
+        } else null
+        boothMode = settings.captureMode.boothMode
+        boothPhotoCount = settings.captureMode.boothPhotoCount
+        selectedFilter = try { PhotoFilter.valueOf(settings.captureMode.selectedFilter) } catch (_: Exception) { PhotoFilter.NONE }
+        cameraId = settings.camera.cameraId
     }
 
     val isCountingDown = uiState is CaptureUiState.CountingDown
@@ -119,18 +139,25 @@ fun CaptureScreen(
         }
     }
 
-    LaunchedEffect(previewView, useFrontCamera) {
+    LaunchedEffect(previewView, useFrontCamera, cameraId) {
         val view = previewView ?: return@LaunchedEffect
         cameraManager.bindToLifecycle(
             lifecycleOwner = lifecycleOwner,
             previewView = view,
             useFrontCamera = useFrontCamera,
+            specificCameraId = cameraId,
         )
     }
 
     LaunchedEffect(uiState) {
         if (uiState is CaptureUiState.Error) {
             Toast.makeText(context, (uiState as CaptureUiState.Error).message, Toast.LENGTH_LONG).show()
+        }
+        if (uiState is CaptureUiState.Saved && boothMode && boothPhotosTaken < boothPhotoCount) {
+            delay(2000)
+            showFlash = false
+            captureViewModel.startCountdown()
+            countdown = 3
         }
     }
 
@@ -149,12 +176,26 @@ fun CaptureScreen(
             val file = java.io.File(outputDir, "capture_${System.currentTimeMillis()}.jpg")
             try {
                 val uri = cameraManager.takePicture(file)
+                showFlash = true
                 captureViewModel.saveCapturedPhoto(
                     uri = uri,
                     eventName = eventName,
                     templateId = null,
                     selectedFrameId = selectedFrameId,
-                    onComplete = onFinishedCapture,
+                    watermarkConfig = watermarkConfig,
+                    filter = selectedFilter,
+                    onComplete = { id ->
+                        if (boothMode && id != null) {
+                            boothPhotosTaken++
+                            if (boothPhotosTaken < boothPhotoCount) {
+                                captureViewModel.resetToIdle()
+                            } else {
+                                onFinishedCapture(id)
+                            }
+                        } else {
+                            onFinishedCapture(id)
+                        }
+                    },
                 )
             } catch (e: Exception) {
                 captureViewModel.resetToIdle()
@@ -267,39 +308,65 @@ fun CaptureScreen(
                 animationSpec = tween(300),
                 label = "pulse",
             )
+            val ringColor = when (seconds) {
+                3 -> Color(0xFF42A5F5)
+                2 -> Gold
+                else -> Rose
+            }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Box(
                     modifier = Modifier
-                        .size(140.dp)
+                        .size(160.dp)
                         .scale(pulseScale)
                         .clip(CircleShape)
                         .background(
                             Brush.radialGradient(
                                 colors = listOf(
-                                    Rose.copy(alpha = 0.8f),
-                                    Rose.copy(alpha = 0.2f),
+                                    ringColor.copy(alpha = 0.9f),
+                                    ringColor.copy(alpha = 0.2f),
                                 ),
                             ),
                         )
-                        .border(3.dp, RoseLight.copy(alpha = 0.6f), CircleShape),
+                        .border(4.dp, ringColor.copy(alpha = 0.8f), CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = seconds.toString(),
-                        fontSize = 64.sp,
+                        fontSize = 72.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                     )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
                 Text(
                     text = if (seconds == 1) stringResource(R.string.capture_smile) else stringResource(R.string.capture_get_ready),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White.copy(alpha = 0.9f),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White.copy(alpha = 0.95f),
+                    fontWeight = FontWeight.SemiBold,
                 )
+                if (boothMode) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "${boothPhotosTaken + 1}/$boothPhotoCount",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gold,
+                    )
+                }
             }
+        }
+
+        AnimatedVisibility(
+            visible = showFlash,
+            enter = fadeIn(tween(100)),
+            exit = fadeOut(tween(400)),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White.copy(alpha = 0.85f)),
+            )
         }
 
         Column(
@@ -330,6 +397,8 @@ fun CaptureScreen(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                     ) {
+                        showFlash = false
+                        boothPhotosTaken = 0
                         captureViewModel.startCountdown()
                         countdown = 3
                     },

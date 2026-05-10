@@ -1,5 +1,7 @@
 package com.example.photobooth.settings
 
+import com.example.photobooth.template.WatermarkPosition
+
 data class EventSettings(
     val eventName: String = "My Event",
     val filenamePattern: String = "EVENT_yyyyMMdd_HHmmss",
@@ -9,6 +11,22 @@ data class EventSettings(
 
 data class CameraSettings(
     val useFrontCamera: Boolean = true,
+    val cameraId: String? = null,
+)
+
+data class WatermarkSettings(
+    val imagePath: String = "",
+    val position: WatermarkPosition = WatermarkPosition.BOTTOM_RIGHT,
+    val sizePercent: Float = 0.15f,
+    val enabled: Boolean = false,
+)
+
+data class CaptureModeSettings(
+    val boothMode: Boolean = false,
+    val boothIntervalSeconds: Int = 5,
+    val boothPhotoCount: Int = 4,
+    val selectedFilter: String = "NONE",
+    val selectedTemplate: String = "NONE",
 )
 
 data class UploadSettings(
@@ -49,5 +67,7 @@ data class AllSettings(
     val sms: SmsGatewaySettings = SmsGatewaySettings(),
     val smtp: SmtpSettings = SmtpSettings(),
     val camera: CameraSettings = CameraSettings(),
+    val watermark: WatermarkSettings = WatermarkSettings(),
+    val captureMode: CaptureModeSettings = CaptureModeSettings(),
 )
 

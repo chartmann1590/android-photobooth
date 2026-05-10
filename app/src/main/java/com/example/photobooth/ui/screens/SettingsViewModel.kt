@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.photobooth.data.AppDatabase
 import com.example.photobooth.data.TemplateEntity
 import com.example.photobooth.settings.AllSettings
+import com.example.photobooth.settings.CaptureModeSettings
 import com.example.photobooth.settings.SettingsRepository
+import com.example.photobooth.settings.WatermarkSettings
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -60,6 +62,24 @@ class SettingsViewModel(
     fun updateCamera(useFrontCamera: Boolean) {
         viewModelScope.launch {
             repo.updateCameraSettings { it.copy(useFrontCamera = useFrontCamera) }
+        }
+    }
+
+    fun updateCameraId(cameraId: String?) {
+        viewModelScope.launch {
+            repo.updateCameraSettings { it.copy(cameraId = cameraId) }
+        }
+    }
+
+    fun updateWatermark(block: (WatermarkSettings) -> WatermarkSettings) {
+        viewModelScope.launch {
+            repo.updateWatermarkSettings(block)
+        }
+    }
+
+    fun updateCaptureMode(block: (CaptureModeSettings) -> CaptureModeSettings) {
+        viewModelScope.launch {
+            repo.updateCaptureModeSettings(block)
         }
     }
 

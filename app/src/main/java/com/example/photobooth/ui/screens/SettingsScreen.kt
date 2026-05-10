@@ -47,6 +47,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.photobooth.data.TemplateEntity
 import com.example.photobooth.settings.AllSettings
+import com.example.photobooth.settings.CaptureModeSettings
+import com.example.photobooth.settings.WatermarkSettings
+import com.example.photobooth.template.WatermarkPosition
+import com.example.photobooth.camera.PhotoFilter
 import com.example.photobooth.ui.theme.CardSurface
 import com.example.photobooth.ui.theme.CardSurfaceLight
 import com.example.photobooth.ui.theme.DarkBackground
@@ -153,12 +157,21 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             EventSettingsSection(state, onEventChange = vm::updateEvent, textFieldColors = textFieldColors)
-            CameraSettingsSection(state, onCameraChange = vm::updateCamera)
+            CameraSettingsSection(state, onCameraChange = vm::updateCamera, onCameraIdChange = vm::updateCameraId)
             FrameSettingsSection(
                 state = state,
                 frames = frames,
                 onFrameSelected = vm::updateSelectedFrame,
                 onOpenFrameDesigner = onOpenFrameDesigner,
+            )
+            CaptureModeSection(
+                state = state,
+                onCaptureModeChange = vm::updateCaptureMode,
+            )
+            WatermarkSection(
+                state = state,
+                onWatermarkChange = vm::updateWatermark,
+                textFieldColors = textFieldColors,
             )
             UploadSettingsSection(state, onUploadChange = vm::updateUpload, textFieldColors = textFieldColors)
             SmsSettingsSection(state, onSmsChange = vm::updateSms, onTestSms = vm::testSms, textFieldColors = textFieldColors)
@@ -452,6 +465,7 @@ private fun SmtpSettingsSection(
 private fun CameraSettingsSection(
     state: AllSettings,
     onCameraChange: (Boolean) -> Unit,
+    onCameraIdChange: (String?) -> Unit,
 ) {
     SettingsCard(
         title = stringResource(R.string.settings_camera),
@@ -462,6 +476,175 @@ private fun CameraSettingsSection(
             checked = state.camera.useFrontCamera,
             onCheckedChange = onCameraChange,
         )
+    }
+}
+
+@Composable
+private fun CaptureModeSection(
+    state: AllSettings,
+    onCaptureModeChange: (CaptureModeSettings.() -> CaptureModeSettings) -> Unit,
+) {
+    SettingsCard(
+        title = stringResource(R.string.settings_capture_mode),
+        iconRes = android.R.drawable.ic_menu_crop,
+    ) {
+        StyledSwitch(
+            label = stringResource(R.string.settings_booth_mode),
+            checked = state.captureMode.boothMode,
+            onCheckedChange = { onCaptureModeChange { copy(boothMode = it) } },
+        )
+        if (state.captureMode.boothMode) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_photo_count),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White,
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ElevatedButton(
+                        onClick = { onCaptureModeChange { copy(boothPhotoCount = maxOf(2, boothPhotoCount - 1)) } },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.elevatedButtonColors(
+                            containerColor = CardSurfaceLight,
+                            contentColor = Color.White,
+                        ),
+                    ) { Text("-") }
+                    Text(
+                        text = " ${state.captureMode.boothPhotoCount} ",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    ElevatedButton(
+                        onClick = { onCaptureModeChange { copy(boothPhotoCount = minOf(8, boothPhotoCount + 1)) } },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.elevatedButtonColors(
+                            containerColor = CardSurfaceLight,
+                            contentColor = Color.White,
+                        ),
+                    ) { Text("+") }
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.settings_photo_filter),
+            style = MaterialTheme.typography.labelLarge,
+            color = TextSecondary,
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            PhotoFilter.entries.forEach { filter ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(
+                            if (state.captureMode.selectedFilter == filter.name) Rose.copy(alpha = 0.2f)
+                            else Color.Transparent,
+                        )
+                        .clickable { onCaptureModeChange { copy(selectedFilter = filter.name) } }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = filter.displayName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (state.captureMode.selectedFilter == filter.name) Color.White else TextSecondary,
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.settings_template_layout),
+            style = MaterialTheme.typography.labelLarge,
+            color = TextSecondary,
+        )
+        val templateOptions = listOf("NONE", "SINGLE", "STRIP_2x2", "STRIP_VERTICAL")
+        val templateNames = mapOf(
+            "NONE" to stringResource(R.string.settings_template_none),
+            "SINGLE" to stringResource(R.string.settings_template_single),
+            "STRIP_2x2" to stringResource(R.string.settings_template_2x2),
+            "STRIP_VERTICAL" to stringResource(R.string.settings_template_vertical),
+        )
+        templateOptions.forEach { key ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(
+                        if (state.captureMode.selectedTemplate == key) Rose.copy(alpha = 0.2f)
+                        else Color.Transparent,
+                    )
+                    .clickable { onCaptureModeChange { copy(selectedTemplate = key) } }
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = templateNames[key] ?: key,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (state.captureMode.selectedTemplate == key) Color.White else TextSecondary,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WatermarkSection(
+    state: AllSettings,
+    onWatermarkChange: (WatermarkSettings.() -> WatermarkSettings) -> Unit,
+    textFieldColors: androidx.compose.material3.TextFieldColors,
+) {
+    SettingsCard(
+        title = stringResource(R.string.settings_watermark),
+        iconRes = android.R.drawable.ic_menu_edit,
+    ) {
+        StyledSwitch(
+            label = stringResource(R.string.settings_watermark_enabled),
+            checked = state.watermark.enabled,
+            onCheckedChange = { onWatermarkChange { copy(enabled = it) } },
+        )
+        if (state.watermark.enabled) {
+            OutlinedTextField(
+                value = state.watermark.imagePath,
+                onValueChange = { onWatermarkChange { copy(imagePath = it) } },
+                label = { Text(stringResource(R.string.settings_watermark_path)) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors,
+                singleLine = true,
+            )
+            Text(
+                text = stringResource(R.string.settings_watermark_position),
+                style = MaterialTheme.typography.labelLarge,
+                color = TextSecondary,
+            )
+            WatermarkPosition.entries.forEach { pos ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(
+                            if (state.watermark.position == pos) Rose.copy(alpha = 0.2f)
+                            else Color.Transparent,
+                        )
+                        .clickable { onWatermarkChange { copy(position = pos) } }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = pos.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (state.watermark.position == pos) Color.White else TextSecondary,
+                    )
+                }
+            }
+        }
     }
 }
 

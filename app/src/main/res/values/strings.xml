@@ -45,6 +45,8 @@
     <string name="gallery_close">Close</string>
     <string name="gallery_uploading">Uploading…</string>
     <string name="gallery_sending">Sending…</string>
+    <string name="gallery_share_social">Share to Apps</string>
+    <string name="gallery_share_via">Share photo via</string>
 
     <!-- Settings screen -->
     <string name="settings_event">Event</string>
@@ -74,6 +76,19 @@
     <string name="settings_no_frame">None (no frame overlay)</string>
     <string name="settings_selected">Selected</string>
     <string name="settings_manage_frames">Manage Frames</string>
+    <string name="settings_capture_mode">Capture Mode &amp; Filters</string>
+    <string name="settings_booth_mode">Booth mode (continuous capture)</string>
+    <string name="settings_photo_count">Photos per session</string>
+    <string name="settings_photo_filter">Photo Filter</string>
+    <string name="settings_template_layout">Template Layout</string>
+    <string name="settings_template_none">Full photo (no template)</string>
+    <string name="settings_template_single">Single portrait with event text</string>
+    <string name="settings_template_2x2">Photo strip 2x2 grid</string>
+    <string name="settings_template_vertical">Photo strip vertical (3 photos)</string>
+    <string name="settings_watermark">Watermark / Logo</string>
+    <string name="settings_watermark_enabled">Enable watermark</string>
+    <string name="settings_watermark_path">Logo image path</string>
+    <string name="settings_watermark_position">Watermark position</string>
 
     <!-- Frame designer -->
     <string name="frame_designer_title">Manage Frames</string>

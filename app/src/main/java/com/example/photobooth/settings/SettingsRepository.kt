@@ -57,6 +57,18 @@ class SettingsRepository(private val context: Context) {
 
         val SELECTED_FRAME_ID = stringPreferencesKey("selected_frame_id")
         val USE_FRONT_CAMERA = booleanPreferencesKey("use_front_camera")
+        val CAMERA_ID = stringPreferencesKey("camera_id")
+
+        val WATERMARK_ENABLED = stringPreferencesKey("watermark_enabled")
+        val WATERMARK_IMAGE_PATH = stringPreferencesKey("watermark_image_path")
+        val WATERMARK_POSITION = stringPreferencesKey("watermark_position")
+        val WATERMARK_SIZE_PERCENT = stringPreferencesKey("watermark_size_percent")
+
+        val BOOTH_MODE = stringPreferencesKey("booth_mode")
+        val BOOTH_INTERVAL = stringPreferencesKey("booth_interval")
+        val BOOTH_PHOTO_COUNT = stringPreferencesKey("booth_photo_count")
+        val SELECTED_FILTER = stringPreferencesKey("selected_filter")
+        val SELECTED_TEMPLATE = stringPreferencesKey("selected_template")
     }
 
     private object SecureKeys {
@@ -105,6 +117,30 @@ class SettingsRepository(private val context: Context) {
             val current = prefs.toAllSettings().camera
             val updated = block(current)
             prefs[Keys.USE_FRONT_CAMERA] = updated.useFrontCamera
+            prefs[Keys.CAMERA_ID] = updated.cameraId ?: ""
+        }
+    }
+
+    suspend fun updateWatermarkSettings(block: (WatermarkSettings) -> WatermarkSettings) {
+        context.dataStore.edit { prefs ->
+            val current = prefs.toAllSettings().watermark
+            val updated = block(current)
+            prefs[Keys.WATERMARK_ENABLED] = updated.enabled.toString()
+            prefs[Keys.WATERMARK_IMAGE_PATH] = updated.imagePath
+            prefs[Keys.WATERMARK_POSITION] = updated.position.name
+            prefs[Keys.WATERMARK_SIZE_PERCENT] = updated.sizePercent.toString()
+        }
+    }
+
+    suspend fun updateCaptureModeSettings(block: (CaptureModeSettings) -> CaptureModeSettings) {
+        context.dataStore.edit { prefs ->
+            val current = prefs.toAllSettings().captureMode
+            val updated = block(current)
+            prefs[Keys.BOOTH_MODE] = updated.boothMode.toString()
+            prefs[Keys.BOOTH_INTERVAL] = updated.boothIntervalSeconds.toString()
+            prefs[Keys.BOOTH_PHOTO_COUNT] = updated.boothPhotoCount.toString()
+            prefs[Keys.SELECTED_FILTER] = updated.selectedFilter
+            prefs[Keys.SELECTED_TEMPLATE] = updated.selectedTemplate
         }
     }
 
@@ -163,6 +199,25 @@ class SettingsRepository(private val context: Context) {
 
         val camera = CameraSettings(
             useFrontCamera = this[Keys.USE_FRONT_CAMERA] ?: true,
+            cameraId = this[Keys.CAMERA_ID]?.ifBlank { null },
+        )
+
+        val watermark = WatermarkSettings(
+            enabled = (this[Keys.WATERMARK_ENABLED] ?: "false").toBooleanStrictOrNull() ?: false,
+            imagePath = this[Keys.WATERMARK_IMAGE_PATH] ?: "",
+            position = this[Keys.WATERMARK_POSITION]?.let {
+                runCatching { com.example.photobooth.template.WatermarkPosition.valueOf(it) }
+                    .getOrDefault(com.example.photobooth.template.WatermarkPosition.BOTTOM_RIGHT)
+            } ?: com.example.photobooth.template.WatermarkPosition.BOTTOM_RIGHT,
+            sizePercent = this[Keys.WATERMARK_SIZE_PERCENT]?.toFloatOrNull() ?: 0.15f,
+        )
+
+        val captureMode = CaptureModeSettings(
+            boothMode = (this[Keys.BOOTH_MODE] ?: "false").toBooleanStrictOrNull() ?: false,
+            boothIntervalSeconds = this[Keys.BOOTH_INTERVAL]?.toIntOrNull() ?: 5,
+            boothPhotoCount = this[Keys.BOOTH_PHOTO_COUNT]?.toIntOrNull() ?: 4,
+            selectedFilter = this[Keys.SELECTED_FILTER] ?: "NONE",
+            selectedTemplate = this[Keys.SELECTED_TEMPLATE] ?: "NONE",
         )
 
         val upload = UploadSettings(
@@ -200,6 +255,8 @@ class SettingsRepository(private val context: Context) {
             sms = sms,
             smtp = smtp,
             camera = camera,
+            watermark = watermark,
+            captureMode = captureMode,
         )
     }
 }

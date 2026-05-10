@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.photobooth.data.AppDatabase
 import com.example.photobooth.data.PhotoEntity
+import com.example.photobooth.template.WatermarkConfig
 import com.example.photobooth.template.renderSimple4x6
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,6 +62,8 @@ class CaptureViewModel(
         eventName: String,
         templateId: Long?,
         selectedFrameId: Long?,
+        watermarkConfig: WatermarkConfig? = null,
+        filter: PhotoFilter = PhotoFilter.NONE,
         onComplete: (Long?) -> Unit,
     ) {
         val app = getApplication<Application>()
@@ -103,12 +106,15 @@ class CaptureViewModel(
                         val corrected = applyExifRotation(rawBitmap, exifRotation)
                         if (corrected !== rawBitmap) rawBitmap.recycle()
 
+                        val filtered = applyFilter(corrected, filter)
+                        if (filtered !== corrected) corrected.recycle()
+
                         val frameOverlayPath = selectedFrameId?.let { id ->
                             templateDao.getTemplateByIdSync(id)?.backgroundImagePath
                         }
 
-                        val processed = renderSimple4x6(corrected, frameOverlayPath)
-                        if (processed !== corrected) corrected.recycle()
+                        val processed = renderSimple4x6(filtered, frameOverlayPath, watermarkConfig)
+                        if (processed !== filtered) filtered.recycle()
 
                         destFile.outputStream().use { out ->
                             processed.compress(Bitmap.CompressFormat.JPEG, 95, out)

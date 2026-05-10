@@ -1,6 +1,8 @@
 package com.example.photobooth.camera
 
 import android.content.Context
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import android.net.Uri
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -15,15 +17,38 @@ import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+data class CameraInfo(
+    val id: String,
+    val displayName: String,
+    val isFrontFacing: Boolean,
+)
+
 class CameraCaptureManager(
     private val context: Context,
 ) {
     private var imageCapture: ImageCapture? = null
 
+    fun getAvailableCameras(): List<CameraInfo> {
+        val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager
+            ?: return emptyList()
+        return cameraManager.cameraIdList.map { id ->
+            val characteristics = cameraManager.getCameraCharacteristics(id)
+            val facing = characteristics.get(CameraCharacteristics.LENS_FACING)
+                ?: CameraCharacteristics.LENS_FACING_BACK
+            val isFront = facing == CameraCharacteristics.LENS_FACING_FRONT
+            CameraInfo(
+                id = id,
+                displayName = if (isFront) "Front Camera" else "Back Camera ($id)",
+                isFrontFacing = isFront,
+            )
+        }
+    }
+
     suspend fun bindToLifecycle(
         lifecycleOwner: LifecycleOwner,
         previewView: PreviewView,
         useFrontCamera: Boolean,
+        specificCameraId: String? = null,
     ) {
         val cameraProvider = getCameraProvider()
 
@@ -31,7 +56,16 @@ class CameraCaptureManager(
             it.setSurfaceProvider(previewView.surfaceProvider)
         }
 
-        val selector = if (useFrontCamera) {
+        val selector = if (specificCameraId != null) {
+            CameraSelector.Builder()
+                .addCameraFilter { cameras ->
+                    cameras.filter { cam ->
+                        val camId = cam.cameraSelector.toString()
+                        camId.contains(specificCameraId)
+                    }
+                }
+                .build()
+        } else if (useFrontCamera) {
             CameraSelector.DEFAULT_FRONT_CAMERA
         } else {
             CameraSelector.DEFAULT_BACK_CAMERA
@@ -96,4 +130,3 @@ class CameraCaptureManager(
             )
         }
 }
-

@@ -16,6 +16,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import android.content.ContentValues
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.provider.MediaStore
 import java.io.File
 
 sealed interface GalleryActionState {
@@ -129,5 +134,41 @@ class GalleryViewModel(
 
     fun clearActionState() {
         _actionState.value = GalleryActionState.Idle
+    }
+
+    fun getShareIntent(photo: PhotoEntity): Intent? {
+        val file = File(photo.localPath)
+        if (!file.exists()) return null
+
+        val uri = try {
+            val values = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, file.name)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                put(MediaStore.Images.Media.IS_PENDING, 1)
+            }
+            val resolver = getApplication<Application>().contentResolver
+            val collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            } else {
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            }
+            val contentUri = resolver.insert(collection, values) ?: return null
+            resolver.openOutputStream(contentUri)?.use { out ->
+                file.inputStream().use { it.copyTo(out) }
+            }
+            values.clear()
+            values.put(MediaStore.Images.Media.IS_PENDING, 0)
+            resolver.update(contentUri, values, null, null)
+            contentUri
+        } catch (_: Exception) {
+            return null
+        }
+
+        return Intent(Intent.ACTION_SEND).apply {
+            type = "image/jpeg"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, "Photo from ${photo.eventName}")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
     }
 }

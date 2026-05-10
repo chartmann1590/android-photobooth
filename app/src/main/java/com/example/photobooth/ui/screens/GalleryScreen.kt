@@ -1,5 +1,6 @@
 package com.example.photobooth.ui.screens
 
+import android.content.Intent
 import android.graphics.BitmapFactory
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -462,6 +463,31 @@ fun GalleryScreen(
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(stringResource(R.string.gallery_print))
                                 }
+                            }
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            FilledTonalButton(
+                                onClick = {
+                                    vm.getShareIntent(photo)?.let { shareIntent ->
+                                        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.gallery_share_via)))
+                                    }
+                                },
+                                enabled = actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = CardSurfaceLight,
+                                    contentColor = Color.White,
+                                ),
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = android.R.drawable.ic_menu_share),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(R.string.gallery_share_social))
                             }
 
                             Spacer(modifier = Modifier.height(4.dp))

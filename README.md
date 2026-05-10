@@ -10,25 +10,27 @@ This project is designed to be used at events with minimal setup: configure your
 ## Features
 
 - **Fullscreen Photobooth Experience** — Immersive landscape-only interface
-- **3-Second Countdown** — Audible prompt and visual countdown timer
-- **Event-Specific Templates** — Customizable photo frames and overlays
+- **3-Second Countdown** — Color-cycling animated countdown with voice prompt and screen flash
+- **Event-Specific Templates** — Customizable photo frames, overlays, and layout templates
+- **Booth Mode** — Continuous capture mode with configurable photo count
+- **Photo Filters** — 8 filters: Original, Grayscale, Sepia, B&W, Vintage, Cool, Warm, Vivid
+- **Watermark/Logo** — Custom watermark with configurable position and opacity
 - **Local Photo Saving** — Automatic local storage of captured photos
 - **Cloud Upload Support** — Optional Immich server integration
 - **SMS Sharing** — Share photos via SMS gateway API
 - **Email Sharing** — SMTP-based email delivery with attachments
+- **Social Media Sharing** — Android share sheet for Instagram, Twitter, WhatsApp, and more
 - **Built-in Gallery** — View and share previously captured photos
 - **Wireless Printing** — Android Print framework integration
+- **Video Capture** — Record video clips with CameraX
+- **Multiple Cameras** — Support for all device cameras beyond front/back
 - **Room Database** — Local persistence for photos and templates
 - **DataStore Settings** — Modern key-value settings storage
 - **Material 3 Design** — Beautiful, consistent UI theme
 
-## Screenshots
-
-Coming soon! 📸
-
 ## 🌐 Landing Page
 
-Visit the landing page to learn more about the app: [**android-photobooth.web.app**](https://android-photobooth.web.app)
+Visit the landing page to learn more about the app: [**chartmann1590.github.io/android-photobooth**](https://chartmann1590.github.io/android-photobooth/)
 
 *Note: This is a marketing/landing page showcasing the app features. To use the actual photobooth app, you'll need to build and install the APK on an Android device.*
 
@@ -150,7 +152,7 @@ com.example.photobooth/
 
 | Library | Version | Purpose |
 |---------|---------|---------|
-| CameraX | 1.3.3 | Camera capture |
+| CameraX | 1.3.3 | Camera capture + video recording |
 | Room | 2.6.1 | Local database |
 | DataStore Preferences | 1.1.0 | Settings storage |
 | OkHttp | 4.12.0 | HTTP client |
@@ -159,6 +161,8 @@ com.example.photobooth/
 | android-mail | 1.6.7 | SMTP email |
 | Navigation Compose | 2.7.7 | Screen navigation |
 | Print | 1.0.0 | Wireless printing |
+| Security Crypto | 1.1.0-alpha06 | Encrypted credential storage |
+| Firebase BOM | 32.8.0 | Analytics, Crashlytics, Performance |
 
 ## Building and Testing
 
@@ -200,14 +204,21 @@ Created by Charles Hartmann
 
 ## Roadmap
 
-- [ ] Add video capture support
-- [ ] Implement additional templates
-- [ ] Add social media sharing (Instagram, Twitter)
-- [ ] Support for multiple cameras
-- [ ] Animated countdown effects
-- [ ] Custom watermark/logo support
-- [ ] Real-time photo filters
-- [ ] Photo booth booth mode (continuous capture)
+- [x] Add video capture support
+- [x] Implement additional templates (single portrait, 2x2 grid, vertical strip)
+- [x] Add social media sharing (via Android share sheet)
+- [x] Support for multiple cameras
+- [x] Animated countdown effects (color-cycling, screen flash, booth counter)
+- [x] Custom watermark/logo support
+- [x] Real-time photo filters (Grayscale, Sepia, B&W, Vintage, Cool, Warm, Vivid)
+- [x] Photo booth booth mode (continuous capture)
+- [ ] GIF/Boomerang creation from burst captures
+- [ ] QR code sharing for instant guest download
+- [ ] Remote trigger via Bluetooth/BLE shutter
+- [ ] Collage builder (multi-photo compositions)
+- [ ] Green screen / background replacement
+- [ ] Live photo previews with filter applied
+- [ ] Template editor with drag-and-drop layout
 
 ## Support
 
