@@ -35,6 +35,15 @@ jobs:
       - name: Restore google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
 
+      - name: Write keystore.properties for CI
+        run: |
+          cat > keystore.properties << EOF
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          storeFile=app/release.keystore
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          EOF
+
       - name: Bump version
         id: bump
         run: |
@@ -71,11 +80,13 @@ jobs:
         run: |
           ./gradlew assembleRelease \
             -PversionCode=${{ steps.bump.outputs.version_code }} \
-            -PversionName=${{ steps.bump.outputs.version_name }} \
-            -Pandroid.injected.signing.store.file=release.keystore \
-            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+            -PversionName=${{ steps.bump.outputs.version_name }}
+
+      - name: Build signed AAB
+        run: |
+          ./gradlew bundleRelease \
+            -PversionCode=${{ steps.bump.outputs.version_code }} \
+            -PversionName=${{ steps.bump.outputs.version_name }}
         working-directory: .
 
       - name: Build signed AAB
