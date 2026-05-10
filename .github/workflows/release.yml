@@ -87,18 +87,6 @@ jobs:
           ./gradlew bundleRelease \
             -PversionCode=${{ steps.bump.outputs.version_code }} \
             -PversionName=${{ steps.bump.outputs.version_name }}
-        working-directory: .
-
-      - name: Build signed AAB
-        run: |
-          ./gradlew bundleRelease \
-            -PversionCode=${{ steps.bump.outputs.version_code }} \
-            -PversionName=${{ steps.bump.outputs.version_name }} \
-            -Pandroid.injected.signing.store.file=release.keystore \
-            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
-        working-directory: .
 
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
