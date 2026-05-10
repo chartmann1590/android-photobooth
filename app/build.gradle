@@ -53,16 +53,6 @@ android {
                 storePassword keystoreProperties["storePassword"]
             }
         }
-        // CI signing via environment variables
-        ci {
-            def ciStoreFile = System.getenv("KEYSTORE_FILE")
-            if (ciStoreFile != null) {
-                storeFile file(ciStoreFile)
-                storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
-                keyAlias System.getenv("KEY_ALIAS") ?: ""
-                keyPassword System.getenv("KEY_PASSWORD") ?: ""
-            }
-        }
     }
 
     buildTypes {
@@ -70,11 +60,9 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
-            signingConfig keystorePropertiesFile.exists()
-                    ? signingConfigs.release
-                    : (System.getenv("KEYSTORE_FILE") != null
-                        ? signingConfigs.ci
-                        : null)
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
         }
         debug {
             minifyEnabled false
