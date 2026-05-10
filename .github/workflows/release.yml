@@ -1,0 +1,157 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
+        continue-on-error: true
+
+      - name: Bump version
+        id: bump
+        run: |
+          # Read current version
+          if [ -f version.properties ]; then
+            CODE=$(grep 'VERSION_CODE' version.properties | cut -d= -f2 | tr -d ' ')
+            NAME=$(grep 'VERSION_NAME' version.properties | cut -d= -f2 | tr -d ' ')
+          else
+            CODE=1
+            NAME="1.0.0"
+          fi
+
+          # Increment versionCode
+          NEW_CODE=$((CODE + 1))
+
+          # Bump patch version automatically
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$NAME"
+          NEW_PATCH=$((PATCH + 1))
+          NEW_NAME="${MAJOR}.${MINOR}.${NEW_PATCH}"
+
+          echo "version_code=${NEW_CODE}" >> $GITHUB_OUTPUT
+          echo "version_name=${NEW_NAME}" >> $GITHUB_OUTPUT
+
+          # Write back
+          cat > version.properties << EOF
+          # This file is auto-updated by CI. Do not edit manually.
+          VERSION_CODE=${NEW_CODE}
+          VERSION_NAME=${NEW_NAME}
+          EOF
+
+          echo "::notice title=Version::Building v${NEW_NAME} (code ${NEW_CODE})"
+
+      - name: Build signed APK
+        run: |
+          ./gradlew assembleRelease \
+            -PversionCode=${{ steps.bump.outputs.version_code }} \
+            -PversionName=${{ steps.bump.outputs.version_name }} \
+            -Pandroid.injected.signing.store.file=release.keystore \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+        working-directory: .
+
+      - name: Build signed AAB
+        run: |
+          ./gradlew bundleRelease \
+            -PversionCode=${{ steps.bump.outputs.version_code }} \
+            -PversionName=${{ steps.bump.outputs.version_name }} \
+            -Pandroid.injected.signing.store.file=release.keystore \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+        working-directory: .
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Rename artifacts
+        run: |
+          mv app/build/outputs/apk/release/app-release.apk \
+             app/build/outputs/apk/release/photobooth-v${{ steps.bump.outputs.version_name }}.apk
+          mv app/build/outputs/bundle/release/app-release.aab \
+             app/build/outputs/bundle/release/photobooth-v${{ steps.bump.outputs.version_name }}.aab
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: photobooth-apk-v${{ steps.bump.outputs.version_name }}
+          path: app/build/outputs/apk/release/photobooth-v${{ steps.bump.outputs.version_name }}.apk
+          retention-days: 90
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: photobooth-aab-v${{ steps.bump.outputs.version_name }}
+          path: app/build/outputs/bundle/release/photobooth-v${{ steps.bump.outputs.version_name }}.aab
+          retention-days: 90
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-v${{ steps.bump.outputs.version_name }}
+          path: app/build/reports/tests/
+          retention-days: 14
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.properties
+          git diff --cached --quiet || git commit -m "chore: bump version to v${{ steps.bump.outputs.version_name }} (${{ steps.bump.outputs.version_code }})"
+          git push
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.bump.outputs.version_name }}
+          name: Photobooth v${{ steps.bump.outputs.version_name }}
+          body: |
+            ## Photobooth v${{ steps.bump.outputs.version_name }}
+
+            **Version Code:** ${{ steps.bump.outputs.version_code }}
+            **Commit:** ${{ github.sha }}
+
+            ### Downloads
+            - **APK** — Install directly on Android devices
+            - **AAB** — Upload to Google Play Console
+
+            ### Artifacts
+            Download from the [Actions workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+          files: |
+            app/build/outputs/apk/release/photobooth-v${{ steps.bump.outputs.version_name }}.apk
+            app/build/outputs/bundle/release/photobooth-v${{ steps.bump.outputs.version_name }}.aab
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup keystore
+        if: always()
+        run: rm -f app/release.keystore

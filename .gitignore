@@ -23,6 +23,7 @@ local.properties
 
 # Signing files
 .signing/
+keystore.properties
 
 # Proguard folder
 proguard/
