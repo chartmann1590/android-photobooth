@@ -32,12 +32,12 @@ def vName = project.hasProperty("versionName")
 
 android {
     namespace "com.example.photobooth"
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.example.photobooth"
         minSdk 24
-        targetSdk 35
+        targetSdk 36
         versionCode vCode
         versionName vName
 
@@ -88,6 +88,9 @@ android {
     packaging {
         resources {
             excludes += ["META-INF/NOTICE.md", "META-INF/LICENSE.md", "META-INF/*.md"]
+        }
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 }

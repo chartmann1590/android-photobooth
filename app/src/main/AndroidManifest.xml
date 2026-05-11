@@ -25,6 +25,10 @@
         android:theme="@style/Theme.Photobooth"
         android:networkSecurityConfig="@xml/network_security_config">
 
+        <property
+            android:name="android.app.PROPERTY_COMPAT_16KB_PAGE_SIZE_SUPPORTED"
+            android:value="1" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
