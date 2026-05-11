@@ -44,7 +44,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -95,6 +95,7 @@ fun CaptureScreen(
     var showFlash by remember { mutableStateOf(false) }
     var selectedFilter by rememberSaveable { mutableStateOf(PhotoFilter.NONE) }
     var cameraId by rememberSaveable { mutableStateOf<String?>(null) }
+    var settingsLoaded by remember { mutableStateOf(false) }
 
     val uiState by captureViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -114,6 +115,21 @@ fun CaptureScreen(
         boothPhotoCount = settings.captureMode.boothPhotoCount
         selectedFilter = try { PhotoFilter.valueOf(settings.captureMode.selectedFilter) } catch (_: Exception) { PhotoFilter.NONE }
         cameraId = settings.camera.cameraId
+        settingsLoaded = true
+    }
+
+    LaunchedEffect(previewView, settingsLoaded) {
+        val view = previewView ?: return@LaunchedEffect
+        if (!settingsLoaded) return@LaunchedEffect
+        try {
+            cameraManager.bindToLifecycle(
+                lifecycleOwner = lifecycleOwner,
+                previewView = view,
+                useFrontCamera = useFrontCamera,
+                specificCameraId = cameraId,
+            )
+        } catch (_: Exception) {
+        }
     }
 
     val isCountingDown = uiState is CaptureUiState.CountingDown
@@ -137,16 +153,6 @@ fun CaptureScreen(
         onDispose {
             tts?.shutdown()
         }
-    }
-
-    LaunchedEffect(previewView, useFrontCamera, cameraId) {
-        val view = previewView ?: return@LaunchedEffect
-        cameraManager.bindToLifecycle(
-            lifecycleOwner = lifecycleOwner,
-            previewView = view,
-            useFrontCamera = useFrontCamera,
-            specificCameraId = cameraId,
-        )
     }
 
     LaunchedEffect(uiState) {

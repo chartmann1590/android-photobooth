@@ -9,6 +9,7 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -59,7 +60,11 @@ import com.example.photobooth.ui.theme.TextSecondary
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        try {
+            enableEdgeToEdge()
+        } catch (_: Exception) {
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+        }
 
         setContent {
             PhotoboothTheme {
@@ -98,7 +103,7 @@ private fun MainEntry() {
 
 private fun requiredPermissions(): Array<String> {
     val perms = mutableListOf(Manifest.permission.CAMERA)
-    if (Build.VERSION.SDK_INT >= 33) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         perms.add(Manifest.permission.READ_MEDIA_IMAGES)
     } else {
         perms.add(Manifest.permission.READ_EXTERNAL_STORAGE)

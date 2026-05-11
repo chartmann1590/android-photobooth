@@ -56,33 +56,43 @@ class CameraCaptureManager(
             it.setSurfaceProvider(previewView.surfaceProvider)
         }
 
-        val selector = if (specificCameraId != null) {
-            CameraSelector.Builder()
-                .addCameraFilter { cameras ->
-                    cameras.filter { cam ->
-                        val camId = cam.cameraSelector.toString()
-                        camId.contains(specificCameraId)
+        val selectors = mutableListOf<CameraSelector>()
+        if (specificCameraId != null) {
+            selectors.add(
+                CameraSelector.Builder()
+                    .addCameraFilter { cameras ->
+                        val filtered = cameras.filter { cam ->
+                            cam.cameraSelector.toString().contains(specificCameraId)
+                        }
+                        if (filtered.isEmpty()) cameras else filtered
                     }
-                }
-                .build()
-        } else if (useFrontCamera) {
-            CameraSelector.DEFAULT_FRONT_CAMERA
-        } else {
-            CameraSelector.DEFAULT_BACK_CAMERA
+                    .build()
+            )
         }
+        selectors.add(if (useFrontCamera) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA)
+        selectors.add(if (useFrontCamera) CameraSelector.DEFAULT_BACK_CAMERA else CameraSelector.DEFAULT_FRONT_CAMERA)
 
         val imageCapture = ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
             .build()
 
         cameraProvider.unbindAll()
-        cameraProvider.bindToLifecycle(
-            lifecycleOwner,
-            selector,
-            preview,
-            imageCapture,
-        )
-        this.imageCapture = imageCapture
+        var lastError: Exception? = null
+        for (selector in selectors) {
+            try {
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner,
+                    selector,
+                    preview,
+                    imageCapture,
+                )
+                this.imageCapture = imageCapture
+                return
+            } catch (e: Exception) {
+                lastError = e
+            }
+        }
+        throw lastError ?: IllegalStateException("No camera available")
     }
 
     suspend fun takePicture(outputFile: File): Uri = suspendCancellableCoroutine { cont ->
