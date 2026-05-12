@@ -38,7 +38,7 @@ jobs:
                 "android_client_info": { "package_name": "com.example.photobooth" }
               },
               "oauth_client": [],
-              "api_key": [],
+              "api_key": [{ "current_key": "AIzaSyDummyKeyForTestingPurposesOnly12345" }],
               "services": {}
             }],
             "configuration_version": "1"
