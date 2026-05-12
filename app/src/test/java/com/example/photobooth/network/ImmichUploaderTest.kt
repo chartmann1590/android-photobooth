@@ -9,8 +9,13 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.File
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [28], application = com.example.photobooth.TestPhotoboothApp::class)
 class ImmichUploaderTest {
     private lateinit var server: MockWebServer
     private lateinit var testFile: File
@@ -38,9 +43,7 @@ class ImmichUploaderTest {
             .addInterceptor { chain ->
                 val original = chain.request()
                 val newUrl = original.url.newBuilder()
-                    .scheme("http")
-                    .host(mockUrl.host)
-                    .port(mockUrl.port)
+                    .scheme("http").host(mockUrl.host).port(mockUrl.port)
                     .build()
                 chain.proceed(original.newBuilder().url(newUrl).build())
             }
@@ -48,103 +51,97 @@ class ImmichUploaderTest {
         return ImmichUploader(settings, client)
     }
 
-    private fun jsonSuccessResponse(json: String): MockResponse {
-        return MockResponse()
-            .setResponseCode(200)
-            .setBody(json)
-            .setHeader("Content-Type", "application/json")
-    }
-
-    @Test
-    fun successful_upload_returns_asset_ID() = runBlocking {
-        server.enqueue(jsonSuccessResponse("{\"id\":\"asset-123\",\"status\":\"created\"}"))
-        val id = makeUploader().upload(testFile)
-        assertEquals("asset-123", id)
-    }
-
     @Test
     fun upload_throws_for_missing_file() {
         val missing = File("/nonexistent/path.jpg")
-        val exception = try {
+        try {
             runBlocking { makeUploader().upload(missing) }
-            null
+            fail("Expected exception")
         } catch (e: IllegalStateException) {
-            e
+            assertTrue(e.message!!.contains("File not found"))
         }
-        assertNotNull(exception)
-        assertTrue(exception!!.message!!.contains("File not found"))
     }
 
     @Test
     fun upload_throws_when_base_URL_is_blank() {
-        val exception = try {
+        try {
             runBlocking {
                 makeUploader(UploadSettings(immichBaseUrl = "", immichApiToken = "token"))
                     .upload(testFile)
             }
-            null
+            fail("Expected exception")
         } catch (e: IllegalStateException) {
-            e
+            assertTrue(e.message!!.contains("base URL not configured"))
         }
-        assertNotNull(exception)
-        assertTrue(exception!!.message!!.contains("base URL not configured"))
     }
 
     @Test
-    fun upload_throws_on_server_error() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(500).setBody("Internal Server Error"))
-        val exception = try {
+    fun sends_API_key_header() {
+        runBlocking {
+            server.enqueue(MockResponse().setResponseCode(200).setBody("{\"id\":\"abc\"}"))
             makeUploader().upload(testFile)
-            null
-        } catch (e: IllegalStateException) {
-            e
+            val request = server.takeRequest()
+            assertEquals("test-token", request.getHeader("x-api-key"))
         }
-        assertNotNull(exception)
-        assertTrue(exception!!.message!!.contains("Immich upload failed"))
     }
 
     @Test
-    fun upload_throws_when_response_has_no_asset_ID() = runBlocking {
-        server.enqueue(jsonSuccessResponse("{\"status\":\"created\"}"))
-        val exception = try {
+    fun successful_upload_returns_asset_ID() {
+        runBlocking {
+            server.enqueue(MockResponse().setResponseCode(200).setBody("{\"id\":\"asset-123\"}"))
+            val id = makeUploader().upload(testFile)
+            assertEquals("asset-123", id)
+        }
+    }
+
+    @Test
+    fun upload_throws_on_server_error() {
+        runBlocking {
+            server.enqueue(MockResponse().setResponseCode(500).setBody("Error"))
+            try {
+                makeUploader().upload(testFile)
+                fail("Expected exception")
+            } catch (e: IllegalStateException) {
+                assertTrue(e.message!!.contains("Immich upload failed"))
+            }
+        }
+    }
+
+    @Test
+    fun upload_throws_when_response_has_no_asset_ID() {
+        runBlocking {
+            server.enqueue(MockResponse().setResponseCode(200).setBody("{\"status\":\"created\"}"))
+            try {
+                makeUploader().upload(testFile)
+                fail("Expected exception")
+            } catch (e: IllegalStateException) {
+                assertTrue(e.message!!.contains("no asset ID"))
+            }
+        }
+    }
+
+    @Test
+    fun sends_album_ID_when_configured() {
+        runBlocking {
+            val settings = UploadSettings(
+                immichBaseUrl = "http://immich.example.com",
+                immichApiToken = "token",
+                immichAlbumId = "album-123",
+            )
+            server.enqueue(MockResponse().setResponseCode(200).setBody("{\"id\":\"abc\"}"))
+            makeUploader(settings).upload(testFile)
+            val body = server.takeRequest().body.readString(Charsets.UTF_8)
+            assertTrue(body.contains("albumId"))
+        }
+    }
+
+    @Test
+    fun no_album_ID_when_not_configured() {
+        runBlocking {
+            server.enqueue(MockResponse().setResponseCode(200).setBody("{\"id\":\"abc\"}"))
             makeUploader().upload(testFile)
-            null
-        } catch (e: IllegalStateException) {
-            e
+            val body = server.takeRequest().body.readString(Charsets.UTF_8)
+            assertFalse(body.contains("albumId"))
         }
-        assertNotNull(exception)
-        assertTrue(exception!!.message!!.contains("no asset ID"))
-    }
-
-    @Test
-    fun sends_API_key_header() = runBlocking {
-        server.enqueue(jsonSuccessResponse("{\"id\":\"abc\"}"))
-        makeUploader().upload(testFile)
-        val request = server.takeRequest()
-        assertEquals("test-token", request.getHeader("x-api-key"))
-    }
-
-    @Test
-    fun sends_album_ID_when_configured() = runBlocking {
-        val settings = UploadSettings(
-            immichBaseUrl = "http://immich.example.com",
-            immichApiToken = "token",
-            immichAlbumId = "album-123",
-        )
-        server.enqueue(jsonSuccessResponse("{\"id\":\"abc\"}"))
-        makeUploader(settings).upload(testFile)
-        val request = server.takeRequest()
-        val body = request.body.readString(Charsets.UTF_8)
-        assertTrue(body.contains("albumId"))
-        assertTrue(body.contains("album-123"))
-    }
-
-    @Test
-    fun no_album_ID_when_not_configured() = runBlocking {
-        server.enqueue(jsonSuccessResponse("{\"id\":\"abc\"}"))
-        makeUploader().upload(testFile)
-        val request = server.takeRequest()
-        val body = request.body.readString(Charsets.UTF_8)
-        assertFalse(body.contains("albumId"))
     }
 }

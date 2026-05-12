@@ -8,8 +8,13 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.File
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [28], application = com.example.photobooth.TestPhotoboothApp::class)
 class CatboxUploaderTest {
     private lateinit var server: MockWebServer
     private lateinit var testFile: File
@@ -34,9 +39,7 @@ class CatboxUploaderTest {
             .addInterceptor { chain ->
                 val original = chain.request()
                 val newUrl = original.url.newBuilder()
-                    .scheme("http")
-                    .host(mockUrl.host)
-                    .port(mockUrl.port)
+                    .scheme("http").host(mockUrl.host).port(mockUrl.port)
                     .build()
                 chain.proceed(original.newBuilder().url(newUrl).build())
             }
@@ -45,91 +48,99 @@ class CatboxUploaderTest {
     }
 
     @Test
-    fun upload_returns_url_on_success() = runBlocking {
-        server.enqueue(MockResponse().setBody("https://catbox.moe/abc123.jpg"))
-        val url = makeUploader().upload(testFile)
-        assertEquals("https://catbox.moe/abc123.jpg", url)
-    }
-
-    @Test
     fun upload_throws_for_missing_file() {
         val missing = File("/nonexistent/path.jpg")
-        val exception = try {
+        try {
             runBlocking { makeUploader().upload(missing) }
-            null
+            fail("Expected exception")
         } catch (e: IllegalStateException) {
-            e
+            assertTrue(e.message!!.contains("File not found"))
         }
-        assertNotNull(exception)
-        assertTrue(exception!!.message!!.contains("File not found"))
     }
 
     @Test
-    fun upload_throws_on_server_error() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(500))
-        val exception = try {
+    fun upload_returns_url_on_success() {
+        runBlocking {
+            server.enqueue(MockResponse().setBody("https://catbox.moe/abc123.jpg"))
+            val url = makeUploader().upload(testFile)
+            assertEquals("https://catbox.moe/abc123.jpg", url)
+        }
+    }
+
+    @Test
+    fun upload_throws_on_server_error() {
+        runBlocking {
+            server.enqueue(MockResponse().setResponseCode(500))
+            try {
+                makeUploader().upload(testFile)
+                fail("Expected exception")
+            } catch (e: IllegalStateException) {
+                assertTrue(e.message!!.contains("Upload failed"))
+            }
+        }
+    }
+
+    @Test
+    fun upload_throws_on_empty_response() {
+        runBlocking {
+            server.enqueue(MockResponse().setBody(""))
+            try {
+                makeUploader().upload(testFile)
+                fail("Expected exception")
+            } catch (e: IllegalStateException) {
+                assertTrue(e.message!!.contains("Empty response"))
+            }
+        }
+    }
+
+    @Test
+    fun sends_multipart_upload() {
+        runBlocking {
+            server.enqueue(MockResponse().setBody("https://catbox.moe/abc.jpg"))
             makeUploader().upload(testFile)
-            null
-        } catch (e: IllegalStateException) {
-            e
+            val request = server.takeRequest()
+            val body = request.body.readString(Charsets.UTF_8)
+            assertTrue(body.contains("fileToUpload"))
+            assertTrue(body.contains("reqtype"))
         }
-        assertNotNull(exception)
-        assertTrue(exception!!.message!!.contains("Upload failed"))
     }
 
     @Test
-    fun upload_throws_on_empty_response() = runBlocking {
-        server.enqueue(MockResponse().setBody(""))
-        val exception = try {
-            makeUploader().upload(testFile)
-            null
-        } catch (e: IllegalStateException) {
-            e
+    fun detects_jpg_mime_type() {
+        runBlocking {
+            val jpgFile = File.createTempFile("test", ".jpg")
+            jpgFile.writeText("data")
+            server.enqueue(MockResponse().setBody("https://example.com/a.jpg"))
+            makeUploader().upload(jpgFile)
+            val body = server.takeRequest().body.readString(Charsets.UTF_8)
+            assertTrue(body.contains("image/jpeg"))
+            jpgFile.delete()
         }
-        assertNotNull(exception)
-        assertTrue(exception!!.message!!.contains("Empty response"))
     }
 
     @Test
-    fun sends_multipart_upload() = runBlocking {
-        server.enqueue(MockResponse().setBody("https://catbox.moe/abc.jpg"))
-        makeUploader().upload(testFile)
-        val request = server.takeRequest()
-        val body = request.body.readString(Charsets.UTF_8)
-        assertTrue(body.contains("fileToUpload"))
-        assertTrue(body.contains("reqtype"))
+    fun detects_png_mime_type() {
+        runBlocking {
+            val pngFile = File.createTempFile("test", ".png")
+            pngFile.writeText("data")
+            server.enqueue(MockResponse().setBody("https://example.com/a.png"))
+            makeUploader().upload(pngFile)
+            val body = server.takeRequest().body.readString(Charsets.UTF_8)
+            assertTrue(body.contains("image/png"))
+            pngFile.delete()
+        }
     }
 
     @Test
-    fun detects_jpg_mime_type() = runBlocking {
-        val jpgFile = File.createTempFile("test", ".jpg")
-        jpgFile.writeText("data")
-        server.enqueue(MockResponse().setBody("https://example.com/a.jpg"))
-        makeUploader().upload(jpgFile)
-        val body = server.takeRequest().body.readString(Charsets.UTF_8)
-        assertTrue(body.contains("image/jpeg"))
-        jpgFile.delete()
-    }
-
-    @Test
-    fun detects_png_mime_type() = runBlocking {
-        val pngFile = File.createTempFile("test", ".png")
-        pngFile.writeText("data")
-        server.enqueue(MockResponse().setBody("https://example.com/a.png"))
-        makeUploader().upload(pngFile)
-        val body = server.takeRequest().body.readString(Charsets.UTF_8)
-        assertTrue(body.contains("image/png"))
-        pngFile.delete()
-    }
-
-    @Test
-    fun detects_gif_mime_type() = runBlocking {
-        val gifFile = File.createTempFile("test", ".gif")
-        gifFile.writeText("data")
-        server.enqueue(MockResponse().setBody("https://example.com/a.gif"))
-        makeUploader().upload(gifFile)
-        val body = server.takeRequest().body.readString(Charsets.UTF_8)
-        assertTrue(body.contains("image/gif"))
-        gifFile.delete()
+    fun detects_gif_mime_type() {
+        runBlocking {
+            val gifFile = File.createTempFile("test", ".gif")
+            gifFile.writeText("data")
+            server.enqueue(MockResponse().setBody("https://example.com/a.gif"))
+            makeUploader().upload(gifFile)
+            val body = server.takeRequest().body.readString(Charsets.UTF_8)
+            assertTrue(body.contains("image/gif"))
+            gifFile.delete()
+        }
     }
 }
