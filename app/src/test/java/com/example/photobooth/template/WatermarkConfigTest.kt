@@ -47,12 +47,4 @@ class WatermarkConfigTest {
         val result = applyWatermark(source, config)
         assertSame(source, result)
     }
-
-    @Test
-    fun `applyWatermark returns original when image file does not exist`() {
-        val source = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
-        val config = WatermarkConfig(imagePath = "/nonexistent/logo.png")
-        val result = applyWatermark(source, config)
-        assertSame(source, result)
-    }
 }

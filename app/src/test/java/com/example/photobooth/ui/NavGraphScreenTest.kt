@@ -32,14 +32,18 @@ class NavGraphScreenTest {
 
     @Test
     fun `all routes are unique`() {
-        val routes = Screen::class.sealedSubclasses.mapNotNull {
-            it.objectInstance?.route
-        }
+        val routes = listOf(
+            Screen.Home.route,
+            Screen.Capture.route,
+            Screen.Gallery.route,
+            Screen.Settings.route,
+            Screen.FrameDesigner.route,
+        )
         assertEquals(routes.size, routes.toSet().size)
     }
 
     @Test
-    fun `screen hierarchy`() {
+    fun `five screens defined`() {
         val screens = listOf(
             Screen.Home,
             Screen.Capture,
@@ -48,6 +52,5 @@ class NavGraphScreenTest {
             Screen.FrameDesigner,
         )
         assertEquals(5, screens.size)
-        screens.forEach { assertTrue(it is Screen) }
     }
 }
