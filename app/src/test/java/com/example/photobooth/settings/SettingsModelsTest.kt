@@ -21,10 +21,10 @@ class SettingsModelsTest {
     fun `upload settings defaults`() {
         val settings = UploadSettings()
         assertTrue(settings.useAnonymousHost)
-        assertEquals(AnonymousHostType.None, settings.anonymousHostType)
         assertEquals("", settings.immichBaseUrl)
         assertEquals("", settings.immichApiToken)
         assertEquals("", settings.immichAlbumId)
+        assertFalse(settings.isImmichConfigured)
     }
 
     @Test
@@ -81,5 +81,20 @@ class SettingsModelsTest {
         val modified = original.copy(useAnonymousHost = false)
         assertFalse(modified.useAnonymousHost)
         assertEquals("https://photos.example.com", modified.immichBaseUrl)
+    }
+
+    @Test
+    fun `isImmichConfigured is true when both base url and token are set`() {
+        val settings = UploadSettings(
+            immichBaseUrl = "https://immich.example.com",
+            immichApiToken = "abc123",
+        )
+        assertTrue(settings.isImmichConfigured)
+    }
+
+    @Test
+    fun `isImmichConfigured is false when missing token`() {
+        val settings = UploadSettings(immichBaseUrl = "https://immich.example.com")
+        assertFalse(settings.isImmichConfigured)
     }
 }

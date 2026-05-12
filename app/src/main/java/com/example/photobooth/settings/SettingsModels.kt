@@ -31,15 +31,12 @@ data class CaptureModeSettings(
 
 data class UploadSettings(
     val useAnonymousHost: Boolean = true,
-    val anonymousHostType: AnonymousHostType = AnonymousHostType.None,
     val immichBaseUrl: String = "",
     val immichApiToken: String = "",
     val immichAlbumId: String = "",
-)
-
-enum class AnonymousHostType {
-    None,
-    ImgurLike, // placeholder for a concrete provider
+) {
+    val isImmichConfigured: Boolean
+        get() = immichBaseUrl.isNotBlank() && immichApiToken.isNotBlank()
 }
 
 data class SmsGatewaySettings(

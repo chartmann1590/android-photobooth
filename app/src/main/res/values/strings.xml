@@ -53,7 +53,7 @@
     <string name="settings_event_name">Event name</string>
     <string name="settings_filename_pattern">Filename pattern</string>
     <string name="settings_upload">Upload</string>
-    <string name="settings_use_anon_host">Use anonymous host (0x0.st)</string>
+    <string name="settings_use_anon_host">Use anonymous host (catbox.moe)</string>
     <string name="settings_immich_base_url">Immich base URL</string>
     <string name="settings_immich_api_token">Immich API token</string>
     <string name="settings_immich_album_id">Immich album ID</string>
@@ -130,6 +130,38 @@
     <string name="consent_privacy_note">You can change this later in Settings. See our Privacy Policy for details.</string>
     <string name="consent_accept">Allow</string>
     <string name="consent_decline">No thanks</string>
+
+    <!-- Tutorial screen -->
+    <string name="tutorial_title">How to Use Photobooth</string>
+    <string name="tutorial_back">Back</string>
+    <string name="tutorial_next">Next</string>
+    <string name="tutorial_done">Get Started</string>
+    <string name="tutorial_step_welcome_title">Welcome to Photobooth</string>
+    <string name="tutorial_step_welcome_body">Tap the screen or press the capture button to take a photo. It\'s that simple! Your photos are saved automatically to the gallery.</string>
+    <string name="tutorial_step_capture_title">Taking Photos</string>
+    <string name="tutorial_step_capture_body">Position yourself in the frame and tap **Capture**. A short countdown gives you time to strike a pose. Photos are saved instantly.</string>
+    <string name="tutorial_step_booth_title">Booth Mode</string>
+    <string name="tutorial_step_booth_body">Enable **Booth Mode** in Settings to take multiple photos in a row automatically. Choose 2–8 photos per session with customizable intervals.</string>
+    <string name="tutorial_step_templates_title">Photo Templates</string>
+    <string name="tutorial_step_templates_body">Choose from built-in layouts like **single portrait**, **2×2 grid**, or **vertical strip**. Templates arrange your photos into professional-looking layouts.</string>
+    <string name="tutorial_step_gif_title">Animated GIFs</string>
+    <string name="tutorial_step_gif_body">In booth mode, enable **GIF mode** to create an animated GIF from your photo series. Perfect for sharing fun moments.</string>
+    <string name="tutorial_step_filters_title">Photo Filters</string>
+    <string name="tutorial_step_filters_body">Apply real-time filters like **grayscale**, **sepia**, **vintage**, or **pop art** to give your photos a creative touch before capturing.</string>
+    <string name="tutorial_step_frames_title">Custom Frames</string>
+    <string name="tutorial_step_frames_body">Upload transparent **PNG overlays** as custom frames. Design your own event-themed borders and logos, then apply them to every photo.</string>
+    <string name="tutorial_step_watermark_title">Watermarks &amp; Logos</string>
+    <string name="tutorial_step_watermark_body">Add a **logo or watermark** to your photos. Choose the position and size to brand every image with your event or company logo.</string>
+    <string name="tutorial_step_gallery_title">Photo Gallery</string>
+    <string name="tutorial_step_gallery_body">Browse all captured photos in the **Gallery**. Tap any photo to see it full-size, upload it, share it, or send it via email or SMS.</string>
+    <string name="tutorial_step_upload_title">Cloud Upload</string>
+    <string name="tutorial_step_upload_body">Photos can be uploaded to the cloud automatically. By default, uploads go to a **free, anonymous file host** (catbox.moe). Configure **Immich** in Settings for self-hosted storage.</string>
+    <string name="tutorial_step_qr_title">QR Code Sharing</string>
+    <string name="tutorial_step_qr_body">After uploading, a **QR code** is generated for the public URL. Guests can scan it with their phone to instantly download the photo.</string>
+    <string name="tutorial_step_share_title">Sharing</string>
+    <string name="tutorial_step_share_body">Share photos via **SMS**, **email**, or any installed app. Configure your SMS gateway and SMTP server in Settings to enable direct sharing.</string>
+    <string name="tutorial_step_settings_title">Settings</string>
+    <string name="tutorial_step_settings_body">Customize everything: event name, camera selection, upload destination, email templates, and more. All settings are saved locally on your device.</string>
 
     <!-- Privacy policy screen -->
     <string name="privacy_policy_title">Privacy Policy</string>

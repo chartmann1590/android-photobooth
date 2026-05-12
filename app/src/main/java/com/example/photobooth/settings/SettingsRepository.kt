@@ -38,7 +38,6 @@ class SettingsRepository(private val context: Context) {
         val CURRENT_TEMPLATE_ID = stringPreferencesKey("current_template_id")
 
         val UPLOAD_USE_ANON = stringPreferencesKey("upload_use_anon")
-        val UPLOAD_ANON_TYPE = stringPreferencesKey("upload_anon_type")
         val IMMICH_BASE_URL = stringPreferencesKey("immich_base_url")
         val IMMICH_ALBUM_ID = stringPreferencesKey("immich_album_id")
 
@@ -155,7 +154,6 @@ class SettingsRepository(private val context: Context) {
             val current = prefs.toAllSettings().upload
             val updated = block(current)
             prefs[Keys.UPLOAD_USE_ANON] = updated.useAnonymousHost.toString()
-            prefs[Keys.UPLOAD_ANON_TYPE] = updated.anonymousHostType.name
             prefs[Keys.IMMICH_BASE_URL] = updated.immichBaseUrl
             prefs[Keys.IMMICH_ALBUM_ID] = updated.immichAlbumId
             setSecureString(SecureKeys.IMMICH_API_TOKEN, updated.immichApiToken)
@@ -222,9 +220,6 @@ class SettingsRepository(private val context: Context) {
 
         val upload = UploadSettings(
             useAnonymousHost = (this[Keys.UPLOAD_USE_ANON] ?: "true").toBooleanStrictOrNull() ?: true,
-            anonymousHostType = this[Keys.UPLOAD_ANON_TYPE]?.let {
-                runCatching { AnonymousHostType.valueOf(it) }.getOrDefault(AnonymousHostType.None)
-            } ?: AnonymousHostType.None,
             immichBaseUrl = this[Keys.IMMICH_BASE_URL] ?: "",
             immichApiToken = getSecureString(SecureKeys.IMMICH_API_TOKEN),
             immichAlbumId = this[Keys.IMMICH_ALBUM_ID] ?: "",

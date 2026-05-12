@@ -14,7 +14,7 @@ interface ImageUploader {
     suspend fun upload(file: File): String
 }
 
-class ZeroX0Uploader(
+class CatboxUploader(
     private val client: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
@@ -26,17 +26,24 @@ class ZeroX0Uploader(
             throw IllegalStateException("File not found: ${file.name}")
         }
 
+        val mimeType = when (file.extension.lowercase()) {
+            "gif" -> "image/gif"
+            "png" -> "image/png"
+            else -> "image/jpeg"
+        }
+
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
+            .addFormDataPart("reqtype", "fileupload")
             .addFormDataPart(
-                "file",
+                "fileToUpload",
                 file.name,
-                file.asRequestBody("image/jpeg".toMediaTypeOrNull()),
+                file.asRequestBody(mimeType.toMediaTypeOrNull()),
             )
             .build()
 
         val request = Request.Builder()
-            .url("https://0x0.st")
+            .url("https://catbox.moe/user/api.php")
             .post(body)
             .build()
 
@@ -45,7 +52,10 @@ class ZeroX0Uploader(
                 throw IllegalStateException("Upload failed: ${response.code}")
             }
             val url = response.body?.string()?.trim()
-            url ?: throw IllegalStateException("Empty response from host")
+            if (url.isNullOrBlank()) {
+                throw IllegalStateException("Empty response from host")
+            }
+            url
         }
     }
 }

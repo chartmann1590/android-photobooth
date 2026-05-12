@@ -7,7 +7,7 @@ import com.example.photobooth.data.AppDatabase
 import com.example.photobooth.data.PhotoEntity
 import com.example.photobooth.network.ImmichUploader
 import com.example.photobooth.network.ImageUploader
-import com.example.photobooth.network.ZeroX0Uploader
+import com.example.photobooth.network.CatboxUploader
 import com.example.photobooth.network.SmtpEmailClient
 import com.example.photobooth.network.SmsGatewayClient
 import com.example.photobooth.settings.SettingsRepository
@@ -40,10 +40,10 @@ class GalleryViewModel(
 
     private fun getUploader(): ImageUploader {
         val uploadSettings = settingsRepo.getCurrentSettingsBlocking().upload
-        return if (uploadSettings.useAnonymousHost) {
-            ZeroX0Uploader()
-        } else {
+        return if (!uploadSettings.useAnonymousHost && uploadSettings.isImmichConfigured) {
             ImmichUploader(uploadSettings)
+        } else {
+            CatboxUploader()
         }
     }
 

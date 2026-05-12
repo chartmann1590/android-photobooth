@@ -277,34 +277,36 @@ private fun UploadSettingsSection(
                 onUploadChange(it, state.upload.immichBaseUrl, state.upload.immichApiToken, state.upload.immichAlbumId)
             },
         )
-        OutlinedTextField(
-            value = state.upload.immichBaseUrl,
-            onValueChange = { onUploadChange(state.upload.useAnonymousHost, it, state.upload.immichApiToken, state.upload.immichAlbumId) },
-            label = { Text(stringResource(R.string.settings_immich_base_url)) },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = textFieldColors,
-            singleLine = true,
-        )
-        OutlinedTextField(
-            value = state.upload.immichApiToken,
-            onValueChange = { onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, it, state.upload.immichAlbumId) },
-            label = { Text(stringResource(R.string.settings_immich_api_token)) },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = textFieldColors,
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-        )
-        OutlinedTextField(
-            value = state.upload.immichAlbumId,
-            onValueChange = { onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, state.upload.immichApiToken, it) },
-            label = { Text(stringResource(R.string.settings_immich_album_id)) },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = textFieldColors,
-            singleLine = true,
-        )
+        if (!state.upload.useAnonymousHost) {
+            OutlinedTextField(
+                value = state.upload.immichBaseUrl,
+                onValueChange = { onUploadChange(state.upload.useAnonymousHost, it, state.upload.immichApiToken, state.upload.immichAlbumId) },
+                label = { Text(stringResource(R.string.settings_immich_base_url)) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors,
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = state.upload.immichApiToken,
+                onValueChange = { onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, it, state.upload.immichAlbumId) },
+                label = { Text(stringResource(R.string.settings_immich_api_token)) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors,
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+            )
+            OutlinedTextField(
+                value = state.upload.immichAlbumId,
+                onValueChange = { onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, state.upload.immichApiToken, it) },
+                label = { Text(stringResource(R.string.settings_immich_album_id)) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors,
+                singleLine = true,
+            )
+        }
     }
 }
 
