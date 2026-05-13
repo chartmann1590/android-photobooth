@@ -139,11 +139,16 @@ class GalleryViewModel(
     fun getShareIntent(photo: PhotoEntity): Intent? {
         val file = File(photo.localPath)
         if (!file.exists()) return null
+        val mimeType = when (file.extension.lowercase()) {
+            "gif" -> "image/gif"
+            "png" -> "image/png"
+            else -> "image/jpeg"
+        }
 
         val uri = try {
             val values = ContentValues().apply {
                 put(MediaStore.Images.Media.DISPLAY_NAME, file.name)
-                put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                put(MediaStore.Images.Media.MIME_TYPE, mimeType)
                 put(MediaStore.Images.Media.IS_PENDING, 1)
             }
             val resolver = getApplication<Application>().contentResolver
@@ -165,7 +170,7 @@ class GalleryViewModel(
         }
 
         return Intent(Intent.ACTION_SEND).apply {
-            type = "image/jpeg"
+            type = mimeType
             putExtra(Intent.EXTRA_STREAM, uri)
             putExtra(Intent.EXTRA_SUBJECT, "Photo from ${photo.eventName}")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)

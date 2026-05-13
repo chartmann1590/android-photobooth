@@ -57,6 +57,16 @@ class SettingsModelsTest {
     }
 
     @Test
+    fun `capture mode settings defaults`() {
+        val settings = CaptureModeSettings()
+        assertFalse(settings.boothMode)
+        assertFalse(settings.gifModeEnabled)
+        assertEquals(4, settings.boothPhotoCount)
+        assertEquals("NONE", settings.selectedFilter)
+        assertEquals("NONE", settings.selectedTemplate)
+    }
+
+    @Test
     fun `all settings composes from defaults`() {
         val settings = AllSettings()
         assertEquals("My Event", settings.event.eventName)

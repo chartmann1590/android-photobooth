@@ -2,9 +2,11 @@ package com.example.photobooth.ui.screens
 
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -56,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -65,11 +68,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.print.PrintHelper
+import coil.ImageLoader
 import coil.compose.AsyncImage
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 import com.example.photobooth.R
 import com.example.photobooth.data.PhotoEntity
 import com.example.photobooth.gallery.GalleryActionState
 import com.example.photobooth.gallery.GalleryViewModel
+import com.example.photobooth.util.QrCodeGenerator
 import com.example.photobooth.ui.theme.CardSurface
 import com.example.photobooth.ui.theme.CardSurfaceLight
 import com.example.photobooth.ui.theme.DarkBackground
@@ -89,6 +96,17 @@ fun GalleryScreen(
     var email by rememberSaveable { mutableStateOf("") }
     var phone by rememberSaveable { mutableStateOf("") }
     var showDeleteConfirm by rememberSaveable { mutableStateOf<PhotoEntity?>(null) }
+    val imageLoader = remember(context) {
+        ImageLoader.Builder(context)
+            .components {
+                if (Build.VERSION.SDK_INT >= 28) {
+                    add(ImageDecoderDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
+            }
+            .build()
+    }
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = Rose,
@@ -103,6 +121,14 @@ fun GalleryScreen(
     LaunchedEffect(actionState) {
         if (actionState is GalleryActionState.Error) {
             selected?.let { }
+        }
+    }
+
+    LaunchedEffect(photos, selected?.id) {
+        selected?.let { current ->
+            photos.firstOrNull { it.id == current.id }?.let { updated ->
+                selected = updated
+            }
         }
     }
 
@@ -201,6 +227,7 @@ fun GalleryScreen(
                             Box {
                                 AsyncImage(
                                     model = photo.localPath,
+                                    imageLoader = imageLoader,
                                     contentDescription = stringResource(R.string.gallery_photo),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
@@ -279,6 +306,7 @@ fun GalleryScreen(
                         ) {
                             AsyncImage(
                                 model = photo.localPath,
+                                imageLoader = imageLoader,
                                 contentDescription = stringResource(R.string.gallery_selected_photo),
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier.fillMaxSize(),
@@ -346,6 +374,44 @@ fun GalleryScreen(
                                     )
                                 }
                                 else -> {}
+                            }
+
+                            photo.uploadedUrl?.let { uploadedUrl ->
+                                val qrBitmap = remember(uploadedUrl) {
+                                    QrCodeGenerator.generate(uploadedUrl, 360)
+                                }
+                                Text(
+                                    text = stringResource(R.string.gallery_qr_code),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = TextSecondary,
+                                )
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(180.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(12.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Image(
+                                            bitmap = qrBitmap.asImageBitmap(),
+                                            contentDescription = stringResource(R.string.gallery_qr_code),
+                                            modifier = Modifier.size(156.dp),
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = uploadedUrl,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
                             }
 
                             Text(

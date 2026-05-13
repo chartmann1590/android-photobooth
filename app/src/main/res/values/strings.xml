@@ -14,6 +14,8 @@
     <string name="start_photobooth">Start Photobooth</string>
     <string name="view_gallery">View Gallery</string>
     <string name="settings">Settings</string>
+    <string name="tutorial_home_button">Tutorial</string>
+    <string name="support_developer">Support Charles on Buy Me a Coffee</string>
 
     <!-- Capture screen -->
     <string name="capture_ready">Ready</string>
@@ -47,6 +49,7 @@
     <string name="gallery_sending">Sending…</string>
     <string name="gallery_share_social">Share to Apps</string>
     <string name="gallery_share_via">Share photo via</string>
+    <string name="gallery_qr_code">QR code</string>
 
     <!-- Settings screen -->
     <string name="settings_event">Event</string>
@@ -78,6 +81,7 @@
     <string name="settings_manage_frames">Manage Frames</string>
     <string name="settings_capture_mode">Capture Mode &amp; Filters</string>
     <string name="settings_booth_mode">Booth mode (continuous capture)</string>
+    <string name="settings_gif_mode">Create animated GIF</string>
     <string name="settings_photo_count">Photos per session</string>
     <string name="settings_photo_filter">Photo Filter</string>
     <string name="settings_template_layout">Template Layout</string>
@@ -137,31 +141,41 @@
     <string name="tutorial_next">Next</string>
     <string name="tutorial_done">Get Started</string>
     <string name="tutorial_step_welcome_title">Welcome to Photobooth</string>
-    <string name="tutorial_step_welcome_body">Tap the screen or press the capture button to take a photo. It\'s that simple! Your photos are saved automatically to the gallery.</string>
+    <string name="tutorial_step_welcome_body">Photobooth is built for events: set up your event once, start the camera, then let guests capture, share, print, and replay the tutorial whenever they need it.</string>
+    <string name="tutorial_step_permissions_title">Permissions</string>
+    <string name="tutorial_step_permissions_body">The app asks for **camera** access to take photos and **media** access to save and share images. Photos stay on this device unless you upload or share them.</string>
+    <string name="tutorial_step_home_title">Home Screen</string>
+    <string name="tutorial_step_home_body">Use **Start Photobooth** for the camera, **View Gallery** for finished photos, **Settings** for event setup, and **Tutorial** to replay these instructions any time.</string>
     <string name="tutorial_step_capture_title">Taking Photos</string>
-    <string name="tutorial_step_capture_body">Position yourself in the frame and tap **Capture**. A short countdown gives you time to strike a pose. Photos are saved instantly.</string>
+    <string name="tutorial_step_capture_body">Position everyone in the live preview and tap the round **Capture** button. A three-second countdown plays, the app says Smile, flashes the screen, and saves the photo.</string>
     <string name="tutorial_step_booth_title">Booth Mode</string>
-    <string name="tutorial_step_booth_body">Enable **Booth Mode** in Settings to take multiple photos in a row automatically. Choose 2–8 photos per session with customizable intervals.</string>
+    <string name="tutorial_step_booth_body">Enable **Booth Mode** in Settings to take 2 to 8 photos in one session. The camera pauses briefly between shots and shows the session count on screen.</string>
     <string name="tutorial_step_templates_title">Photo Templates</string>
-    <string name="tutorial_step_templates_body">Choose from built-in layouts like **single portrait**, **2×2 grid**, or **vertical strip**. Templates arrange your photos into professional-looking layouts.</string>
+    <string name="tutorial_step_templates_body">Choose a built-in layout such as **single portrait**, **2x2 grid**, or **vertical strip**. Templates give event photos a finished layout before they reach the gallery.</string>
     <string name="tutorial_step_gif_title">Animated GIFs</string>
-    <string name="tutorial_step_gif_body">In booth mode, enable **GIF mode** to create an animated GIF from your photo series. Perfect for sharing fun moments.</string>
+    <string name="tutorial_step_gif_body">In Booth Mode, turn on **Create animated GIF**. The app keeps the individual photos and adds a GIF version of the full booth sequence to the gallery.</string>
     <string name="tutorial_step_filters_title">Photo Filters</string>
-    <string name="tutorial_step_filters_body">Apply real-time filters like **grayscale**, **sepia**, **vintage**, or **pop art** to give your photos a creative touch before capturing.</string>
+    <string name="tutorial_step_filters_body">Pick a filter in Settings before capture. Options include **Original**, **Grayscale**, **Sepia**, **B&amp;W**, **Vintage**, **Cool**, **Warm**, and **Vivid**.</string>
     <string name="tutorial_step_frames_title">Custom Frames</string>
-    <string name="tutorial_step_frames_body">Upload transparent **PNG overlays** as custom frames. Design your own event-themed borders and logos, then apply them to every photo.</string>
+    <string name="tutorial_step_frames_body">Use **Manage Frames** to import transparent PNG overlays. Select a frame in Settings and it will be applied to new captures.</string>
     <string name="tutorial_step_watermark_title">Watermarks &amp; Logos</string>
-    <string name="tutorial_step_watermark_body">Add a **logo or watermark** to your photos. Choose the position and size to brand every image with your event or company logo.</string>
+    <string name="tutorial_step_watermark_body">Enable **Watermark / Logo**, enter the image path, and choose its position. This brands new photos with your event or company mark.</string>
     <string name="tutorial_step_gallery_title">Photo Gallery</string>
-    <string name="tutorial_step_gallery_body">Browse all captured photos in the **Gallery**. Tap any photo to see it full-size, upload it, share it, or send it via email or SMS.</string>
+    <string name="tutorial_step_gallery_body">The **Gallery** stores captured photos and GIFs. Tap an item to preview it, upload it, send it, print it, or share it through Android apps.</string>
     <string name="tutorial_step_upload_title">Cloud Upload</string>
-    <string name="tutorial_step_upload_body">Photos can be uploaded to the cloud automatically. By default, uploads go to a **free, anonymous file host** (catbox.moe). Configure **Immich** in Settings for self-hosted storage.</string>
+    <string name="tutorial_step_upload_body">Tap **Upload** from a gallery item. By default, uploads use catbox.moe; configure **Immich** in Settings if you want self-hosted storage.</string>
     <string name="tutorial_step_qr_title">QR Code Sharing</string>
-    <string name="tutorial_step_qr_body">After uploading, a **QR code** is generated for the public URL. Guests can scan it with their phone to instantly download the photo.</string>
+    <string name="tutorial_step_qr_body">After an upload succeeds, the gallery detail shows a **QR code** for the uploaded URL. Guests can scan it to open the shared photo or GIF.</string>
     <string name="tutorial_step_share_title">Sharing</string>
-    <string name="tutorial_step_share_body">Share photos via **SMS**, **email**, or any installed app. Configure your SMS gateway and SMTP server in Settings to enable direct sharing.</string>
+    <string name="tutorial_step_share_body">Use **SMS** and **Email** after configuring your gateway or SMTP settings. Use **Share to Apps** for the Android share sheet.</string>
+    <string name="tutorial_step_print_title">Printing</string>
+    <string name="tutorial_step_print_body">Tap **Print** from a gallery item to use Android printing. Choose any printer or print service already available on the device.</string>
     <string name="tutorial_step_settings_title">Settings</string>
-    <string name="tutorial_step_settings_body">Customize everything: event name, camera selection, upload destination, email templates, and more. All settings are saved locally on your device.</string>
+    <string name="tutorial_step_settings_body">Settings control the event name, filenames, camera, booth mode, GIF mode, filters, templates, frames, watermark, upload destination, SMS, and email.</string>
+    <string name="tutorial_step_privacy_title">Privacy</string>
+    <string name="tutorial_step_privacy_body">Photos and credentials are stored locally. Analytics and crash reporting only run if you allow them during the consent prompt.</string>
+    <string name="tutorial_step_support_title">Support</string>
+    <string name="tutorial_step_support_body">The **Support Charles on Buy Me a Coffee** link opens a browser page. It is always optional and stays below the main controls on the Home screen.</string>
 
     <!-- Privacy policy screen -->
     <string name="privacy_policy_title">Privacy Policy</string>

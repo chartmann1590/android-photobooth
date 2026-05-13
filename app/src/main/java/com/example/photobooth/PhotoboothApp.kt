@@ -47,4 +47,18 @@ class PhotoboothApp : Application() {
     suspend fun needsConsent(): Boolean {
         return getConsentStatus() == ConsentStatus.UNKNOWN
     }
+
+    suspend fun hasSeenTutorial(): Boolean {
+        val key = booleanPreferencesKey("tutorial_seen")
+        return consentDataStore.data.map { prefs ->
+            prefs[key] == true
+        }.first()
+    }
+
+    suspend fun setTutorialSeen() {
+        val key = booleanPreferencesKey("tutorial_seen")
+        consentDataStore.edit { prefs ->
+            prefs[key] = true
+        }
+    }
 }

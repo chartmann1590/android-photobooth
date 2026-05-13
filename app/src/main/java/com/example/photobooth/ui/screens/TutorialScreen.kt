@@ -70,6 +70,16 @@ private val tutorialSteps = listOf(
         bodyRes = R.string.tutorial_step_welcome_body,
     ),
     TutorialStep(
+        titleRes = R.string.tutorial_step_permissions_title,
+        iconRes = android.R.drawable.ic_dialog_info,
+        bodyRes = R.string.tutorial_step_permissions_body,
+    ),
+    TutorialStep(
+        titleRes = R.string.tutorial_step_home_title,
+        iconRes = android.R.drawable.ic_menu_manage,
+        bodyRes = R.string.tutorial_step_home_body,
+    ),
+    TutorialStep(
         titleRes = R.string.tutorial_step_capture_title,
         iconRes = android.R.drawable.ic_menu_camera,
         bodyRes = R.string.tutorial_step_capture_body,
@@ -125,9 +135,24 @@ private val tutorialSteps = listOf(
         bodyRes = R.string.tutorial_step_share_body,
     ),
     TutorialStep(
+        titleRes = R.string.tutorial_step_print_title,
+        iconRes = android.R.drawable.ic_menu_send,
+        bodyRes = R.string.tutorial_step_print_body,
+    ),
+    TutorialStep(
         titleRes = R.string.tutorial_step_settings_title,
         iconRes = android.R.drawable.ic_menu_preferences,
         bodyRes = R.string.tutorial_step_settings_body,
+    ),
+    TutorialStep(
+        titleRes = R.string.tutorial_step_privacy_title,
+        iconRes = android.R.drawable.ic_lock_lock,
+        bodyRes = R.string.tutorial_step_privacy_body,
+    ),
+    TutorialStep(
+        titleRes = R.string.tutorial_step_support_title,
+        iconRes = android.R.drawable.ic_menu_send,
+        bodyRes = R.string.tutorial_step_support_body,
     ),
 )
 

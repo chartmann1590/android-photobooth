@@ -17,6 +17,9 @@ interface PhotoDao {
     @Query("SELECT * FROM photos WHERE id = :id")
     fun getPhotoById(id: Long): Flow<PhotoEntity?>
 
+    @Query("SELECT * FROM photos WHERE id IN (:ids)")
+    suspend fun getPhotosByIds(ids: List<Long>): List<PhotoEntity>
+
     @Query("UPDATE photos SET uploadedUrl = :uploadedUrl WHERE id = :id")
     suspend fun updateUploadedUrl(id: Long, uploadedUrl: String)
 

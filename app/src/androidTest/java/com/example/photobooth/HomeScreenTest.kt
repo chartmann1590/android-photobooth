@@ -3,6 +3,7 @@ package com.example.photobooth
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import com.example.photobooth.ui.screens.HomeScreen
 import org.junit.Rule
 import org.junit.Test
@@ -19,6 +20,8 @@ class HomeScreenTest {
                 onStartCapture = {},
                 onOpenGallery = {},
                 onOpenSettings = {},
+                onOpenTutorial = {},
+                onDonate = {},
             )
         }
 
@@ -27,6 +30,8 @@ class HomeScreenTest {
         composeTestRule.onNodeWithText("Start Photobooth").assertIsDisplayed()
         composeTestRule.onNodeWithText("View Gallery").assertIsDisplayed()
         composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Tutorial").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Support Charles on Buy Me a Coffee").assertIsDisplayed()
     }
 
     @Test
@@ -38,6 +43,8 @@ class HomeScreenTest {
                 onStartCapture = { captureClicked = true },
                 onOpenGallery = {},
                 onOpenSettings = {},
+                onOpenTutorial = {},
+                onDonate = {},
             )
         }
 

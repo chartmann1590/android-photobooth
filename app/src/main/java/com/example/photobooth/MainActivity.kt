@@ -32,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +57,7 @@ import com.example.photobooth.ui.theme.Gold
 import com.example.photobooth.ui.theme.PhotoboothTheme
 import com.example.photobooth.ui.theme.Rose
 import com.example.photobooth.ui.theme.TextSecondary
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,22 +82,46 @@ class MainActivity : ComponentActivity() {
 private fun MainEntry() {
     val context = LocalContext.current
     val app = remember { context.applicationContext as PhotoboothApp }
+    val scope = rememberCoroutineScope()
     var needsConsent by remember { mutableStateOf(false) }
     var consentChecked by remember { mutableStateOf(false) }
+    var tutorialChecked by remember { mutableStateOf(false) }
+    var showTutorialOnStart by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         needsConsent = app.needsConsent()
+        if (!needsConsent) {
+            showTutorialOnStart = !app.hasSeenTutorial()
+            tutorialChecked = true
+        }
         consentChecked = true
     }
 
     when {
         !consentChecked -> {}
         needsConsent -> {
-            ConsentDialog(onDecision = { needsConsent = false })
+            ConsentDialog(onDecision = {
+                needsConsent = false
+                tutorialChecked = false
+            })
         }
         else -> {
+            LaunchedEffect(needsConsent, tutorialChecked) {
+                if (!needsConsent && !tutorialChecked) {
+                    showTutorialOnStart = !app.hasSeenTutorial()
+                    tutorialChecked = true
+                }
+            }
             PermissionGate {
-                NavGraph()
+                if (tutorialChecked) {
+                    NavGraph(
+                        showTutorialOnStart = showTutorialOnStart,
+                        onTutorialSeen = {
+                            showTutorialOnStart = false
+                            scope.launch { app.setTutorialSeen() }
+                        },
+                    )
+                }
             }
         }
     }

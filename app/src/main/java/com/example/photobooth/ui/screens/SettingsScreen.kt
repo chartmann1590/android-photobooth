@@ -496,6 +496,11 @@ private fun CaptureModeSection(
             onCheckedChange = { onCaptureModeChange { copy(boothMode = it) } },
         )
         if (state.captureMode.boothMode) {
+            StyledSwitch(
+                label = stringResource(R.string.settings_gif_mode),
+                checked = state.captureMode.gifModeEnabled,
+                onCheckedChange = { onCaptureModeChange { copy(gifModeEnabled = it) } },
+            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

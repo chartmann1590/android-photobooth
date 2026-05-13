@@ -33,6 +33,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -90,8 +91,11 @@ fun CaptureScreen(
     var selectedFrameId by rememberSaveable { mutableStateOf<Long?>(null) }
     var watermarkConfig by remember { mutableStateOf<WatermarkConfig?>(null) }
     var boothMode by rememberSaveable { mutableStateOf(false) }
+    var gifModeEnabled by rememberSaveable { mutableStateOf(false) }
     var boothPhotoCount by rememberSaveable { mutableIntStateOf(4) }
     var boothPhotosTaken by rememberSaveable { mutableIntStateOf(0) }
+    val boothPhotoIds = remember { mutableStateListOf<Long>() }
+    var pendingNextBoothShot by remember { mutableStateOf(false) }
     var showFlash by remember { mutableStateOf(false) }
     var selectedFilter by rememberSaveable { mutableStateOf(PhotoFilter.NONE) }
     var cameraId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -112,6 +116,7 @@ fun CaptureScreen(
             )
         } else null
         boothMode = settings.captureMode.boothMode
+        gifModeEnabled = settings.captureMode.gifModeEnabled
         boothPhotoCount = settings.captureMode.boothPhotoCount
         selectedFilter = try { PhotoFilter.valueOf(settings.captureMode.selectedFilter) } catch (_: Exception) { PhotoFilter.NONE }
         cameraId = settings.camera.cameraId
@@ -159,9 +164,13 @@ fun CaptureScreen(
         if (uiState is CaptureUiState.Error) {
             Toast.makeText(context, (uiState as CaptureUiState.Error).message, Toast.LENGTH_LONG).show()
         }
-        if (uiState is CaptureUiState.Saved && boothMode && boothPhotosTaken < boothPhotoCount) {
+    }
+
+    LaunchedEffect(pendingNextBoothShot) {
+        if (pendingNextBoothShot) {
             delay(2000)
             showFlash = false
+            pendingNextBoothShot = false
             captureViewModel.startCountdown()
             countdown = 3
         }
@@ -190,14 +199,23 @@ fun CaptureScreen(
                     selectedFrameId = selectedFrameId,
                     watermarkConfig = watermarkConfig,
                     filter = selectedFilter,
-                    onComplete = { id ->
-                        if (boothMode && id != null) {
-                            boothPhotosTaken++
-                            if (boothPhotosTaken < boothPhotoCount) {
-                                captureViewModel.resetToIdle()
-                            } else {
-                                onFinishedCapture(id)
-                            }
+                        onComplete = { id ->
+                            if (boothMode && id != null) {
+                                boothPhotoIds.add(id)
+                                boothPhotosTaken++
+                                if (boothPhotosTaken < boothPhotoCount) {
+                                    captureViewModel.resetToIdle()
+                                    pendingNextBoothShot = true
+                                } else if (gifModeEnabled && boothPhotoIds.size >= 2) {
+                                    captureViewModel.createGifFromPhotos(
+                                        photoIds = boothPhotoIds.toList(),
+                                        eventName = eventName,
+                                    ) { gifId ->
+                                        onFinishedCapture(gifId ?: id)
+                                    }
+                                } else {
+                                    onFinishedCapture(id)
+                                }
                         } else {
                             onFinishedCapture(id)
                         }
@@ -405,6 +423,8 @@ fun CaptureScreen(
                     ) {
                         showFlash = false
                         boothPhotosTaken = 0
+                        boothPhotoIds.clear()
+                        pendingNextBoothShot = false
                         captureViewModel.startCountdown()
                         countdown = 3
                     },

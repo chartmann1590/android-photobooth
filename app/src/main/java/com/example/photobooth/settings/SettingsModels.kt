@@ -25,6 +25,7 @@ data class CaptureModeSettings(
     val boothMode: Boolean = false,
     val boothIntervalSeconds: Int = 5,
     val boothPhotoCount: Int = 4,
+    val gifModeEnabled: Boolean = false,
     val selectedFilter: String = "NONE",
     val selectedTemplate: String = "NONE",
 )

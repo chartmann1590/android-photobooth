@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.photobooth.data.AppDatabase
 import com.example.photobooth.data.PhotoEntity
+import com.example.photobooth.template.GifEncoder
 import com.example.photobooth.template.WatermarkConfig
 import com.example.photobooth.template.renderSimple4x6
 import kotlinx.coroutines.Dispatchers
@@ -136,6 +137,68 @@ class CaptureViewModel(
                 onComplete(id)
             } catch (e: Exception) {
                 _uiState.value = CaptureUiState.Error(e.message ?: "Failed to save photo")
+                onComplete(null)
+            }
+        }
+    }
+
+    fun createGifFromPhotos(
+        photoIds: List<Long>,
+        eventName: String,
+        onComplete: (Long?) -> Unit,
+    ) {
+        val app = getApplication<Application>()
+        viewModelScope.launch {
+            try {
+                val id = withContext(Dispatchers.IO) {
+                    val photosById = photoDao.getPhotosByIds(photoIds).associateBy { it.id }
+                    val orderedPhotos = photoIds.mapNotNull { photosById[it] }
+                    if (orderedPhotos.size < 2) {
+                        throw IllegalStateException("At least two photos are required to create a GIF")
+                    }
+
+                    val outputDir = File(app.filesDir, "photos")
+                    if (!outputDir.exists() && !outputDir.mkdirs()) {
+                        throw IllegalStateException("Failed to create photo directory")
+                    }
+
+                    val firstBounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                    BitmapFactory.decodeFile(orderedPhotos.first().localPath, firstBounds)
+                    if (firstBounds.outWidth <= 0 || firstBounds.outHeight <= 0) {
+                        throw IllegalStateException("Failed to read GIF source photo")
+                    }
+
+                    val targetWidth = minOf(640, firstBounds.outWidth)
+                    val targetHeight = (firstBounds.outHeight * (targetWidth.toFloat() / firstBounds.outWidth)).toInt()
+                        .coerceAtLeast(1)
+                    val destFile = File(outputDir, "gif_${System.currentTimeMillis()}.gif")
+                    destFile.outputStream().use { out ->
+                        val encoder = GifEncoder(targetWidth, targetHeight, delayMs = 500)
+                        encoder.start(out)
+                        orderedPhotos.forEach { photo ->
+                            val bitmap = BitmapFactory.decodeFile(photo.localPath)
+                                ?: throw IllegalStateException("Failed to decode ${photo.localPath}")
+                            try {
+                                encoder.addFrame(bitmap)
+                            } finally {
+                                bitmap.recycle()
+                            }
+                        }
+                        encoder.finish()
+                    }
+
+                    photoDao.insert(
+                        PhotoEntity(
+                            eventName = eventName,
+                            localPath = destFile.absolutePath,
+                            templateId = null,
+                        ),
+                    )
+                }
+                _uiState.value = CaptureUiState.Saved(id)
+                onComplete(id)
+            } catch (e: Exception) {
+                _uiState.value = CaptureUiState.Error(e.message ?: "Failed to create GIF")
                 onComplete(null)
             }
         }

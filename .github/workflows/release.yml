@@ -3,6 +3,8 @@ name: Build & Release
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - version.properties
   workflow_dispatch:
 
 permissions:
@@ -23,14 +25,16 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Install Android NDK for native library checks
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;28.2.13676358"
+
       - name: Decode keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
 
       - name: Restore google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
@@ -47,7 +51,6 @@ jobs:
       - name: Bump version
         id: bump
         run: |
-          # Read current version
           if [ -f version.properties ]; then
             CODE=$(grep 'VERSION_CODE' version.properties | cut -d= -f2 | tr -d ' ')
             NAME=$(grep 'VERSION_NAME' version.properties | cut -d= -f2 | tr -d ' ')
@@ -56,18 +59,14 @@ jobs:
             NAME="1.0.0"
           fi
 
-          # Increment versionCode
           NEW_CODE=$((CODE + 1))
-
-          # Bump patch version automatically
           IFS='.' read -r MAJOR MINOR PATCH <<< "$NAME"
           NEW_PATCH=$((PATCH + 1))
           NEW_NAME="${MAJOR}.${MINOR}.${NEW_PATCH}"
 
-          echo "version_code=${NEW_CODE}" >> $GITHUB_OUTPUT
-          echo "version_name=${NEW_NAME}" >> $GITHUB_OUTPUT
+          echo "version_code=${NEW_CODE}" >> "$GITHUB_OUTPUT"
+          echo "version_name=${NEW_NAME}" >> "$GITHUB_OUTPUT"
 
-          # Write back
           cat > version.properties << EOF
           # This file is auto-updated by CI. Do not edit manually.
           VERSION_CODE=${NEW_CODE}
@@ -76,20 +75,38 @@ jobs:
 
           echo "::notice title=Version::Building v${NEW_NAME} (code ${NEW_CODE})"
 
-      - name: Build signed APK
-        run: |
-          ./gradlew assembleRelease \
-            -PversionCode=${{ steps.bump.outputs.version_code }} \
-            -PversionName=${{ steps.bump.outputs.version_name }}
-
-      - name: Build signed AAB
-        run: |
-          ./gradlew bundleRelease \
-            -PversionCode=${{ steps.bump.outputs.version_code }} \
-            -PversionName=${{ steps.bump.outputs.version_name }}
-
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
+
+      - name: Build signed APK and AAB
+        run: |
+          ./gradlew assembleRelease bundleRelease \
+            -PversionCode=${{ steps.bump.outputs.version_code }} \
+            -PversionName=${{ steps.bump.outputs.version_name }}
+
+      - name: Verify APK 16 KB page-size compliance
+        run: |
+          APK="app/build/outputs/apk/release/app-release.apk"
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 -v 4 "$APK"
+
+          rm -rf apk-native-check
+          mkdir apk-native-check
+          unzip -q "$APK" 'lib/**/*.so' -d apk-native-check
+
+          OBJDUMP="$ANDROID_HOME/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-objdump"
+          failed=0
+          while IFS= read -r so; do
+            while IFS= read -r line; do
+              if [[ "$line" =~ align\ 2\*\*([0-9]+) ]] && [ "${BASH_REMATCH[1]}" -lt 14 ]; then
+                echo "::error file=$so::Non-compliant ELF LOAD alignment: $line"
+                failed=1
+              fi
+            done < <("$OBJDUMP" -p "$so" | grep LOAD)
+          done < <(find apk-native-check -name '*.so' -type f)
+
+          if [ "$failed" -ne 0 ]; then
+            exit 1
+          fi
 
       - name: Rename artifacts
         run: |
@@ -140,11 +157,11 @@ jobs:
             **Commit:** ${{ github.sha }}
 
             ### Downloads
-            - **APK** — Install directly on Android devices
-            - **AAB** — Upload to Google Play Console
+            - **APK** - Install directly on Android devices
+            - **AAB** - Upload to Google Play Console
 
-            ### Artifacts
-            Download from the [Actions workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+            ### Compliance
+            Release APK passed Android 16 KB page-size zip alignment and ELF LOAD segment checks.
           files: |
             app/build/outputs/apk/release/photobooth-v${{ steps.bump.outputs.version_name }}.apk
             app/build/outputs/bundle/release/photobooth-v${{ steps.bump.outputs.version_name }}.aab
@@ -153,6 +170,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cleanup keystore
+      - name: Cleanup signing files
         if: always()
-        run: rm -f app/release.keystore
+        run: rm -f app/release.keystore app/google-services.json keystore.properties

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +28,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -54,6 +56,8 @@ fun HomeScreen(
     onStartCapture: () -> Unit,
     onOpenGallery: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenTutorial: () -> Unit = {},
+    onDonate: () -> Unit = {},
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "bg")
     val animOffset by infiniteTransition.animateFloat(
@@ -71,7 +75,6 @@ fun HomeScreen(
             .fillMaxSize()
             .background(DarkBackground),
     ) {
-        // Animated gradient orbs in background
         Box(
             modifier = Modifier
                 .size(400.dp)
@@ -103,147 +106,193 @@ fun HomeScreen(
                 ),
         )
 
-        // Main content — landscape layout
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 48.dp, vertical = 32.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .navigationBarsPadding()
+                .padding(horizontal = 48.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Left: branding
-            Column(
+            Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .fillMaxWidth()
+                    .weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
+                Column(
                     modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(Rose, RoseLight),
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(Rose, RoseLight),
+                                ),
                             ),
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(id = android.R.drawable.ic_menu_camera),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(40.dp),
-                    )
-                }
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_menu_camera),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(40.dp),
+                        )
+                    }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                Text(
-                    text = stringResource(R.string.home_title),
-                    style = MaterialTheme.typography.displaySmall.copy(
-                        letterSpacing = 6.sp,
-                        fontWeight = FontWeight.Bold,
-                    ),
-                    color = Color.White,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.home_tagline),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = TextSecondary,
-                    textAlign = TextAlign.Center,
-                )
-            }
-
-            Spacer(modifier = Modifier.width(48.dp))
-
-            // Right: action buttons
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                ElevatedButton(
-                    onClick = onStartCapture,
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(64.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = ButtonDefaults.elevatedButtonColors(
-                        containerColor = Rose,
-                        contentColor = Color.White,
-                    ),
-                    elevation = ButtonDefaults.elevatedButtonElevation(
-                        defaultElevation = 8.dp,
-                    ),
-                ) {
-                    Icon(
-                        painter = painterResource(id = android.R.drawable.ic_menu_camera),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = stringResource(R.string.start_photobooth),
-                        style = MaterialTheme.typography.titleMedium.copy(
+                        text = stringResource(R.string.home_title),
+                        style = MaterialTheme.typography.displaySmall.copy(
+                            letterSpacing = 6.sp,
                             fontWeight = FontWeight.Bold,
                         ),
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
                     )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                FilledTonalButton(
-                    onClick = onOpenGallery,
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = CardSurface,
-                        contentColor = Color.White,
-                    ),
-                ) {
-                    Icon(
-                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                        contentDescription = null,
-                        modifier = Modifier.size(22.dp),
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = stringResource(R.string.view_gallery),
-                        style = MaterialTheme.typography.titleSmall,
+                        text = stringResource(R.string.home_tagline),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = TextSecondary,
+                        textAlign = TextAlign.Center,
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.width(48.dp))
 
-                FilledTonalButton(
-                    onClick = onOpenSettings,
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = CardSurface,
-                        contentColor = Color.White,
-                    ),
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Icon(
-                        painter = painterResource(id = android.R.drawable.ic_menu_preferences),
-                        contentDescription = null,
-                        modifier = Modifier.size(22.dp),
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = stringResource(R.string.settings),
-                        style = MaterialTheme.typography.titleSmall,
-                    )
+                    ElevatedButton(
+                        onClick = onStartCapture,
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .height(64.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = ButtonDefaults.elevatedButtonColors(
+                            containerColor = Rose,
+                            contentColor = Color.White,
+                        ),
+                        elevation = ButtonDefaults.elevatedButtonElevation(
+                            defaultElevation = 8.dp,
+                        ),
+                    ) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_menu_camera),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = stringResource(R.string.start_photobooth),
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                            ),
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    FilledTonalButton(
+                        onClick = onOpenGallery,
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = CardSurface,
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = stringResource(R.string.view_gallery),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    FilledTonalButton(
+                        onClick = onOpenSettings,
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = CardSurface,
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_menu_preferences),
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = stringResource(R.string.settings),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    FilledTonalButton(
+                        onClick = onOpenTutorial,
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = CardSurface,
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_menu_help),
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = stringResource(R.string.tutorial_home_button),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                    }
                 }
+            }
+
+            TextButton(
+                onClick = onDonate,
+                colors = ButtonDefaults.textButtonColors(contentColor = Gold),
+            ) {
+                Icon(
+                    painter = painterResource(id = android.R.drawable.ic_menu_send),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.support_developer),
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                )
             }
         }
     }

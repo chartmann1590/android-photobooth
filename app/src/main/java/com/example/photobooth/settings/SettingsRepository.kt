@@ -66,6 +66,7 @@ class SettingsRepository(private val context: Context) {
         val BOOTH_MODE = stringPreferencesKey("booth_mode")
         val BOOTH_INTERVAL = stringPreferencesKey("booth_interval")
         val BOOTH_PHOTO_COUNT = stringPreferencesKey("booth_photo_count")
+        val GIF_MODE_ENABLED = stringPreferencesKey("gif_mode_enabled")
         val SELECTED_FILTER = stringPreferencesKey("selected_filter")
         val SELECTED_TEMPLATE = stringPreferencesKey("selected_template")
     }
@@ -138,6 +139,7 @@ class SettingsRepository(private val context: Context) {
             prefs[Keys.BOOTH_MODE] = updated.boothMode.toString()
             prefs[Keys.BOOTH_INTERVAL] = updated.boothIntervalSeconds.toString()
             prefs[Keys.BOOTH_PHOTO_COUNT] = updated.boothPhotoCount.toString()
+            prefs[Keys.GIF_MODE_ENABLED] = updated.gifModeEnabled.toString()
             prefs[Keys.SELECTED_FILTER] = updated.selectedFilter
             prefs[Keys.SELECTED_TEMPLATE] = updated.selectedTemplate
         }
@@ -214,6 +216,7 @@ class SettingsRepository(private val context: Context) {
             boothMode = (this[Keys.BOOTH_MODE] ?: "false").toBooleanStrictOrNull() ?: false,
             boothIntervalSeconds = this[Keys.BOOTH_INTERVAL]?.toIntOrNull() ?: 5,
             boothPhotoCount = this[Keys.BOOTH_PHOTO_COUNT]?.toIntOrNull() ?: 4,
+            gifModeEnabled = (this[Keys.GIF_MODE_ENABLED] ?: "false").toBooleanStrictOrNull() ?: false,
             selectedFilter = this[Keys.SELECTED_FILTER] ?: "NONE",
             selectedTemplate = this[Keys.SELECTED_TEMPLATE] ?: "NONE",
         )

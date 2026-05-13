@@ -31,6 +31,11 @@ class NavGraphScreenTest {
     }
 
     @Test
+    fun `Tutorial route`() {
+        assertEquals("tutorial", Screen.Tutorial.route)
+    }
+
+    @Test
     fun `all routes are unique`() {
         val routes = listOf(
             Screen.Home.route,
@@ -38,19 +43,21 @@ class NavGraphScreenTest {
             Screen.Gallery.route,
             Screen.Settings.route,
             Screen.FrameDesigner.route,
+            Screen.Tutorial.route,
         )
         assertEquals(routes.size, routes.toSet().size)
     }
 
     @Test
-    fun `five screens defined`() {
+    fun `six screens defined`() {
         val screens = listOf(
             Screen.Home,
             Screen.Capture,
             Screen.Gallery,
             Screen.Settings,
             Screen.FrameDesigner,
+            Screen.Tutorial,
         )
-        assertEquals(5, screens.size)
+        assertEquals(6, screens.size)
     }
 }

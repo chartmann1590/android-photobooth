@@ -27,13 +27,18 @@ class ImmichUploader(
         if (settings.immichBaseUrl.isBlank()) {
             throw IllegalStateException("Immich base URL not configured")
         }
+        val mimeType = when (file.extension.lowercase()) {
+            "gif" -> "image/gif"
+            "png" -> "image/png"
+            else -> "image/jpeg"
+        }
 
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart(
                 "assetData",
                 file.name,
-                file.asRequestBody("image/jpeg".toMediaTypeOrNull()),
+                file.asRequestBody(mimeType.toMediaTypeOrNull()),
             )
             .apply {
                 if (settings.immichAlbumId.isNotBlank()) {
