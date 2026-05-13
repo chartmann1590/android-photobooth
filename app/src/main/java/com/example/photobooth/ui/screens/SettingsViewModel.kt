@@ -93,6 +93,7 @@ class SettingsViewModel(
         useAnonymous: Boolean,
         immichBase: String,
         immichToken: String,
+        immichAlbumSyncEnabled: Boolean,
         immichAlbum: String,
     ) {
         viewModelScope.launch {
@@ -101,6 +102,7 @@ class SettingsViewModel(
                     useAnonymousHost = useAnonymous,
                     immichBaseUrl = immichBase,
                     immichApiToken = immichToken,
+                    immichAlbumSyncEnabled = immichAlbumSyncEnabled,
                     immichAlbumId = immichAlbum,
                 )
             }

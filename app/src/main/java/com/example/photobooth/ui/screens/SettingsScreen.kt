@@ -263,7 +263,7 @@ private fun EventSettingsSection(
 @Composable
 private fun UploadSettingsSection(
     state: AllSettings,
-    onUploadChange: (Boolean, String, String, String) -> Unit,
+    onUploadChange: (Boolean, String, String, Boolean, String) -> Unit,
     textFieldColors: androidx.compose.material3.TextFieldColors,
 ) {
     SettingsCard(
@@ -274,13 +274,13 @@ private fun UploadSettingsSection(
             label = stringResource(R.string.settings_use_anon_host),
             checked = state.upload.useAnonymousHost,
             onCheckedChange = {
-                onUploadChange(it, state.upload.immichBaseUrl, state.upload.immichApiToken, state.upload.immichAlbumId)
+                onUploadChange(it, state.upload.immichBaseUrl, state.upload.immichApiToken, state.upload.immichAlbumSyncEnabled, state.upload.immichAlbumId)
             },
         )
         if (!state.upload.useAnonymousHost) {
             OutlinedTextField(
                 value = state.upload.immichBaseUrl,
-                onValueChange = { onUploadChange(state.upload.useAnonymousHost, it, state.upload.immichApiToken, state.upload.immichAlbumId) },
+                onValueChange = { onUploadChange(state.upload.useAnonymousHost, it, state.upload.immichApiToken, state.upload.immichAlbumSyncEnabled, state.upload.immichAlbumId) },
                 label = { Text(stringResource(R.string.settings_immich_base_url)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -289,7 +289,7 @@ private fun UploadSettingsSection(
             )
             OutlinedTextField(
                 value = state.upload.immichApiToken,
-                onValueChange = { onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, it, state.upload.immichAlbumId) },
+                onValueChange = { onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, it, state.upload.immichAlbumSyncEnabled, state.upload.immichAlbumId) },
                 label = { Text(stringResource(R.string.settings_immich_api_token)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -297,15 +297,24 @@ private fun UploadSettingsSection(
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
             )
-            OutlinedTextField(
-                value = state.upload.immichAlbumId,
-                onValueChange = { onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, state.upload.immichApiToken, it) },
-                label = { Text(stringResource(R.string.settings_immich_album_id)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = textFieldColors,
-                singleLine = true,
+            StyledSwitch(
+                label = stringResource(R.string.settings_immich_album_sync),
+                checked = state.upload.immichAlbumSyncEnabled,
+                onCheckedChange = {
+                    onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, state.upload.immichApiToken, it, state.upload.immichAlbumId)
+                },
             )
+            if (state.upload.immichAlbumSyncEnabled) {
+                OutlinedTextField(
+                    value = state.upload.immichAlbumId,
+                    onValueChange = { onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, state.upload.immichApiToken, state.upload.immichAlbumSyncEnabled, it) },
+                    label = { Text(stringResource(R.string.settings_immich_album_id)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = textFieldColors,
+                    singleLine = true,
+                )
+            }
         }
     }
 }

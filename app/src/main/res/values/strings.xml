@@ -56,9 +56,10 @@
     <string name="settings_event_name">Event name</string>
     <string name="settings_filename_pattern">Filename pattern</string>
     <string name="settings_upload">Upload</string>
-    <string name="settings_use_anon_host">Use anonymous host (catbox.moe)</string>
+    <string name="settings_use_anon_host">Use anonymous upload host</string>
     <string name="settings_immich_base_url">Immich base URL</string>
     <string name="settings_immich_api_token">Immich API token</string>
+    <string name="settings_immich_album_sync">Sync uploads to Immich album</string>
     <string name="settings_immich_album_id">Immich album ID</string>
     <string name="settings_sms_gateway">SMS Gateway</string>
     <string name="settings_base_url">Base URL</string>
@@ -163,7 +164,7 @@
     <string name="tutorial_step_gallery_title">Photo Gallery</string>
     <string name="tutorial_step_gallery_body">The **Gallery** stores captured photos and GIFs. Tap an item to preview it, upload it, send it, print it, or share it through Android apps.</string>
     <string name="tutorial_step_upload_title">Cloud Upload</string>
-    <string name="tutorial_step_upload_body">Tap **Upload** from a gallery item. By default, uploads use catbox.moe; configure **Immich** in Settings if you want self-hosted storage.</string>
+    <string name="tutorial_step_upload_body">Tap **Upload** from a gallery item. By default, uploads use an anonymous temporary host; configure **Immich** in Settings if you want self-hosted storage.</string>
     <string name="tutorial_step_qr_title">QR Code Sharing</string>
     <string name="tutorial_step_qr_body">After an upload succeeds, the gallery detail shows a **QR code** for the uploaded URL. Guests can scan it to open the shared photo or GIF.</string>
     <string name="tutorial_step_share_title">Sharing</string>

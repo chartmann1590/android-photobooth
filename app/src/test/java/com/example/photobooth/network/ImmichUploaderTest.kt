@@ -126,12 +126,29 @@ class ImmichUploaderTest {
             val settings = UploadSettings(
                 immichBaseUrl = "http://immich.example.com",
                 immichApiToken = "token",
+                immichAlbumSyncEnabled = true,
                 immichAlbumId = "album-123",
             )
             server.enqueue(MockResponse().setResponseCode(200).setBody("{\"id\":\"abc\"}"))
             makeUploader(settings).upload(testFile)
             val body = server.takeRequest().body.readString(Charsets.UTF_8)
             assertTrue(body.contains("albumId"))
+        }
+    }
+
+    @Test
+    fun no_album_ID_when_album_sync_disabled() {
+        runBlocking {
+            val settings = UploadSettings(
+                immichBaseUrl = "http://immich.example.com",
+                immichApiToken = "token",
+                immichAlbumSyncEnabled = false,
+                immichAlbumId = "album-123",
+            )
+            server.enqueue(MockResponse().setResponseCode(200).setBody("{\"id\":\"abc\"}"))
+            makeUploader(settings).upload(testFile)
+            val body = server.takeRequest().body.readString(Charsets.UTF_8)
+            assertFalse(body.contains("albumId"))
         }
     }
 

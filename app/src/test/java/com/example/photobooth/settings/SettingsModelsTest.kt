@@ -23,6 +23,7 @@ class SettingsModelsTest {
         assertTrue(settings.useAnonymousHost)
         assertEquals("", settings.immichBaseUrl)
         assertEquals("", settings.immichApiToken)
+        assertFalse(settings.immichAlbumSyncEnabled)
         assertEquals("", settings.immichAlbumId)
         assertFalse(settings.isImmichConfigured)
     }

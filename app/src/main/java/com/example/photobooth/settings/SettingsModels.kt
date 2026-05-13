@@ -34,6 +34,7 @@ data class UploadSettings(
     val useAnonymousHost: Boolean = true,
     val immichBaseUrl: String = "",
     val immichApiToken: String = "",
+    val immichAlbumSyncEnabled: Boolean = false,
     val immichAlbumId: String = "",
 ) {
     val isImmichConfigured: Boolean

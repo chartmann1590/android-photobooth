@@ -5,9 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.photobooth.data.AppDatabase
 import com.example.photobooth.data.PhotoEntity
+import com.example.photobooth.network.AnonymousUploader
 import com.example.photobooth.network.ImmichUploader
 import com.example.photobooth.network.ImageUploader
-import com.example.photobooth.network.CatboxUploader
 import com.example.photobooth.network.SmtpEmailClient
 import com.example.photobooth.network.SmsGatewayClient
 import com.example.photobooth.settings.SettingsRepository
@@ -43,7 +43,7 @@ class GalleryViewModel(
         return if (!uploadSettings.useAnonymousHost && uploadSettings.isImmichConfigured) {
             ImmichUploader(uploadSettings)
         } else {
-            CatboxUploader()
+            AnonymousUploader()
         }
     }
 

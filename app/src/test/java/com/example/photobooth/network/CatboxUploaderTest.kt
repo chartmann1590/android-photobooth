@@ -94,6 +94,19 @@ class CatboxUploaderTest {
     }
 
     @Test
+    fun upload_throws_on_non_url_response() {
+        runBlocking {
+            server.enqueue(MockResponse().setBody("temporary host rejected upload"))
+            try {
+                makeUploader().upload(testFile)
+                fail("Expected exception")
+            } catch (e: IllegalStateException) {
+                assertTrue(e.message!!.contains("did not return a URL"))
+            }
+        }
+    }
+
+    @Test
     fun sends_multipart_upload() {
         runBlocking {
             server.enqueue(MockResponse().setBody("https://catbox.moe/abc.jpg"))

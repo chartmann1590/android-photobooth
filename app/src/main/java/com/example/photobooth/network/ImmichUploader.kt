@@ -41,7 +41,7 @@ class ImmichUploader(
                 file.asRequestBody(mimeType.toMediaTypeOrNull()),
             )
             .apply {
-                if (settings.immichAlbumId.isNotBlank()) {
+                if (settings.immichAlbumSyncEnabled && settings.immichAlbumId.isNotBlank()) {
                     addFormDataPart("albumId", settings.immichAlbumId)
                 }
             }

@@ -39,6 +39,7 @@ class SettingsRepository(private val context: Context) {
 
         val UPLOAD_USE_ANON = stringPreferencesKey("upload_use_anon")
         val IMMICH_BASE_URL = stringPreferencesKey("immich_base_url")
+        val IMMICH_ALBUM_SYNC_ENABLED = stringPreferencesKey("immich_album_sync_enabled")
         val IMMICH_ALBUM_ID = stringPreferencesKey("immich_album_id")
 
         val SMS_BASE_URL = stringPreferencesKey("sms_base_url")
@@ -157,6 +158,7 @@ class SettingsRepository(private val context: Context) {
             val updated = block(current)
             prefs[Keys.UPLOAD_USE_ANON] = updated.useAnonymousHost.toString()
             prefs[Keys.IMMICH_BASE_URL] = updated.immichBaseUrl
+            prefs[Keys.IMMICH_ALBUM_SYNC_ENABLED] = updated.immichAlbumSyncEnabled.toString()
             prefs[Keys.IMMICH_ALBUM_ID] = updated.immichAlbumId
             setSecureString(SecureKeys.IMMICH_API_TOKEN, updated.immichApiToken)
         }
@@ -225,6 +227,7 @@ class SettingsRepository(private val context: Context) {
             useAnonymousHost = (this[Keys.UPLOAD_USE_ANON] ?: "true").toBooleanStrictOrNull() ?: true,
             immichBaseUrl = this[Keys.IMMICH_BASE_URL] ?: "",
             immichApiToken = getSecureString(SecureKeys.IMMICH_API_TOKEN),
+            immichAlbumSyncEnabled = (this[Keys.IMMICH_ALBUM_SYNC_ENABLED] ?: "false").toBooleanStrictOrNull() ?: false,
             immichAlbumId = this[Keys.IMMICH_ALBUM_ID] ?: "",
         )
 
