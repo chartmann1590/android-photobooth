@@ -73,7 +73,6 @@ import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import com.example.photobooth.R
-import com.example.photobooth.data.PhotoEntity
 import com.example.photobooth.gallery.GalleryActionState
 import com.example.photobooth.gallery.GalleryViewModel
 import com.example.photobooth.util.QrCodeGenerator
@@ -92,10 +91,16 @@ fun GalleryScreen(
     val vm: GalleryViewModel = viewModel()
     val photos by vm.photos.collectAsState()
     val actionState by vm.actionState.collectAsState()
-    var selected by rememberSaveable { mutableStateOf<PhotoEntity?>(null) }
+    var selectedPhotoId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val selected = remember(photos, selectedPhotoId) {
+        selectedPhotoId?.let { id -> photos.firstOrNull { it.id == id } }
+    }
     var email by rememberSaveable { mutableStateOf("") }
     var phone by rememberSaveable { mutableStateOf("") }
-    var showDeleteConfirm by rememberSaveable { mutableStateOf<PhotoEntity?>(null) }
+    var showDeleteConfirmPhotoId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val showDeleteConfirm = remember(photos, showDeleteConfirmPhotoId) {
+        showDeleteConfirmPhotoId?.let { id -> photos.firstOrNull { it.id == id } }
+    }
     val imageLoader = remember(context) {
         ImageLoader.Builder(context)
             .components {
@@ -117,20 +122,6 @@ fun GalleryScreen(
         focusedTextColor = Color.White,
         unfocusedTextColor = Color.White,
     )
-
-    LaunchedEffect(actionState) {
-        if (actionState is GalleryActionState.Error) {
-            selected?.let { }
-        }
-    }
-
-    LaunchedEffect(photos, selected?.id) {
-        selected?.let { current ->
-            photos.firstOrNull { it.id == current.id }?.let { updated ->
-                selected = updated
-            }
-        }
-    }
 
     Box(
         modifier = Modifier
@@ -217,7 +208,7 @@ fun GalleryScreen(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { selected = photo },
+                                .clickable { selectedPhotoId = photo.id },
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = CardSurface,
@@ -279,7 +270,7 @@ fun GalleryScreen(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                         ) {
-                            selected = null
+                            selectedPhotoId = null
                             vm.clearActionState()
                         },
                     contentAlignment = Alignment.Center,
@@ -559,7 +550,7 @@ fun GalleryScreen(
                             Spacer(modifier = Modifier.height(4.dp))
 
                             FilledTonalButton(
-                                onClick = { selected = null; vm.clearActionState() },
+                                onClick = { selectedPhotoId = null; vm.clearActionState() },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.filledTonalButtonColors(
@@ -578,20 +569,20 @@ fun GalleryScreen(
 
     showDeleteConfirm?.let { photo ->
         AlertDialog(
-            onDismissRequest = { showDeleteConfirm = null },
+            onDismissRequest = { showDeleteConfirmPhotoId = null },
             title = { Text(stringResource(R.string.frame_designer_delete_confirm_title)) },
             text = { Text(stringResource(R.string.frame_designer_delete_confirm_message, photo.eventName)) },
             confirmButton = {
                 TextButton(onClick = {
                     vm.deletePhoto(photo)
-                    showDeleteConfirm = null
-                    if (selected == photo) selected = null
+                    showDeleteConfirmPhotoId = null
+                    if (selectedPhotoId == photo.id) selectedPhotoId = null
                 }) {
                     Text(stringResource(R.string.frame_designer_delete), color = Rose)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = null }) {
+                TextButton(onClick = { showDeleteConfirmPhotoId = null }) {
                     Text(stringResource(R.string.gallery_close))
                 }
             },

@@ -146,7 +146,7 @@ private val tutorialSteps = listOf(
     ),
     TutorialStep(
         titleRes = R.string.tutorial_step_privacy_title,
-        iconRes = android.R.drawable.ic_lock_lock,
+        iconRes = android.R.drawable.ic_dialog_info,
         bodyRes = R.string.tutorial_step_privacy_body,
     ),
     TutorialStep(
@@ -239,12 +239,14 @@ fun TutorialScreen(
                             .background(Rose.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(
-                            painter = painterResource(id = step.iconRes),
-                            contentDescription = null,
-                            tint = Rose,
-                            modifier = Modifier.size(32.dp),
-                        )
+                        runCatching { painterResource(id = step.iconRes) }.getOrNull()?.let { icon ->
+                            Icon(
+                                painter = icon,
+                                contentDescription = null,
+                                tint = Rose,
+                                modifier = Modifier.size(32.dp),
+                            )
+                        }
                     }
 
                     Text(
