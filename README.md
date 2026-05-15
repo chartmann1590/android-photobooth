@@ -177,7 +177,7 @@ com.charles.photobooth/
 
 | Library | Version | Purpose |
 |---------|---------|---------|
-| CameraX | 1.3.3 | Camera capture + video recording |
+| CameraX | 1.3.3 | Camera capture |
 | Room | 2.6.1 | Local database |
 | DataStore Preferences | 1.1.0 | Settings storage |
 | OkHttp | 4.12.0 | HTTP client |
@@ -229,7 +229,6 @@ Created by Charles Hartmann
 
 ## Roadmap
 
-- [x] Add video capture support
 - [x] Implement additional templates (single portrait, 2x2 grid, vertical strip)
 - [x] Add social media sharing (via Android share sheet)
 - [x] Support for multiple cameras
