@@ -182,23 +182,51 @@ class TemplateRenderer(
             canvas.drawBitmap(bmp, srcRect, dest, null)
         }
 
-        paint.color = Color.WHITE
-        paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        paint.textAlign = Paint.Align.CENTER
-        // setShadowLayer makes white captions readable even when the band color is
-        // close to white in the photo content. ~3% blur of canvas height looks crisp.
-        paint.setShadowLayer(template.heightPx * 0.004f, 0f, template.heightPx * 0.002f, Color.BLACK)
+        val textPaint = android.text.TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            textAlign = Paint.Align.CENTER
+            // setShadowLayer makes white captions readable even when the band color is
+            // close to white in the photo content. ~3% blur of canvas height looks crisp.
+            setShadowLayer(template.heightPx * 0.004f, 0f, template.heightPx * 0.002f, Color.BLACK)
+        }
 
         // Scale text size relative to the canvas, not device DPI. 14sp -> ~5% of canvas
         // height, so an 18sp title at 1800px is ~115px tall and clearly readable.
         val textScale = template.heightPx * 0.0036f
+        // Reserve a 4% margin on each side so text never touches the canvas edge.
+        val maxTextWidth = template.widthPx * 0.92f
         template.overlays.forEach { overlay ->
-            paint.textSize = overlay.textSizeSp * textScale
+            val baseSize = overlay.textSizeSp * textScale
+            textPaint.textSize = baseSize
+            val measuredAtBase = textPaint.measureText(overlay.text)
+
+            // Shrink-to-fit: drop the font size proportionally until the text fits.
+            // Floor at 60% of base so the text stays readable. If even the floor
+            // overflows, ellipsize so the text never bleeds past the canvas.
+            val displayText: String = if (measuredAtBase <= maxTextWidth) {
+                overlay.text
+            } else {
+                val target = (baseSize * maxTextWidth / measuredAtBase)
+                    .coerceAtLeast(baseSize * 0.6f)
+                textPaint.textSize = target
+                val measuredAtTarget = textPaint.measureText(overlay.text)
+                if (measuredAtTarget <= maxTextWidth) {
+                    overlay.text
+                } else {
+                    android.text.TextUtils.ellipsize(
+                        overlay.text,
+                        textPaint,
+                        maxTextWidth,
+                        android.text.TextUtils.TruncateAt.END,
+                    ).toString()
+                }
+            }
+
             val x = overlay.xPercent * template.widthPx
             val y = overlay.yPercent * template.heightPx
-            canvas.drawText(overlay.text, x, y, paint)
+            canvas.drawText(displayText, x, y, textPaint)
         }
-        paint.clearShadowLayer()
 
         return output
     }
@@ -249,14 +277,14 @@ object BuiltInTemplates {
         widthPx = OUTPUT_4X6_WIDTH,
         heightPx = OUTPUT_4X6_HEIGHT,
         backgroundColor = backgroundColor,
-        // Photo at 2:3 aspect to match the captured 1200x1800 source — no warping or
-        // cropping required. Visible themed border of ~10% on each side and a fat
-        // caption band at the bottom.
-        frames = listOf(FrameSlot(0.1f, 0.04f, 0.8f, 0.8f)),
+        // Photo at the top with a fat caption band at the bottom. 8% margin on the
+        // sides + 4% top, photo height 72% (ends at y=0.76), leaving 24% (~430px) of
+        // band -- enough room for a 24sp title above a 14sp date without overlap.
+        frames = listOf(FrameSlot(0.08f, 0.04f, 0.84f, 0.72f)),
         overlays = buildList {
-            add(TextOverlay(title, 0.5f, 0.91f, 28f))
+            add(TextOverlay(title, 0.5f, 0.87f, 24f))
             if (date.isNotBlank()) {
-                add(TextOverlay(date, 0.5f, 0.97f, 18f))
+                add(TextOverlay(date, 0.5f, 0.95f, 14f))
             }
         },
     )
