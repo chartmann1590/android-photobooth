@@ -147,7 +147,9 @@ fun CaptureScreen(
     val multiPhotoTemplate = remember(selectedTemplateKey, eventName, eventDate) {
         BuiltInTemplates.fromKey(selectedTemplateKey, eventName, eventDate)
     }
-    val effectiveBoothMode = boothMode || (multiPhotoTemplate?.frames?.size ?: 0) > 1
+    // Any selected template (even a 1-frame event preset like Birthday) needs the compose
+    // path so the themed background, title, and date overlay actually get applied.
+    val effectiveBoothMode = boothMode || multiPhotoTemplate != null
     val effectiveBoothCount = multiPhotoTemplate?.frames?.size ?: boothPhotoCount
 
     fun finishOrPreview(photoId: Long?) {
@@ -506,7 +508,7 @@ fun CaptureScreen(
                     color = Color.White.copy(alpha = 0.95f),
                     fontWeight = FontWeight.SemiBold,
                 )
-                if (effectiveBoothMode) {
+                if (effectiveBoothMode && effectiveBoothCount > 1) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "${boothPhotosTaken + 1}/$effectiveBoothCount",
