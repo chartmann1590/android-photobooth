@@ -25,6 +25,10 @@
         android:theme="@style/Theme.Photobooth"
         android:networkSecurityConfig="@xml/network_security_config">
 
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}" />
+
         <property
             android:name="android.app.PROPERTY_COMPAT_16KB_PAGE_SIZE_SUPPORTED"
             android:value="1" />

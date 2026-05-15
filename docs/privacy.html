@@ -1,0 +1,140 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Photobooth</title>
+    <meta name="description" content="Privacy policy for the Android Photobooth app.">
+    <meta name="theme-color" content="#0F0F1A">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0F0F1A;
+            --surface: #1A1A2E;
+            --card: #252540;
+            --card-light: #2E2E4A;
+            --rose: #E91E63;
+            --rose-light: #FF5C8D;
+            --gold: #FFD54F;
+            --text: #F5F5F5;
+            --text-muted: #B0B0C8;
+            --radius: 16px;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+        }
+        .container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+        header {
+            border-bottom: 1px solid var(--card-light);
+            padding: 32px 0;
+        }
+        header .container { display: flex; align-items: center; justify-content: space-between; }
+        header a { color: var(--rose); text-decoration: none; font-weight: 600; font-size: 14px; }
+        header a:hover { text-decoration: underline; }
+        .logo { font-size: 20px; font-weight: 800; letter-spacing: 2px; }
+        .logo span {
+            background: linear-gradient(135deg, var(--rose), var(--rose-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        main { padding: 64px 0 100px; }
+        h1 { font-size: clamp(28px, 4vw, 42px); font-weight: 800; margin-bottom: 8px; }
+        .updated { color: var(--text-muted); font-size: 14px; margin-bottom: 48px; }
+        h2 { font-size: 22px; font-weight: 700; margin-top: 40px; margin-bottom: 12px; color: var(--rose-light); }
+        p, li { color: var(--text-muted); margin-bottom: 16px; font-size: 15px; }
+        ul { margin-left: 24px; margin-bottom: 16px; }
+        li { margin-bottom: 8px; }
+        footer {
+            border-top: 1px solid var(--card-light); padding: 32px 0; text-align: center;
+            color: var(--text-muted); font-size: 14px;
+        }
+        footer a { color: var(--rose); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">PHOTO<span>BOOTH</span></div>
+            <a href="index.html">&larr; Back to Home</a>
+        </div>
+    </header>
+    <main>
+        <div class="container">
+            <h1>Privacy Policy</h1>
+            <p class="updated">Last updated: May 15, 2026</p>
+            <p>This privacy policy applies to the Android Photobooth application ("App") developed by Charles Hartmann and the associated landing page at <a href="https://chartmann1590.github.io/android-photobooth/" style="color: #FF5C8D;">chartmann1590.github.io/android-photobooth</a>.</p>
+
+            <h2>1. Data We Collect</h2>
+            <p>The App is designed with privacy in mind. We collect the absolute minimum amount of data required for the app to function:</p>
+            <ul>
+                <li><strong>Photos you capture.</strong> Photos are stored locally on your device only. They are never sent to any server unless you explicitly configure and initiate an upload.</li>
+                <li><strong>App settings.</strong> Configuration such as event name, template selection, and optional server credentials are stored locally using Android DataStore. Credentials are encrypted at rest using Android EncryptedSharedPreferences.</li>
+            </ul>
+            <p>We do <strong>not</strong> collect personal information, usage analytics, device identifiers, or tracking data by default.</p>
+
+            <h2>2. Optional Cloud Services</h2>
+            <p>The App supports optional integrations that may transmit data over the internet. These are <strong>disabled by default</strong> and only activated when you configure them:</p>
+            <ul>
+                <li><strong>Immich Server Upload.</strong> If configured, photos may be uploaded to your own self-hosted Immich server. We do not have access to your server or uploaded content.</li>
+                <li><strong>SMS Gateway.</strong> If configured, phone numbers and photo links may be sent to a third-party SMS gateway provider for the purpose of sharing photos via text message. Their privacy policy applies to data they process.</li>
+                <li><strong>SMTP Email.</strong> If configured, email addresses and photo attachments are sent through your own SMTP server. We do not have access to your email server or its logs.</li>
+            </ul>
+
+            <h2>3. Firebase Analytics &amp; Crashlytics</h2>
+            <p>The App may include Firebase Analytics and Crashlytics to collect anonymous usage statistics and crash reports. This data helps improve app stability and performance. Data collected may include:</p>
+            <ul>
+                <li>Device model and OS version</li>
+                <li>App version</li>
+                <li>Crash logs and stack traces</li>
+                <li>Anonymized usage events</li>
+            </ul>
+            <p>No personally identifiable information is collected through Firebase. You can opt out by disabling analytics in your device settings.</p>
+
+            <h2>4. Website / Landing Page</h2>
+            <p>The GitHub Pages landing page is a static website. It does not use cookies, tracking scripts, or analytics. No personal data is collected when you visit the landing page.</p>
+
+            <h2>5. Permissions</h2>
+            <p>The App requests the following Android permissions:</p>
+            <ul>
+                <li><strong>Camera</strong> &mdash; Required to capture photos and video.</li>
+                <li><strong>Internet</strong> &mdash; Required for optional cloud upload, SMS, and email features.</li>
+                <li><strong>Storage / Media</strong> &mdash; Required to save photos to local storage.</li>
+            </ul>
+            <p>No permission is requested beyond what is strictly necessary for app functionality.</p>
+
+            <h2>6. Data Retention &amp; Deletion</h2>
+            <ul>
+                <li><strong>Local photos</strong> are stored on your device until you delete them through the app gallery or uninstall the app.</li>
+                <li><strong>Uploaded photos</strong> are subject to the data retention policy of your configured server.</li>
+                <li><strong>SMS/Email data</strong> is processed by the respective third-party services and subject to their policies.</li>
+            </ul>
+
+            <h2>7. Children's Privacy</h2>
+            <p>The App is not directed at children under 13. We do not knowingly collect personal information from children.</p>
+
+            <h2>8. Third-Party Links</h2>
+            <p>The App and landing page may contain links to third-party websites or services. We are not responsible for the privacy practices of those third parties.</p>
+
+            <h2>9. Security</h2>
+            <p>We take reasonable measures to protect any data stored on your device, including using Android's encrypted storage for sensitive credentials. However, no method of electronic storage is 100% secure.</p>
+
+            <h2>10. Changes to This Policy</h2>
+            <p>We may update this privacy policy from time to time. Changes will be posted on this page with an updated "Last updated" date.</p>
+
+            <h2>11. Contact</h2>
+            <p>If you have questions about this privacy policy, please open an issue on the <a href="https://github.com/chartmann1590/android-photobooth/issues" style="color: #FF5C8D;">GitHub repository</a>.</p>
+        </div>
+    </main>
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Photobooth &middot; <a href="https://github.com/chartmann1590/android-photobooth">GitHub</a> &middot; <a href="index.html">Home</a></p>
+        </div>
+    </footer>
+</body>
+</html>

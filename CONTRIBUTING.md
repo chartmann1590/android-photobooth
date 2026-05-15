@@ -31,7 +31,7 @@ cd android-photobooth
 ### Project Structure
 
 ```
-app/src/main/java/com/example/photobooth/
+app/src/main/java/com/charles/photobooth/
 ├── camera/          # CameraX integration and capture logic
 ├── data/            # Room database entities and DAOs
 ├── gallery/         # Gallery screen and view model

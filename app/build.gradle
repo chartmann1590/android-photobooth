@@ -1,6 +1,7 @@
 plugins {
     id "com.android.application"
     id "org.jetbrains.kotlin.android"
+    id "org.jetbrains.kotlin.plugin.compose"
     id "kotlin-kapt"
     id "com.google.gms.google-services"
 }
@@ -17,6 +18,12 @@ def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+def localPropertiesFile = rootProject.file("local.properties")
+def localProperties = new Properties()
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
 }
 
 def versionPropsFile = rootProject.file("version.properties")
@@ -37,17 +44,21 @@ def vName = project.hasProperty("versionName")
         : versionProps["VERSION_NAME"]
 
 android {
-    namespace "com.example.photobooth"
+    namespace "com.charles.photobooth"
     compileSdk 36
 
     defaultConfig {
-        applicationId "com.example.photobooth"
+        applicationId "com.charles.photobooth"
         minSdk 24
         targetSdk 36
         versionCode vCode
         versionName vName
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        def admobAppId = localProperties["ADMOB_APP_ID"] ?: ""
+        def admobRewardedInterstitialAdUnitId = localProperties["ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID"] ?: ""
+        manifestPlaceholders["admobAppId"] = admobAppId
+        buildConfigField "String", "ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID", "\"${admobRewardedInterstitialAdUnitId}\""
     }
 
     signingConfigs {
@@ -77,10 +88,7 @@ android {
 
     buildFeatures {
         compose true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion "1.5.14"
+        buildConfig true
     }
 
     compileOptions {
@@ -121,6 +129,10 @@ dependencies {
     // Firebase Performance Monitoring
     implementation("com.google.firebase:firebase-perf")
 
+    // Google Mobile Ads and Play Billing
+    implementation "com.google.android.gms:play-services-ads:24.7.0"
+    implementation "com.android.billingclient:billing-ktx:8.3.0"
+
     implementation "androidx.core:core-ktx:1.13.1"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.0"
     implementation "androidx.lifecycle:lifecycle-runtime-compose:2.8.0"
@@ -148,7 +160,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
 
     // Room
-    def room_version = "2.6.1"
+    def room_version = "2.8.4"
     implementation "androidx.room:room-runtime:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
     implementation "androidx.room:room-ktx:$room_version"

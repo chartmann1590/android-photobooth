@@ -119,8 +119,34 @@ Configure email delivery:
 
 - View all captured photos
 - Share individual photos via SMS, email, or other apps
-- Delete photos from local storage
+- Delete photos from local storage (tap a photo, then **Delete**)
 - Print photos wirelessly
+
+### Where Are My Photos?
+
+Captured photos are saved to app-specific external storage so a stock file
+manager can find them without root:
+
+```
+Android/data/com.charles.photobooth/files/Pictures/
+```
+
+Open the system **Files** app, browse to that folder, and you can copy,
+delete, or share the JPEGs directly. (Note: Android wipes this folder when
+the app is uninstalled — back up before removing the app.)
+
+### Multi-Photo Templates
+
+The capture screen has a chip-row above the shutter for picking a layout:
+
+- **Single** — one photo, full frame
+- **2x2** — four photos composited into a 2x2 grid
+- **Strip** — three photos stacked vertically as a photo strip
+
+When you pick a multi-photo layout, the shutter button takes the required
+number of shots back-to-back (with a countdown between each), then writes a
+single composite JPEG to the gallery. You can also set a default in
+**Settings → Capture Mode → Template Layout**.
 
 ## Architecture
 
@@ -138,7 +164,7 @@ This app uses modern Android development practices:
 ### Package Structure
 
 ```
-com.example.photobooth/
+com.charles.photobooth/
 ├── camera/          # CameraX integration and capture logic
 ├── data/            # Room database entities and DAOs
 ├── gallery/         # Gallery screen and view model
@@ -215,7 +241,7 @@ Created by Charles Hartmann
 - [ ] GIF/Boomerang creation from burst captures
 - [ ] QR code sharing for instant guest download
 - [ ] Remote trigger via Bluetooth/BLE shutter
-- [ ] Collage builder (multi-photo compositions)
+- [x] Collage builder (multi-photo compositions)
 - [ ] Green screen / background replacement
 - [ ] Live photo previews with filter applied
 - [ ] Template editor with drag-and-drop layout
@@ -223,6 +249,16 @@ Created by Charles Hartmann
 ## Support
 
 If you encounter any issues or have questions, please open an issue on GitHub.
+
+## Sponsors
+
+Support the development of this project:
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-orange?logo=buymeacoffee&logoColor=white)](https://buymeacoffee.com/charleshartmann)
+
+## Privacy Policy
+
+Please read our [Privacy Policy](https://chartmann1590.github.io/android-photobooth/privacy.html) for information on how we handle your data.
 
 ---
 

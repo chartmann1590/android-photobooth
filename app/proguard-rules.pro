@@ -26,9 +26,9 @@
 -dontnote kotlinx.serialization.AnnotationsKt
 -keepclassmembers class kotlinx.serialization.json.** { *** Companion; }
 -keepclasseswithmembers class kotlinx.serialization.json.** { kotlinx.serialization.KSerializer serializer(...); }
--keep,includedescriptorclasses class com.example.photobooth.**$$serializer { *; }
--keepclassmembers class com.example.photobooth.** { *** Companion; }
--keepclasseswithmembers class com.example.photobooth.** { kotlinx.serialization.KSerializer serializer(...); }
+-keep,includedescriptorclasses class com.charles.photobooth.**$$serializer { *; }
+-keepclassmembers class com.charles.photobooth.** { *** Companion; }
+-keepclasseswithmembers class com.charles.photobooth.** { kotlinx.serialization.KSerializer serializer(...); }
 
 # CameraX
 -keep class androidx.camera.** { *; }
@@ -44,5 +44,5 @@
 -keep class androidx.security.** { *; }
 
 # Keep data classes used by Room/Gson
--keep class com.example.photobooth.data.** { *; }
--keep class com.example.photobooth.settings.** { *; }
+-keep class com.charles.photobooth.data.** { *; }
+-keep class com.charles.photobooth.settings.** { *; }

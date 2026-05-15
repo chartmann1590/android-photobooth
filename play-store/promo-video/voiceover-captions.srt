@@ -1,0 +1,16 @@
+1
+00:00:00,100 --> 00:00:05,106
+Turn your Android device into a self-serve photo booth for any event.
+
+2
+00:00:05,056 --> 00:00:13,508
+With Photobooth Event Camera, guests get a simple countdown, fun frames, filters, booth sessions, and animated GIFs.
+
+3
+00:00:13,508 --> 00:00:22,414
+Every capture is saved to the gallery, ready to share by QR code, email, SMS, Android apps, or wireless printing.
+
+4
+00:00:22,414 --> 00:00:27,414
+Set up your event, start the booth, and keep the moments flowing.
+
