@@ -37,7 +37,11 @@ jobs:
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
 
       - name: Restore google-services.json
-        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
+          # Self-heal stale package name in case the uploaded secret still
+          # references the old com.example.photobooth namespace.
+          sed -i 's/com\.example\.photobooth/com.charles.photobooth/g' app/google-services.json
 
       - name: Write keystore.properties for CI
         run: |
