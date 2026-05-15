@@ -161,22 +161,44 @@ class TemplateRenderer(
             val bmp = capturedBitmaps.getOrNull(index) ?: return@forEachIndexed
             val left = (frame.leftPercent * template.widthPx).toInt()
             val top = (frame.topPercent * template.heightPx).toInt()
-            val width = (frame.widthPercent * template.widthPx).toInt()
-            val height = (frame.heightPercent * template.heightPx).toInt()
+            val width = (frame.widthPercent * template.widthPx).toInt().coerceAtLeast(1)
+            val height = (frame.heightPercent * template.heightPx).toInt().coerceAtLeast(1)
             val dest = Rect(left, top, left + width, top + height)
-            canvas.drawBitmap(bmp, null, dest, null)
+
+            // Center-crop the source bitmap to the destination's aspect ratio so faces
+            // don't stretch when the slot's aspect differs from the photo's (e.g., a
+            // 2:3 photo into a near-square 2x2 cell).
+            val srcAspect = bmp.width.toFloat() / bmp.height.toFloat()
+            val dstAspect = width.toFloat() / height.toFloat()
+            val srcRect = if (srcAspect > dstAspect) {
+                val srcWidth = (bmp.height * dstAspect).toInt().coerceAtLeast(1)
+                val srcLeft = (bmp.width - srcWidth) / 2
+                Rect(srcLeft, 0, srcLeft + srcWidth, bmp.height)
+            } else {
+                val srcHeight = (bmp.width / dstAspect).toInt().coerceAtLeast(1)
+                val srcTop = (bmp.height - srcHeight) / 2
+                Rect(0, srcTop, bmp.width, srcTop + srcHeight)
+            }
+            canvas.drawBitmap(bmp, srcRect, dest, null)
         }
 
         paint.color = Color.WHITE
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         paint.textAlign = Paint.Align.CENTER
+        // setShadowLayer makes white captions readable even when the band color is
+        // close to white in the photo content. ~3% blur of canvas height looks crisp.
+        paint.setShadowLayer(template.heightPx * 0.004f, 0f, template.heightPx * 0.002f, Color.BLACK)
 
+        // Scale text size relative to the canvas, not device DPI. 14sp -> ~5% of canvas
+        // height, so an 18sp title at 1800px is ~115px tall and clearly readable.
+        val textScale = template.heightPx * 0.0036f
         template.overlays.forEach { overlay ->
-            paint.textSize = overlay.textSizeSp * context.resources.displayMetrics.scaledDensity
+            paint.textSize = overlay.textSizeSp * textScale
             val x = overlay.xPercent * template.widthPx
             val y = overlay.yPercent * template.heightPx
             canvas.drawText(overlay.text, x, y, paint)
         }
+        paint.clearShadowLayer()
 
         return output
     }
@@ -227,11 +249,14 @@ object BuiltInTemplates {
         widthPx = OUTPUT_4X6_WIDTH,
         heightPx = OUTPUT_4X6_HEIGHT,
         backgroundColor = backgroundColor,
-        frames = listOf(FrameSlot(0.06f, 0.06f, 0.88f, 0.7f)),
+        // Photo at 2:3 aspect to match the captured 1200x1800 source — no warping or
+        // cropping required. Visible themed border of ~10% on each side and a fat
+        // caption band at the bottom.
+        frames = listOf(FrameSlot(0.1f, 0.04f, 0.8f, 0.8f)),
         overlays = buildList {
-            add(TextOverlay(title, 0.5f, 0.84f, 18f))
+            add(TextOverlay(title, 0.5f, 0.91f, 28f))
             if (date.isNotBlank()) {
-                add(TextOverlay(date, 0.5f, 0.92f, 12f))
+                add(TextOverlay(date, 0.5f, 0.97f, 18f))
             }
         },
     )
