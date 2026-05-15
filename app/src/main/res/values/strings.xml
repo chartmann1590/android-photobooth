@@ -92,14 +92,16 @@
     <string name="settings_username">Username</string>
     <string name="settings_password">Password</string>
     <string name="settings_cloud_server">Cloud server mode</string>
-    <string name="settings_test_sms">Test SMS</string>
+    <string name="settings_test_sms">Test Connection</string>
+    <string name="settings_sms_test_phone_hint">Test phone number (optional)</string>
+    <string name="settings_sms_send_test">Send real test SMS</string>
     <string name="settings_smtp_email">SMTP / Email</string>
     <string name="settings_smtp_host">SMTP host</string>
     <string name="settings_port">Port</string>
     <string name="settings_use_tls">Use TLS</string>
     <string name="settings_from_address">From address</string>
     <string name="settings_from_name">From name</string>
-    <string name="settings_test_email">Test Email / DNS</string>
+    <string name="settings_test_email">Test Email Connection</string>
     <string name="settings_camera">Camera</string>
     <string name="settings_use_front_camera">Use front camera</string>
     <string name="settings_frame_overlay">Frame Overlay</string>
@@ -154,16 +156,7 @@
     <string name="frame_designer_delete_confirm_title">Delete Frame</string>
     <string name="frame_designer_delete_confirm_message">Are you sure you want to delete \"%1$s\"? This cannot be undone.</string>
 
-    <!-- Test status messages -->
-    <string name="test_sms_no_url">Set SMS base URL first</string>
-    <string name="test_sms_success">Test SMS request sent successfully</string>
-    <string name="test_sms_failed">Test SMS failed: %1$s</string>
-    <string name="test_smtp_no_host">Set SMTP host first</string>
-    <string name="test_smtp_dns_ok">SMTP DNS test ok: %1$s</string>
-    <string name="test_smtp_dns_failed">SMTP DNS test failed: %1$s</string>
-    <string name="test_smtp_error">SMTP test error: %1$s</string>
-
-    <!-- SMS body template -->
+<!-- SMS body template -->
     <string name="sms_body_template">Your photo from %1$s: %2$s</string>
     <string name="sms_uploaded_locally">uploaded locally</string>
 

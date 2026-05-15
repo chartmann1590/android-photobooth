@@ -22,7 +22,6 @@ This project is designed to be used at events with minimal setup: configure your
 - **Social Media Sharing** — Android share sheet for Instagram, Twitter, WhatsApp, and more
 - **Built-in Gallery** — View and share previously captured photos
 - **Wireless Printing** — Android Print framework integration
-- **Video Capture** — Record video clips with CameraX
 - **Multiple Cameras** — Support for all device cameras beyond front/back
 - **Room Database** — Local persistence for photos and templates
 - **DataStore Settings** — Modern key-value settings storage

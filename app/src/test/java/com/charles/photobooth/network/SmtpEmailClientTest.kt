@@ -17,21 +17,32 @@ class SmtpEmailClientTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Test
-    fun `testConnection succeeds for localhost`() = runBlocking {
-        val settings = SmtpSettings(host = "localhost")
-        val client = SmtpEmailClient(context, settings)
+    fun `testConnection returns failure for blank host`() = runBlocking {
+        val client = SmtpEmailClient(context, SmtpSettings(host = ""))
         val result = client.testConnection()
-        assertTrue(result.success)
-        assertTrue(result.message.contains("DNS lookup successful"))
+        assertFalse(result.success)
+        assertTrue(result.message.contains("host", ignoreCase = true))
     }
 
     @Test
-    fun `testConnection fails for invalid hostname`() = runBlocking {
-        val settings = SmtpSettings(host = "nonexistent-domain.invalid")
-        val client = SmtpEmailClient(context, settings)
-        val result = client.testConnection()
+    fun `testConnection returns failure for unreachable host`() = runBlocking {
+        // Pick a TLD that DNS will refuse and a low timeout: we want the test to fail
+        // fast and deterministically without hitting the network on CI.
+        val settings = SmtpSettings(
+            host = "nonexistent-domain.invalid",
+            port = 587,
+            username = "user",
+            password = "pass",
+        )
+        val result = SmtpEmailClient(context, settings).testConnection()
         assertFalse(result.success)
-        assertTrue(result.message.contains("DNS lookup failed"))
+        // Any of these wordings is acceptable — we just care that it failed loudly.
+        val msg = result.message.lowercase()
+        assertTrue(
+            "expected reachability or DNS-style error message, got: ${result.message}",
+            msg.contains("reach") || msg.contains("host") || msg.contains("unknown")
+                || msg.contains("nonexistent-domain"),
+        )
     }
 
     @Test
@@ -48,15 +59,15 @@ class SmtpEmailClientTest {
     }
 
     @Test
-    fun `test result data class success`() {
-        val result = SmtpEmailClient.TestResult(true, "OK")
+    fun `NetworkTestResult success holds message`() {
+        val result = NetworkTestResult(true, "OK")
         assertTrue(result.success)
         assertEquals("OK", result.message)
     }
 
     @Test
-    fun `test result data class failure`() {
-        val result = SmtpEmailClient.TestResult(false, "Failed")
+    fun `NetworkTestResult failure holds message`() {
+        val result = NetworkTestResult(false, "Failed")
         assertFalse(result.success)
         assertEquals("Failed", result.message)
     }

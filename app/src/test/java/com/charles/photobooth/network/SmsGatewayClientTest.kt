@@ -140,4 +140,86 @@ class SmsGatewayClientTest {
             assertTrue(body.contains("Hello world"))
         }
     }
+
+    @Test
+    fun testConnection_returns_failure_when_base_URL_blank() = runBlocking {
+        val result = SmsGatewayClient(SmsGatewaySettings(baseUrl = "")).testConnection()
+        assertFalse(result.success)
+        assertTrue(result.message.contains("URL", ignoreCase = true))
+    }
+
+    @Test
+    fun testConnection_returns_failure_when_URL_scheme_invalid() = runBlocking {
+        val result = SmsGatewayClient(SmsGatewaySettings(baseUrl = "ftp://example.com"))
+            .testConnection()
+        assertFalse(result.success)
+        assertTrue(result.message.contains("http", ignoreCase = true))
+    }
+
+    @Test
+    fun testConnection_returns_success_on_2xx_and_does_not_send_SMS() {
+        runBlocking {
+            server.enqueue(MockResponse().setResponseCode(204))
+            val result = makeClient().testConnection()
+            assertTrue("expected success, got: ${result.message}", result.success)
+            assertTrue(result.message.contains("204") || result.message.contains("gateway", ignoreCase = true))
+            // Verify the probe used GET, not POST — i.e., no SMS was queued.
+            val request = server.takeRequest()
+            assertEquals("GET", request.method)
+            assertEquals(0, request.bodySize)
+        }
+    }
+
+    @Test
+    fun testConnection_reports_auth_failure_on_401() {
+        runBlocking {
+            server.enqueue(MockResponse().setResponseCode(401))
+            val result = makeClient().testConnection()
+            assertFalse(result.success)
+            assertTrue(result.message.contains("Authentication", ignoreCase = true))
+        }
+    }
+
+    @Test
+    fun testConnection_reports_auth_failure_on_403() {
+        runBlocking {
+            server.enqueue(MockResponse().setResponseCode(403))
+            val result = makeClient().testConnection()
+            assertFalse(result.success)
+            assertTrue(result.message.contains("Authentication", ignoreCase = true))
+        }
+    }
+
+    @Test
+    fun testConnection_reports_url_error_on_404() {
+        runBlocking {
+            server.enqueue(MockResponse().setResponseCode(404))
+            val result = makeClient().testConnection()
+            assertFalse(result.success)
+            assertTrue(result.message.contains("not found", ignoreCase = true))
+        }
+    }
+
+    @Test
+    fun testConnection_includes_response_body_on_5xx() {
+        runBlocking {
+            server.enqueue(MockResponse().setResponseCode(500).setBody("backend offline"))
+            val result = makeClient().testConnection()
+            assertFalse(result.success)
+            assertTrue(result.message.contains("500"))
+            assertTrue(result.message.contains("backend offline"))
+        }
+    }
+
+    @Test
+    fun testConnection_sends_basic_auth_header_when_username_set() {
+        runBlocking {
+            server.enqueue(MockResponse().setResponseCode(200))
+            makeClient().testConnection()
+            val request = server.takeRequest()
+            val auth = request.getHeader("Authorization")
+            assertNotNull(auth)
+            assertTrue(auth!!.startsWith("Basic "))
+        }
+    }
 }

@@ -37,6 +37,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -192,7 +193,13 @@ fun SettingsScreen(
             )
             UploadSettingsSection(state, onUploadChange = vm::updateUpload, textFieldColors = textFieldColors)
             ShareSettingsSection(state, onShareChange = vm::updateShare)
-            SmsSettingsSection(state, onSmsChange = vm::updateSms, onTestSms = vm::testSms, textFieldColors = textFieldColors)
+            SmsSettingsSection(
+                state,
+                onSmsChange = vm::updateSms,
+                onTestSms = vm::testSms,
+                onSendTestSms = vm::sendTestSms,
+                textFieldColors = textFieldColors,
+            )
             SmtpSettingsSection(state, onSmtpChange = vm::updateSmtp, onTestEmail = vm::testEmail, textFieldColors = textFieldColors)
             if (BuildConfig.DEBUG) {
                 DebugSection(onResetQuota = vm::resetDailyPhotoQuota)
@@ -376,8 +383,10 @@ private fun SmsSettingsSection(
     state: AllSettings,
     onSmsChange: (String, String, String, Boolean) -> Unit,
     onTestSms: () -> Unit,
+    onSendTestSms: (String) -> Unit,
     textFieldColors: androidx.compose.material3.TextFieldColors,
 ) {
+    var testPhone by rememberSaveable { mutableStateOf("") }
     SettingsCard(
         title = stringResource(R.string.settings_sms_gateway),
         iconRes = android.R.drawable.ic_dialog_email,
@@ -420,6 +429,23 @@ private fun SmsSettingsSection(
             ),
         ) {
             Text(stringResource(R.string.settings_test_sms), fontWeight = FontWeight.Medium)
+        }
+        StableTextField(
+            value = testPhone,
+            onValueChange = { testPhone = it },
+            label = stringResource(R.string.settings_sms_test_phone_hint),
+            modifier = Modifier.fillMaxWidth(),
+            colors = textFieldColors,
+        )
+        ElevatedButton(
+            onClick = { onSendTestSms(testPhone) },
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.elevatedButtonColors(
+                containerColor = Gold,
+                contentColor = Color.Black,
+            ),
+        ) {
+            Text(stringResource(R.string.settings_sms_send_test), fontWeight = FontWeight.Medium)
         }
     }
 }

@@ -175,12 +175,39 @@ class SettingsViewModel(
                 _testStatus.value = "Set SMS base URL first"
                 return@launch
             }
+            _testStatus.value = "Testing SMS gateway…"
             try {
                 val client = SmsGatewayClient(current)
-                client.sendSms(listOf(current.username), "Photobooth SMS test")
-                _testStatus.value = "Test SMS request sent successfully"
+                val result = client.testConnection()
+                _testStatus.value = if (result.success) {
+                    "SMS test ok: ${result.message}"
+                } else {
+                    "SMS test failed: ${result.message}"
+                }
             } catch (e: Exception) {
-                _testStatus.value = "Test SMS failed: ${e.message}"
+                _testStatus.value = "SMS test error: ${e.message}"
+            }
+        }
+    }
+
+    fun sendTestSms(phone: String) {
+        viewModelScope.launch {
+            val current = settings.value.sms
+            if (current.baseUrl.isBlank()) {
+                _testStatus.value = "Set SMS base URL first"
+                return@launch
+            }
+            val trimmed = phone.trim()
+            if (trimmed.isBlank() || !trimmed.matches(Regex("^\\+?[0-9 \\-]{6,}$"))) {
+                _testStatus.value = "Enter a valid test phone number"
+                return@launch
+            }
+            _testStatus.value = "Sending real test SMS…"
+            try {
+                SmsGatewayClient(current).sendSms(listOf(trimmed), "Photobooth test")
+                _testStatus.value = "Test SMS sent to $trimmed"
+            } catch (e: Exception) {
+                _testStatus.value = "Test SMS send failed: ${e.message}"
             }
         }
     }
@@ -192,13 +219,14 @@ class SettingsViewModel(
                 _testStatus.value = "Set SMTP host first"
                 return@launch
             }
+            _testStatus.value = "Testing SMTP connection…"
             try {
                 val client = SmtpEmailClient(getApplication(), smtp)
                 val result = client.testConnection()
                 _testStatus.value = if (result.success) {
-                    "SMTP DNS test ok: ${result.message}"
+                    "SMTP test ok: ${result.message}"
                 } else {
-                    "SMTP DNS test failed: ${result.message}"
+                    "SMTP test failed: ${result.message}"
                 }
             } catch (e: Exception) {
                 _testStatus.value = "SMTP test error: ${e.message}"

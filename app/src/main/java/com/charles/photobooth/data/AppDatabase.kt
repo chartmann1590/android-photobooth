@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.charles.photobooth.BuildConfig
 
 @Database(
     entities = [
@@ -11,7 +12,7 @@ import androidx.room.RoomDatabase
         TemplateEntity::class,
     ],
     version = 1,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun photoDao(): PhotoDao
@@ -28,7 +29,13 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "photobooth.db",
                 )
-                    .fallbackToDestructiveMigration()
+                    .addMigrations(*Migrations.ALL)
+                    // Debug only: schema mismatches wipe the DB so iterating on the
+                    // schema is fast. Release builds intentionally crash instead — a
+                    // noisy startup failure is recoverable; silent data loss is not.
+                    .apply {
+                        if (BuildConfig.DEBUG) fallbackToDestructiveMigration(true)
+                    }
                     .build()
                     .also { INSTANCE = it }
             }

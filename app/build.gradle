@@ -59,6 +59,16 @@ android {
         def admobRewardedInterstitialAdUnitId = localProperties["ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID"] ?: ""
         manifestPlaceholders["admobAppId"] = admobAppId
         buildConfigField "String", "ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID", "\"${admobRewardedInterstitialAdUnitId}\""
+
+        // Export Room schemas under app/schemas/ so future migrations have a
+        // diffable source of truth. Commit the generated JSON.
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [
+                        "room.schemaLocation": "$projectDir/schemas".toString(),
+                ]
+            }
+        }
     }
 
     signingConfigs {

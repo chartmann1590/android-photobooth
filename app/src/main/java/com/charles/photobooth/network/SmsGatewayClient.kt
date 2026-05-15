@@ -19,6 +19,42 @@ class SmsGatewayClient(
         .writeTimeout(30, TimeUnit.SECONDS)
         .build(),
 ) {
+    /**
+     * Probe the gateway with a HEAD-style GET — confirms reachability and credentials
+     * without queueing an SMS. Most gateways (android-sms-gateway included) return 2xx
+     * on the base URL when the basic-auth credentials are valid.
+     */
+    suspend fun testConnection(): NetworkTestResult = withContext(Dispatchers.IO) {
+        if (settings.baseUrl.isBlank()) {
+            return@withContext NetworkTestResult(false, "Set SMS gateway URL first")
+        }
+        val base = settings.baseUrl.trimEnd('/')
+        if (!base.startsWith("https://") && !base.startsWith("http://")) {
+            return@withContext NetworkTestResult(false, "Gateway URL must start with http:// or https://")
+        }
+
+        val builder = Request.Builder().url(base).get()
+        if (settings.username.isNotBlank()) {
+            builder.header("Authorization", Credentials.basic(settings.username, settings.password))
+        }
+
+        return@withContext try {
+            client.newCall(builder.build()).execute().use { response ->
+                when (response.code) {
+                    in 200..299 -> NetworkTestResult(true, "Reached gateway (HTTP ${response.code})")
+                    401, 403 -> NetworkTestResult(false, "Authentication failed — check username/password")
+                    404 -> NetworkTestResult(false, "Endpoint not found — check the Base URL")
+                    else -> {
+                        val detail = response.body?.string()?.take(200).orEmpty()
+                        NetworkTestResult(false, "Gateway returned HTTP ${response.code}${if (detail.isNotBlank()) " — $detail" else ""}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            NetworkTestResult(false, "Could not reach gateway: ${e.message ?: e.javaClass.simpleName}")
+        }
+    }
+
     suspend fun sendSms(phones: List<String>, text: String) = withContext(Dispatchers.IO) {
         if (phones.isEmpty()) {
             throw IllegalStateException("No phone numbers provided")
