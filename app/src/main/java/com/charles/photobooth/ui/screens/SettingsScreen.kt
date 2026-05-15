@@ -58,6 +58,7 @@ import com.charles.photobooth.settings.AllSettings
 import com.charles.photobooth.settings.CaptureModeSettings
 import com.charles.photobooth.settings.ShareSettings
 import com.charles.photobooth.settings.WatermarkSettings
+import com.charles.photobooth.BuildConfig
 import com.charles.photobooth.template.BuiltInTemplates
 import com.charles.photobooth.template.WatermarkPosition
 import com.charles.photobooth.ui.components.TemplatePreview
@@ -193,6 +194,9 @@ fun SettingsScreen(
             ShareSettingsSection(state, onShareChange = vm::updateShare)
             SmsSettingsSection(state, onSmsChange = vm::updateSms, onTestSms = vm::testSms, textFieldColors = textFieldColors)
             SmtpSettingsSection(state, onSmtpChange = vm::updateSmtp, onTestEmail = vm::testEmail, textFieldColors = textFieldColors)
+            if (BuildConfig.DEBUG) {
+                DebugSection(onResetQuota = vm::resetDailyPhotoQuota)
+            }
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
@@ -945,6 +949,32 @@ private fun FullScreenTemplatePreviewDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun DebugSection(
+    onResetQuota: () -> Unit,
+) {
+    SettingsCard(
+        title = stringResource(R.string.settings_debug),
+        iconRes = android.R.drawable.ic_menu_manage,
+    ) {
+        Text(
+            text = stringResource(R.string.settings_debug_caption),
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary,
+        )
+        ElevatedButton(
+            onClick = onResetQuota,
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.elevatedButtonColors(
+                containerColor = Gold,
+                contentColor = Color.Black,
+            ),
+        ) {
+            Text(stringResource(R.string.settings_debug_reset_quota), fontWeight = FontWeight.Medium)
         }
     }
 }

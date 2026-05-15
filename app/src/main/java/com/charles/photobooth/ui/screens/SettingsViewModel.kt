@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.charles.photobooth.data.AppDatabase
 import com.charles.photobooth.data.TemplateEntity
+import com.charles.photobooth.monetization.PhotoQuotaRepository
 import com.charles.photobooth.settings.AllSettings
 import com.charles.photobooth.settings.CaptureModeSettings
 import com.charles.photobooth.settings.SettingsRepository
@@ -35,6 +36,7 @@ class SettingsViewModel(
 
     private val repo = SettingsRepository(application)
     private val templateDao = AppDatabase.getInstance(application).templateDao()
+    private val quotaRepo = PhotoQuotaRepository(application)
     private val _testStatus = MutableStateFlow<String?>(null)
     val testStatus: kotlinx.coroutines.flow.StateFlow<String?> = _testStatus
 
@@ -75,6 +77,14 @@ class SettingsViewModel(
     fun updateFrontScreenFlash(enabled: Boolean) {
         viewModelScope.launch {
             repo.updateCameraSettings { it.copy(frontScreenFlashEnabled = enabled) }
+        }
+    }
+
+    /** Debug-only: clear today's photo-quota counters back to base. */
+    fun resetDailyPhotoQuota() {
+        viewModelScope.launch {
+            quotaRepo.resetDailyQuota()
+            _testStatus.value = "Daily photo quota reset"
         }
     }
 

@@ -126,6 +126,9 @@
     <string name="settings_template_enabled">Enabled</string>
     <string name="settings_template_disabled">Disabled</string>
     <string name="settings_front_screen_flash">Front screen flash (lights up the screen)</string>
+    <string name="settings_debug">Debug</string>
+    <string name="settings_debug_caption">Debug builds only — daily quota also auto-resets to 15 each time it hits zero.</string>
+    <string name="settings_debug_reset_quota">Reset daily photo quota to 15</string>
     <string name="template_single">Single</string>
     <string name="template_strip_2x2">2x2</string>
     <string name="template_strip_vertical">Strip</string>

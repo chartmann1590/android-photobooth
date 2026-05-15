@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.charles.photobooth.BuildConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -39,12 +40,34 @@ class PhotoQuotaRepository(
         var reserved = false
         context.photoQuotaDataStore.edit { prefs ->
             val current = prefs.toQuotaState()
-            val next = PhotoQuotaPolicy.reserve(current, photoCount) ?: return@edit
+            val next = PhotoQuotaPolicy.reserve(current, photoCount)
+            if (next == null) {
+                // In debug builds, transparently refresh the quota and retry so a
+                // tester is never blocked by the daily limit during development.
+                if (BuildConfig.DEBUG) {
+                    val refreshed = current.copy(photosUsedToday = 0, adPhotosEarnedToday = 0)
+                    val retry = PhotoQuotaPolicy.reserve(refreshed, photoCount) ?: return@edit
+                    prefs[dateKey] = retry.dateKey
+                    prefs[photosUsedKey] = retry.photosUsedToday
+                    prefs[adPhotosEarnedKey] = retry.adPhotosEarnedToday
+                    prefs[unlimitedKey] = retry.hasUnlimitedPhotos
+                    reserved = true
+                }
+                return@edit
+            }
             prefs[dateKey] = next.dateKey
             prefs[photosUsedKey] = next.photosUsedToday
             prefs[adPhotosEarnedKey] = next.adPhotosEarnedToday
             prefs[unlimitedKey] = next.hasUnlimitedPhotos
             reserved = true
+
+            // Debug only: when the counter would land at zero, recycle it back to a
+            // full daily quota so the visible "X photos left today" rolls back to 15
+            // instead of bottoming out and triggering the paywall.
+            if (BuildConfig.DEBUG && !next.hasUnlimitedPhotos && next.remainingPhotos <= 0) {
+                prefs[photosUsedKey] = 0
+                prefs[adPhotosEarnedKey] = 0
+            }
         }
         return reserved
     }
@@ -71,6 +94,17 @@ class PhotoQuotaRepository(
             granted = true
         }
         return granted
+    }
+
+    /** Debug helper: zero out today's used + ad-earned counters so the visible
+     *  "X photos left" snaps back to the base 15. Intended to be called from a
+     *  debug-only Settings action. */
+    suspend fun resetDailyQuota() {
+        context.photoQuotaDataStore.edit { prefs ->
+            prefs[dateKey] = todayKey()
+            prefs[photosUsedKey] = 0
+            prefs[adPhotosEarnedKey] = 0
+        }
     }
 
     suspend fun setUnlimitedPhotos(enabled: Boolean) {
