@@ -11,6 +11,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.charles.photobooth.data.AppDatabase
 import com.charles.photobooth.data.PhotoEntity
+import com.charles.photobooth.network.AnonymousUploader
+import com.charles.photobooth.network.ImageUploader
+import com.charles.photobooth.network.ImmichUploader
+import com.charles.photobooth.settings.UploadSettings
 import com.charles.photobooth.template.GifEncoder
 import com.charles.photobooth.template.TemplateDefinition
 import com.charles.photobooth.template.TemplateRenderer
@@ -34,7 +38,18 @@ sealed interface CaptureUiState {
     data class CountingDown(val secondsLeft: Int) : CaptureUiState
     data object Capturing : CaptureUiState
     data class Saved(val photoId: Long) : CaptureUiState
+    data class Preview(
+        val photoId: Long,
+        val photoPath: String,
+        val uploadStatus: UploadStatus,
+    ) : CaptureUiState
     data class Error(val message: String) : CaptureUiState
+}
+
+sealed interface UploadStatus {
+    data object Uploading : UploadStatus
+    data class Complete(val url: String) : UploadStatus
+    data class Failed(val message: String) : UploadStatus
 }
 
 class CaptureViewModel(
@@ -51,6 +66,48 @@ class CaptureViewModel(
     fun resetToIdle() {
         _uiState.value = CaptureUiState.Idle
     }
+
+    fun enterPreviewAndUpload(photoId: Long, uploadSettings: UploadSettings) {
+        viewModelScope.launch {
+            val photo = photoDao.getPhotosByIds(listOf(photoId)).firstOrNull()
+            if (photo == null) {
+                _uiState.value = CaptureUiState.Error("Photo not found for preview")
+                return@launch
+            }
+            _uiState.value = CaptureUiState.Preview(
+                photoId = photo.id,
+                photoPath = photo.localPath,
+                uploadStatus = UploadStatus.Uploading,
+            )
+            try {
+                val uploader = uploaderFor(uploadSettings)
+                val file = File(photo.localPath)
+                val url = withContext(Dispatchers.IO) { uploader.upload(file) }
+                if (url.isBlank()) {
+                    updatePreviewStatus(photoId, UploadStatus.Failed("Upload returned empty URL"))
+                    return@launch
+                }
+                photoDao.updateUploadedUrl(photo.id, url)
+                updatePreviewStatus(photoId, UploadStatus.Complete(url))
+            } catch (e: Exception) {
+                updatePreviewStatus(photoId, UploadStatus.Failed(e.message ?: "Upload failed"))
+            }
+        }
+    }
+
+    private fun updatePreviewStatus(photoId: Long, status: UploadStatus) {
+        val current = _uiState.value
+        if (current is CaptureUiState.Preview && current.photoId == photoId) {
+            _uiState.value = current.copy(uploadStatus = status)
+        }
+    }
+
+    private fun uploaderFor(uploadSettings: UploadSettings): ImageUploader =
+        if (!uploadSettings.useAnonymousHost && uploadSettings.isImmichConfigured) {
+            ImmichUploader(uploadSettings)
+        } else {
+            AnonymousUploader()
+        }
 
     fun startCountdown() {
         if (_uiState.value is CaptureUiState.CountingDown || _uiState.value is CaptureUiState.Capturing) {

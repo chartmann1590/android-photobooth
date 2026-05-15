@@ -91,6 +91,7 @@ fun GalleryScreen(
     val vm: GalleryViewModel = viewModel()
     val photos by vm.photos.collectAsState()
     val actionState by vm.actionState.collectAsState()
+    val shareSettings by vm.shareSettings.collectAsState()
     var selectedPhotoId by rememberSaveable { mutableStateOf<Long?>(null) }
     val selected = remember(photos, selectedPhotoId) {
         selectedPhotoId?.let { id -> photos.firstOrNull { it.id == id } }
@@ -405,75 +406,79 @@ fun GalleryScreen(
                                 )
                             }
 
-                            Text(
-                                text = stringResource(R.string.gallery_share_sms),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = TextSecondary,
-                            )
-                            OutlinedTextField(
-                                value = phone,
-                                onValueChange = { phone = it },
-                                label = { Text(stringResource(R.string.gallery_phone_number)) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = textFieldColors,
-                                singleLine = true,
-                            )
-                            FilledTonalButton(
-                                onClick = { vm.sendPhotoBySms(photo, phone) },
-                                enabled = phone.isNotBlank() && actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = CardSurfaceLight,
-                                    contentColor = Color.White,
-                                ),
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = android.R.drawable.ic_dialog_email),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
+                            if (shareSettings.enableSmsShare) {
+                                Text(
+                                    text = stringResource(R.string.gallery_share_sms),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = TextSecondary,
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.gallery_send_sms))
+                                OutlinedTextField(
+                                    value = phone,
+                                    onValueChange = { phone = it },
+                                    label = { Text(stringResource(R.string.gallery_phone_number)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = textFieldColors,
+                                    singleLine = true,
+                                )
+                                FilledTonalButton(
+                                    onClick = { vm.sendPhotoBySms(photo, phone) },
+                                    enabled = phone.isNotBlank() && actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = CardSurfaceLight,
+                                        contentColor = Color.White,
+                                    ),
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = android.R.drawable.ic_dialog_email),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(stringResource(R.string.gallery_send_sms))
+                                }
+
+                                Spacer(modifier = Modifier.height(4.dp))
                             }
 
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            Text(
-                                text = stringResource(R.string.gallery_share_email),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = TextSecondary,
-                            )
-                            OutlinedTextField(
-                                value = email,
-                                onValueChange = { email = it },
-                                label = { Text(stringResource(R.string.gallery_email_address)) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = textFieldColors,
-                                singleLine = true,
-                            )
-                            FilledTonalButton(
-                                onClick = { vm.sendPhotoByEmail(photo, email) },
-                                enabled = email.isNotBlank() && actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = CardSurfaceLight,
-                                    contentColor = Color.White,
-                                ),
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = android.R.drawable.ic_dialog_email),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
+                            if (shareSettings.enableEmailShare) {
+                                Text(
+                                    text = stringResource(R.string.gallery_share_email),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = TextSecondary,
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.gallery_send_email))
-                            }
+                                OutlinedTextField(
+                                    value = email,
+                                    onValueChange = { email = it },
+                                    label = { Text(stringResource(R.string.gallery_email_address)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = textFieldColors,
+                                    singleLine = true,
+                                )
+                                FilledTonalButton(
+                                    onClick = { vm.sendPhotoByEmail(photo, email) },
+                                    enabled = email.isNotBlank() && actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = CardSurfaceLight,
+                                        contentColor = Color.White,
+                                    ),
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = android.R.drawable.ic_dialog_email),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(stringResource(R.string.gallery_send_email))
+                                }
 
-                            Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
 
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -496,29 +501,31 @@ fun GalleryScreen(
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(stringResource(R.string.gallery_upload))
                                 }
-                                ElevatedButton(
-                                    onClick = {
-                                        val helper = PrintHelper(context)
-                                        helper.scaleMode = PrintHelper.SCALE_MODE_FIT
-                                        BitmapFactory.decodeFile(photo.localPath)?.let { bitmap ->
-                                            helper.printBitmap(context.getString(R.string.print_job_name), bitmap)
-                                        }
-                                    },
-                                    enabled = actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.elevatedButtonColors(
-                                        containerColor = Gold,
-                                        contentColor = Color.Black,
-                                    ),
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = android.R.drawable.ic_menu_send),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp),
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(stringResource(R.string.gallery_print))
+                                if (shareSettings.enablePrintShare) {
+                                    ElevatedButton(
+                                        onClick = {
+                                            val helper = PrintHelper(context)
+                                            helper.scaleMode = PrintHelper.SCALE_MODE_FIT
+                                            BitmapFactory.decodeFile(photo.localPath)?.let { bitmap ->
+                                                helper.printBitmap(context.getString(R.string.print_job_name), bitmap)
+                                            }
+                                        },
+                                        enabled = actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.elevatedButtonColors(
+                                            containerColor = Gold,
+                                            contentColor = Color.Black,
+                                        ),
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = android.R.drawable.ic_menu_send),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(stringResource(R.string.gallery_print))
+                                    }
                                 }
                             }
 

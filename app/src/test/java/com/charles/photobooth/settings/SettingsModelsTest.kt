@@ -12,20 +12,73 @@ class SettingsModelsTest {
     fun `event settings defaults`() {
         val settings = EventSettings()
         assertEquals("My Event", settings.eventName)
+        assertEquals("", settings.eventDate)
         assertEquals("EVENT_yyyyMMdd_HHmmss", settings.filenamePattern)
         assertNull(settings.currentTemplateId)
         assertNull(settings.selectedFrameId)
     }
 
     @Test
+    fun `event settings preserves date through copy`() {
+        val original = EventSettings(eventName = "Sarah's 30th", eventDate = "May 24, 2026")
+        val modified = original.copy(eventName = "Bob's 40th")
+        assertEquals("May 24, 2026", modified.eventDate)
+        assertEquals("Bob's 40th", modified.eventName)
+    }
+
+    @Test
     fun `upload settings defaults`() {
         val settings = UploadSettings()
+        assertFalse(settings.autoUploadEnabled)
         assertTrue(settings.useAnonymousHost)
         assertEquals("", settings.immichBaseUrl)
         assertEquals("", settings.immichApiToken)
         assertFalse(settings.immichAlbumSyncEnabled)
         assertEquals("", settings.immichAlbumId)
         assertFalse(settings.isImmichConfigured)
+    }
+
+    @Test
+    fun `isAnyUploadDestinationReady true when anonymous host enabled`() {
+        val settings = UploadSettings(useAnonymousHost = true)
+        assertTrue(settings.isAnyUploadDestinationReady)
+    }
+
+    @Test
+    fun `isAnyUploadDestinationReady true when Immich configured`() {
+        val settings = UploadSettings(
+            useAnonymousHost = false,
+            immichBaseUrl = "https://immich.example.com",
+            immichApiToken = "token",
+        )
+        assertTrue(settings.isAnyUploadDestinationReady)
+    }
+
+    @Test
+    fun `isAnyUploadDestinationReady false when neither anonymous nor Immich is set`() {
+        val settings = UploadSettings(
+            useAnonymousHost = false,
+            immichBaseUrl = "",
+            immichApiToken = "",
+        )
+        assertFalse(settings.isAnyUploadDestinationReady)
+    }
+
+    @Test
+    fun `share settings defaults all enabled`() {
+        val settings = ShareSettings()
+        assertTrue(settings.enableEmailShare)
+        assertTrue(settings.enableSmsShare)
+        assertTrue(settings.enablePrintShare)
+    }
+
+    @Test
+    fun `share settings copy disables individual channels`() {
+        val original = ShareSettings()
+        val modified = original.copy(enableEmailShare = false, enablePrintShare = false)
+        assertFalse(modified.enableEmailShare)
+        assertTrue(modified.enableSmsShare)
+        assertFalse(modified.enablePrintShare)
     }
 
     @Test
@@ -74,6 +127,10 @@ class SettingsModelsTest {
         assertTrue(settings.upload.useAnonymousHost)
         assertEquals(587, settings.smtp.port)
         assertTrue(settings.camera.useFrontCamera)
+        assertTrue(settings.share.enableEmailShare)
+        assertTrue(settings.share.enableSmsShare)
+        assertTrue(settings.share.enablePrintShare)
+        assertFalse(settings.upload.autoUploadEnabled)
     }
 
     @Test

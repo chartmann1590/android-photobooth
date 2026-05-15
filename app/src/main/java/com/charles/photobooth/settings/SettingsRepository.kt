@@ -34,13 +34,19 @@ class SettingsRepository(private val context: Context) {
 
     private object Keys {
         val EVENT_NAME = stringPreferencesKey("event_name")
+        val EVENT_DATE = stringPreferencesKey("event_date")
         val FILENAME_PATTERN = stringPreferencesKey("filename_pattern")
         val CURRENT_TEMPLATE_ID = stringPreferencesKey("current_template_id")
 
         val UPLOAD_USE_ANON = stringPreferencesKey("upload_use_anon")
+        val UPLOAD_AUTO_ENABLED = stringPreferencesKey("upload_auto_enabled")
         val IMMICH_BASE_URL = stringPreferencesKey("immich_base_url")
         val IMMICH_ALBUM_SYNC_ENABLED = stringPreferencesKey("immich_album_sync_enabled")
         val IMMICH_ALBUM_ID = stringPreferencesKey("immich_album_id")
+
+        val SHARE_ENABLE_EMAIL = stringPreferencesKey("share_enable_email")
+        val SHARE_ENABLE_SMS = stringPreferencesKey("share_enable_sms")
+        val SHARE_ENABLE_PRINT = stringPreferencesKey("share_enable_print")
 
         val SMS_BASE_URL = stringPreferencesKey("sms_base_url")
         val SMS_USERNAME = stringPreferencesKey("sms_username")
@@ -107,6 +113,7 @@ class SettingsRepository(private val context: Context) {
             val current = prefs.toAllSettings().event
             val updated = block(current)
             prefs[Keys.EVENT_NAME] = updated.eventName
+            prefs[Keys.EVENT_DATE] = updated.eventDate
             prefs[Keys.FILENAME_PATTERN] = updated.filenamePattern
             prefs[Keys.CURRENT_TEMPLATE_ID] = updated.currentTemplateId?.toString() ?: ""
             prefs[Keys.SELECTED_FRAME_ID] = updated.selectedFrameId?.toString() ?: ""
@@ -156,11 +163,22 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { prefs ->
             val current = prefs.toAllSettings().upload
             val updated = block(current)
+            prefs[Keys.UPLOAD_AUTO_ENABLED] = updated.autoUploadEnabled.toString()
             prefs[Keys.UPLOAD_USE_ANON] = updated.useAnonymousHost.toString()
             prefs[Keys.IMMICH_BASE_URL] = updated.immichBaseUrl
             prefs[Keys.IMMICH_ALBUM_SYNC_ENABLED] = updated.immichAlbumSyncEnabled.toString()
             prefs[Keys.IMMICH_ALBUM_ID] = updated.immichAlbumId
             setSecureString(SecureKeys.IMMICH_API_TOKEN, updated.immichApiToken)
+        }
+    }
+
+    suspend fun updateShareSettings(block: (ShareSettings) -> ShareSettings) {
+        context.dataStore.edit { prefs ->
+            val current = prefs.toAllSettings().share
+            val updated = block(current)
+            prefs[Keys.SHARE_ENABLE_EMAIL] = updated.enableEmailShare.toString()
+            prefs[Keys.SHARE_ENABLE_SMS] = updated.enableSmsShare.toString()
+            prefs[Keys.SHARE_ENABLE_PRINT] = updated.enablePrintShare.toString()
         }
     }
 
@@ -194,6 +212,7 @@ class SettingsRepository(private val context: Context) {
     private fun Preferences.toAllSettings(): AllSettings {
         val event = EventSettings(
             eventName = this[Keys.EVENT_NAME] ?: EventSettings().eventName,
+            eventDate = this[Keys.EVENT_DATE] ?: EventSettings().eventDate,
             filenamePattern = this[Keys.FILENAME_PATTERN] ?: EventSettings().filenamePattern,
             currentTemplateId = this[Keys.CURRENT_TEMPLATE_ID]?.toLongOrNull(),
             selectedFrameId = this[Keys.SELECTED_FRAME_ID]?.toLongOrNull(),
@@ -224,11 +243,18 @@ class SettingsRepository(private val context: Context) {
         )
 
         val upload = UploadSettings(
+            autoUploadEnabled = (this[Keys.UPLOAD_AUTO_ENABLED] ?: "false").toBooleanStrictOrNull() ?: false,
             useAnonymousHost = (this[Keys.UPLOAD_USE_ANON] ?: "true").toBooleanStrictOrNull() ?: true,
             immichBaseUrl = this[Keys.IMMICH_BASE_URL] ?: "",
             immichApiToken = getSecureString(SecureKeys.IMMICH_API_TOKEN),
             immichAlbumSyncEnabled = (this[Keys.IMMICH_ALBUM_SYNC_ENABLED] ?: "false").toBooleanStrictOrNull() ?: false,
             immichAlbumId = this[Keys.IMMICH_ALBUM_ID] ?: "",
+        )
+
+        val share = ShareSettings(
+            enableEmailShare = (this[Keys.SHARE_ENABLE_EMAIL] ?: "true").toBooleanStrictOrNull() ?: true,
+            enableSmsShare = (this[Keys.SHARE_ENABLE_SMS] ?: "true").toBooleanStrictOrNull() ?: true,
+            enablePrintShare = (this[Keys.SHARE_ENABLE_PRINT] ?: "true").toBooleanStrictOrNull() ?: true,
         )
 
         val sms = SmsGatewaySettings(
@@ -258,6 +284,7 @@ class SettingsRepository(private val context: Context) {
             camera = camera,
             watermark = watermark,
             captureMode = captureMode,
+            share = share,
         )
     }
 }

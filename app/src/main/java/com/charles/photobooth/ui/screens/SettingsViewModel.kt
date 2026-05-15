@@ -8,6 +8,7 @@ import com.charles.photobooth.data.TemplateEntity
 import com.charles.photobooth.settings.AllSettings
 import com.charles.photobooth.settings.CaptureModeSettings
 import com.charles.photobooth.settings.SettingsRepository
+import com.charles.photobooth.settings.ShareSettings
 import com.charles.photobooth.settings.WatermarkSettings
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -51,10 +52,10 @@ class SettingsViewModel(
             initialValue = emptyList(),
         )
 
-    fun updateEvent(eventName: String, pattern: String) {
+    fun updateEvent(eventName: String, eventDate: String, pattern: String) {
         viewModelScope.launch {
             repo.updateEventSettings {
-                it.copy(eventName = eventName, filenamePattern = pattern)
+                it.copy(eventName = eventName, eventDate = eventDate, filenamePattern = pattern)
             }
         }
     }
@@ -90,6 +91,7 @@ class SettingsViewModel(
     }
 
     fun updateUpload(
+        autoUploadEnabled: Boolean,
         useAnonymous: Boolean,
         immichBase: String,
         immichToken: String,
@@ -99,6 +101,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             repo.updateUploadSettings {
                 it.copy(
+                    autoUploadEnabled = autoUploadEnabled,
                     useAnonymousHost = useAnonymous,
                     immichBaseUrl = immichBase,
                     immichApiToken = immichToken,
@@ -106,6 +109,12 @@ class SettingsViewModel(
                     immichAlbumId = immichAlbum,
                 )
             }
+        }
+    }
+
+    fun updateShare(block: (ShareSettings) -> ShareSettings) {
+        viewModelScope.launch {
+            repo.updateShareSettings(block)
         }
     }
 

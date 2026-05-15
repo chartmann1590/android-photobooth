@@ -218,14 +218,56 @@ object BuiltInTemplates {
         ),
     )
 
+    private fun eventPreset(
+        title: String,
+        date: String,
+        backgroundColor: Int,
+    ) = TemplateDefinition(
+        widthPx = OUTPUT_4X6_WIDTH,
+        heightPx = OUTPUT_4X6_HEIGHT,
+        backgroundColor = backgroundColor,
+        frames = listOf(FrameSlot(0.06f, 0.06f, 0.88f, 0.7f)),
+        overlays = buildList {
+            add(TextOverlay(title, 0.5f, 0.84f, 18f))
+            if (date.isNotBlank()) {
+                add(TextOverlay(date, 0.5f, 0.92f, 12f))
+            }
+        },
+    )
+
+    fun birthday(title: String, date: String) =
+        eventPreset(title, date, 0xFFB23A5E.toInt())
+
+    fun wedding(title: String, date: String) =
+        eventPreset(title, date, 0xFF3A4A6B.toInt())
+
+    fun anniversary(title: String, date: String) =
+        eventPreset(title, date, 0xFF7A1F3D.toInt())
+
+    fun holiday(title: String, date: String) =
+        eventPreset(title, date, 0xFF1F5C3A.toInt())
+
+    fun generic(title: String, date: String) =
+        eventPreset(title, date, 0xFF1E2738.toInt())
+
     const val KEY_NONE = "NONE"
     const val KEY_SINGLE = "SINGLE"
     const val KEY_STRIP_2X2 = "STRIP_2x2"
     const val KEY_STRIP_VERTICAL = "STRIP_VERTICAL"
+    const val KEY_BIRTHDAY = "EVENT_BIRTHDAY"
+    const val KEY_WEDDING = "EVENT_WEDDING"
+    const val KEY_ANNIVERSARY = "EVENT_ANNIVERSARY"
+    const val KEY_HOLIDAY = "EVENT_HOLIDAY"
+    const val KEY_GENERIC = "EVENT_GENERIC"
 
-    fun fromKey(key: String, eventName: String): TemplateDefinition? = when (key) {
+    fun fromKey(key: String, eventName: String, eventDate: String = ""): TemplateDefinition? = when (key) {
         KEY_STRIP_2X2 -> photoStrip2x2(eventName)
         KEY_STRIP_VERTICAL -> photoStripVertical(eventName)
+        KEY_BIRTHDAY -> birthday(eventName, eventDate)
+        KEY_WEDDING -> wedding(eventName, eventDate)
+        KEY_ANNIVERSARY -> anniversary(eventName, eventDate)
+        KEY_HOLIDAY -> holiday(eventName, eventDate)
+        KEY_GENERIC -> generic(eventName, eventDate)
         else -> null
     }
 }

@@ -10,10 +10,12 @@ import com.charles.photobooth.network.ImmichUploader
 import com.charles.photobooth.network.ImageUploader
 import com.charles.photobooth.network.SmtpEmailClient
 import com.charles.photobooth.network.SmsGatewayClient
+import com.charles.photobooth.settings.ShareSettings
 import com.charles.photobooth.settings.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import android.content.ContentValues
@@ -53,6 +55,15 @@ class GalleryViewModel(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyList(),
+            )
+
+    val shareSettings: StateFlow<ShareSettings> =
+        settingsRepo.settingsFlow
+            .map { it.share }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = ShareSettings(),
             )
 
     private val _actionState = MutableStateFlow<GalleryActionState>(GalleryActionState.Idle)

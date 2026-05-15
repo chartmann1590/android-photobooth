@@ -48,8 +48,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.charles.photobooth.data.TemplateEntity
 import com.charles.photobooth.settings.AllSettings
 import com.charles.photobooth.settings.CaptureModeSettings
+import com.charles.photobooth.settings.ShareSettings
 import com.charles.photobooth.settings.WatermarkSettings
+import com.charles.photobooth.template.BuiltInTemplates
 import com.charles.photobooth.template.WatermarkPosition
+import com.charles.photobooth.ui.components.TemplatePreview
 import com.charles.photobooth.camera.PhotoFilter
 import com.charles.photobooth.ui.theme.CardSurface
 import com.charles.photobooth.ui.theme.CardSurfaceLight
@@ -174,6 +177,7 @@ fun SettingsScreen(
                 textFieldColors = textFieldColors,
             )
             UploadSettingsSection(state, onUploadChange = vm::updateUpload, textFieldColors = textFieldColors)
+            ShareSettingsSection(state, onShareChange = vm::updateShare)
             SmsSettingsSection(state, onSmsChange = vm::updateSms, onTestSms = vm::testSms, textFieldColors = textFieldColors)
             SmtpSettingsSection(state, onSmtpChange = vm::updateSmtp, onTestEmail = vm::testEmail, textFieldColors = textFieldColors)
             Spacer(modifier = Modifier.height(16.dp))
@@ -232,7 +236,7 @@ private fun SettingsCard(
 @Composable
 private fun EventSettingsSection(
     state: AllSettings,
-    onEventChange: (String, String) -> Unit,
+    onEventChange: (String, String, String) -> Unit,
     textFieldColors: androidx.compose.material3.TextFieldColors,
 ) {
     SettingsCard(
@@ -241,7 +245,7 @@ private fun EventSettingsSection(
     ) {
         OutlinedTextField(
             value = state.event.eventName,
-            onValueChange = { onEventChange(it, state.event.filenamePattern) },
+            onValueChange = { onEventChange(it, state.event.eventDate, state.event.filenamePattern) },
             label = { Text(stringResource(R.string.settings_event_name)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
@@ -249,8 +253,17 @@ private fun EventSettingsSection(
             singleLine = true,
         )
         OutlinedTextField(
+            value = state.event.eventDate,
+            onValueChange = { onEventChange(state.event.eventName, it, state.event.filenamePattern) },
+            label = { Text(stringResource(R.string.settings_event_date)) },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = textFieldColors,
+            singleLine = true,
+        )
+        OutlinedTextField(
             value = state.event.filenamePattern,
-            onValueChange = { onEventChange(state.event.eventName, it) },
+            onValueChange = { onEventChange(state.event.eventName, state.event.eventDate, it) },
             label = { Text(stringResource(R.string.settings_filename_pattern)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
@@ -263,7 +276,7 @@ private fun EventSettingsSection(
 @Composable
 private fun UploadSettingsSection(
     state: AllSettings,
-    onUploadChange: (Boolean, String, String, Boolean, String) -> Unit,
+    onUploadChange: (Boolean, Boolean, String, String, Boolean, String) -> Unit,
     textFieldColors: androidx.compose.material3.TextFieldColors,
 ) {
     SettingsCard(
@@ -271,16 +284,23 @@ private fun UploadSettingsSection(
         iconRes = android.R.drawable.ic_menu_upload,
     ) {
         StyledSwitch(
+            label = stringResource(R.string.settings_auto_upload),
+            checked = state.upload.autoUploadEnabled,
+            onCheckedChange = {
+                onUploadChange(it, state.upload.useAnonymousHost, state.upload.immichBaseUrl, state.upload.immichApiToken, state.upload.immichAlbumSyncEnabled, state.upload.immichAlbumId)
+            },
+        )
+        StyledSwitch(
             label = stringResource(R.string.settings_use_anon_host),
             checked = state.upload.useAnonymousHost,
             onCheckedChange = {
-                onUploadChange(it, state.upload.immichBaseUrl, state.upload.immichApiToken, state.upload.immichAlbumSyncEnabled, state.upload.immichAlbumId)
+                onUploadChange(state.upload.autoUploadEnabled, it, state.upload.immichBaseUrl, state.upload.immichApiToken, state.upload.immichAlbumSyncEnabled, state.upload.immichAlbumId)
             },
         )
         if (!state.upload.useAnonymousHost) {
             OutlinedTextField(
                 value = state.upload.immichBaseUrl,
-                onValueChange = { onUploadChange(state.upload.useAnonymousHost, it, state.upload.immichApiToken, state.upload.immichAlbumSyncEnabled, state.upload.immichAlbumId) },
+                onValueChange = { onUploadChange(state.upload.autoUploadEnabled, state.upload.useAnonymousHost, it, state.upload.immichApiToken, state.upload.immichAlbumSyncEnabled, state.upload.immichAlbumId) },
                 label = { Text(stringResource(R.string.settings_immich_base_url)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -289,7 +309,7 @@ private fun UploadSettingsSection(
             )
             OutlinedTextField(
                 value = state.upload.immichApiToken,
-                onValueChange = { onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, it, state.upload.immichAlbumSyncEnabled, state.upload.immichAlbumId) },
+                onValueChange = { onUploadChange(state.upload.autoUploadEnabled, state.upload.useAnonymousHost, state.upload.immichBaseUrl, it, state.upload.immichAlbumSyncEnabled, state.upload.immichAlbumId) },
                 label = { Text(stringResource(R.string.settings_immich_api_token)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -301,13 +321,13 @@ private fun UploadSettingsSection(
                 label = stringResource(R.string.settings_immich_album_sync),
                 checked = state.upload.immichAlbumSyncEnabled,
                 onCheckedChange = {
-                    onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, state.upload.immichApiToken, it, state.upload.immichAlbumId)
+                    onUploadChange(state.upload.autoUploadEnabled, state.upload.useAnonymousHost, state.upload.immichBaseUrl, state.upload.immichApiToken, it, state.upload.immichAlbumId)
                 },
             )
             if (state.upload.immichAlbumSyncEnabled) {
                 OutlinedTextField(
                     value = state.upload.immichAlbumId,
-                    onValueChange = { onUploadChange(state.upload.useAnonymousHost, state.upload.immichBaseUrl, state.upload.immichApiToken, state.upload.immichAlbumSyncEnabled, it) },
+                    onValueChange = { onUploadChange(state.upload.autoUploadEnabled, state.upload.useAnonymousHost, state.upload.immichBaseUrl, state.upload.immichApiToken, state.upload.immichAlbumSyncEnabled, it) },
                     label = { Text(stringResource(R.string.settings_immich_album_id)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -316,6 +336,33 @@ private fun UploadSettingsSection(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ShareSettingsSection(
+    state: AllSettings,
+    onShareChange: (ShareSettings.() -> ShareSettings) -> Unit,
+) {
+    SettingsCard(
+        title = stringResource(R.string.settings_share_options),
+        iconRes = android.R.drawable.ic_menu_share,
+    ) {
+        StyledSwitch(
+            label = stringResource(R.string.settings_share_email),
+            checked = state.share.enableEmailShare,
+            onCheckedChange = { onShareChange { copy(enableEmailShare = it) } },
+        )
+        StyledSwitch(
+            label = stringResource(R.string.settings_share_sms),
+            checked = state.share.enableSmsShare,
+            onCheckedChange = { onShareChange { copy(enableSmsShare = it) } },
+        )
+        StyledSwitch(
+            label = stringResource(R.string.settings_share_print),
+            checked = state.share.enablePrintShare,
+            onCheckedChange = { onShareChange { copy(enablePrintShare = it) } },
+        )
     }
 }
 
@@ -580,14 +627,38 @@ private fun CaptureModeSection(
             style = MaterialTheme.typography.labelLarge,
             color = TextSecondary,
         )
-        val templateOptions = listOf("NONE", "SINGLE", "STRIP_2x2", "STRIP_VERTICAL")
+        val templateOptions = listOf(
+            "NONE",
+            "SINGLE",
+            "STRIP_2x2",
+            "STRIP_VERTICAL",
+            BuiltInTemplates.KEY_BIRTHDAY,
+            BuiltInTemplates.KEY_WEDDING,
+            BuiltInTemplates.KEY_ANNIVERSARY,
+            BuiltInTemplates.KEY_HOLIDAY,
+            BuiltInTemplates.KEY_GENERIC,
+        )
         val templateNames = mapOf(
             "NONE" to stringResource(R.string.settings_template_none),
             "SINGLE" to stringResource(R.string.settings_template_single),
             "STRIP_2x2" to stringResource(R.string.settings_template_2x2),
             "STRIP_VERTICAL" to stringResource(R.string.settings_template_vertical),
+            BuiltInTemplates.KEY_BIRTHDAY to stringResource(R.string.settings_template_birthday),
+            BuiltInTemplates.KEY_WEDDING to stringResource(R.string.settings_template_wedding),
+            BuiltInTemplates.KEY_ANNIVERSARY to stringResource(R.string.settings_template_anniversary),
+            BuiltInTemplates.KEY_HOLIDAY to stringResource(R.string.settings_template_holiday),
+            BuiltInTemplates.KEY_GENERIC to stringResource(R.string.settings_template_generic),
         )
+        val previewEventName = state.event.eventName.ifBlank { "Event Title" }
+        val previewEventDate = state.event.eventDate.ifBlank { "Date here" }
         templateOptions.forEach { key ->
+            val previewTemplate = when (key) {
+                "NONE" -> null
+                "SINGLE" -> BuiltInTemplates.singlePortrait(previewEventName)
+                "STRIP_2x2" -> BuiltInTemplates.photoStrip2x2(previewEventName)
+                "STRIP_VERTICAL" -> BuiltInTemplates.photoStripVertical(previewEventName)
+                else -> BuiltInTemplates.fromKey(key, previewEventName, previewEventDate)
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -600,6 +671,11 @@ private fun CaptureModeSection(
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                TemplatePreview(
+                    template = previewTemplate,
+                    modifier = Modifier.width(40.dp),
+                )
+                Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = templateNames[key] ?: key,
                     style = MaterialTheme.typography.bodyMedium,

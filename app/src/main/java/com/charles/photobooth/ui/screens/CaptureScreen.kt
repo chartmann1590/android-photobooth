@@ -58,6 +58,17 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.Lifecycle
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.lifecycle.LifecycleEventObserver
 import com.charles.photobooth.R
 import com.charles.photobooth.camera.CameraCaptureManager
@@ -67,9 +78,13 @@ import com.charles.photobooth.camera.PhotoFilter
 import com.charles.photobooth.monetization.BillingUiState
 import com.charles.photobooth.monetization.PhotoQuotaState
 import com.charles.photobooth.monetization.RewardedAdState
+import com.charles.photobooth.camera.UploadStatus
 import com.charles.photobooth.settings.SettingsRepository
+import com.charles.photobooth.settings.UploadSettings
 import com.charles.photobooth.template.BuiltInTemplates
 import com.charles.photobooth.template.WatermarkConfig
+import com.charles.photobooth.ui.components.TemplatePreview
+import com.charles.photobooth.util.QrCodeGenerator
 import com.charles.photobooth.ui.theme.DarkBackground
 import com.charles.photobooth.ui.theme.Gold
 import com.charles.photobooth.ui.theme.Rose
@@ -103,8 +118,10 @@ fun CaptureScreen(
     var countdown by rememberSaveable { mutableIntStateOf(0) }
     var useFrontCamera by rememberSaveable { mutableStateOf(true) }
     var eventName by rememberSaveable { mutableStateOf(context.getString(R.string.default_event_name)) }
+    var eventDate by rememberSaveable { mutableStateOf("") }
     var selectedFrameId by rememberSaveable { mutableStateOf<Long?>(null) }
     var watermarkConfig by remember { mutableStateOf<WatermarkConfig?>(null) }
+    var uploadSettings by remember { mutableStateOf(UploadSettings()) }
     var boothMode by rememberSaveable { mutableStateOf(false) }
     var gifModeEnabled by rememberSaveable { mutableStateOf(false) }
     var boothPhotoCount by rememberSaveable { mutableIntStateOf(4) }
@@ -121,16 +138,25 @@ fun CaptureScreen(
 
     val uiState by captureViewModel.uiState.collectAsStateWithLifecycle()
 
-    val multiPhotoTemplate = remember(selectedTemplateKey, eventName) {
-        BuiltInTemplates.fromKey(selectedTemplateKey, eventName)
+    val multiPhotoTemplate = remember(selectedTemplateKey, eventName, eventDate) {
+        BuiltInTemplates.fromKey(selectedTemplateKey, eventName, eventDate)
     }
-    val effectiveBoothMode = boothMode || multiPhotoTemplate != null
+    val effectiveBoothMode = boothMode || (multiPhotoTemplate?.frames?.size ?: 0) > 1
     val effectiveBoothCount = multiPhotoTemplate?.frames?.size ?: boothPhotoCount
+
+    fun finishOrPreview(photoId: Long?) {
+        if (photoId != null && uploadSettings.autoUploadEnabled && uploadSettings.isAnyUploadDestinationReady) {
+            captureViewModel.enterPreviewAndUpload(photoId, uploadSettings)
+        } else {
+            onFinishedCapture(photoId)
+        }
+    }
 
     LaunchedEffect(Unit) {
         val settings = settingsRepo.settingsFlow.first()
         useFrontCamera = settings.camera.useFrontCamera
         eventName = settings.event.eventName
+        eventDate = settings.event.eventDate
         selectedFrameId = settings.event.selectedFrameId
         watermarkConfig = if (settings.watermark.enabled && settings.watermark.imagePath.isNotBlank()) {
             WatermarkConfig(
@@ -139,6 +165,7 @@ fun CaptureScreen(
                 sizePercent = settings.watermark.sizePercent,
             )
         } else null
+        uploadSettings = settings.upload
         boothMode = settings.captureMode.boothMode
         gifModeEnabled = settings.captureMode.gifModeEnabled
         boothPhotoCount = settings.captureMode.boothPhotoCount
@@ -245,7 +272,7 @@ fun CaptureScreen(
                                         eventName = eventName,
                                     ) { compositeId ->
                                         quotaReservedForSession = 0
-                                        onFinishedCapture(compositeId ?: id)
+                                        finishOrPreview(compositeId ?: id)
                                     }
                                 } else if (gifModeEnabled && boothPhotoIds.size >= 2) {
                                     captureViewModel.createGifFromPhotos(
@@ -253,15 +280,15 @@ fun CaptureScreen(
                                         eventName = eventName,
                                     ) { gifId ->
                                         quotaReservedForSession = 0
-                                        onFinishedCapture(gifId ?: id)
+                                        finishOrPreview(gifId ?: id)
                                     }
                                 } else {
                                     quotaReservedForSession = 0
-                                    onFinishedCapture(id)
+                                    finishOrPreview(id)
                                 }
                         } else {
                             quotaReservedForSession = 0
-                            onFinishedCapture(id)
+                            finishOrPreview(id)
                         }
                     },
                 )
@@ -372,6 +399,7 @@ fun CaptureScreen(
                     is CaptureUiState.CountingDown -> stringResource(R.string.capture_get_ready)
                     is CaptureUiState.Capturing -> stringResource(R.string.capture_capturing)
                     is CaptureUiState.Saved -> stringResource(R.string.capture_saved)
+                    is CaptureUiState.Preview -> stringResource(R.string.capture_saved)
                     is CaptureUiState.Error -> stringResource(R.string.capture_error)
                 }
                 Text(
@@ -466,29 +494,51 @@ fun CaptureScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (uiState is CaptureUiState.Idle) {
+                val templateChips = listOf(
+                    BuiltInTemplates.KEY_NONE to stringResource(R.string.template_single),
+                    BuiltInTemplates.KEY_STRIP_2X2 to stringResource(R.string.template_strip_2x2),
+                    BuiltInTemplates.KEY_STRIP_VERTICAL to stringResource(R.string.template_strip_vertical),
+                    BuiltInTemplates.KEY_BIRTHDAY to stringResource(R.string.template_birthday),
+                    BuiltInTemplates.KEY_WEDDING to stringResource(R.string.template_wedding),
+                    BuiltInTemplates.KEY_ANNIVERSARY to stringResource(R.string.template_anniversary),
+                    BuiltInTemplates.KEY_HOLIDAY to stringResource(R.string.template_holiday),
+                    BuiltInTemplates.KEY_GENERIC to stringResource(R.string.template_generic),
+                )
                 Row(
                     horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(bottom = 12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 0.dp)
+                        .padding(bottom = 12.dp),
                 ) {
-                    listOf(
-                        BuiltInTemplates.KEY_NONE to stringResource(R.string.template_single),
-                        BuiltInTemplates.KEY_STRIP_2X2 to stringResource(R.string.template_strip_2x2),
-                        BuiltInTemplates.KEY_STRIP_VERTICAL to stringResource(R.string.template_strip_vertical),
-                    ).forEach { (key, label) ->
+                    templateChips.forEach { (key, label) ->
                         val selected = selectedTemplateKey == key
-                        Box(
+                        val previewTemplate = when (key) {
+                            BuiltInTemplates.KEY_NONE -> null
+                            BuiltInTemplates.KEY_STRIP_2X2 -> BuiltInTemplates.photoStrip2x2(eventName)
+                            BuiltInTemplates.KEY_STRIP_VERTICAL -> BuiltInTemplates.photoStripVertical(eventName)
+                            else -> BuiltInTemplates.fromKey(key, eventName, eventDate.ifBlank { "Date" })
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(if (selected) Rose else DarkBackground.copy(alpha = 0.6f))
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
                                 ) { selectedTemplateKey = key }
-                                .padding(horizontal = 14.dp, vertical = 8.dp),
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
                         ) {
+                            TemplatePreview(
+                                template = previewTemplate,
+                                modifier = Modifier.width(36.dp),
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = label,
-                                style = MaterialTheme.typography.labelMedium,
+                                style = MaterialTheme.typography.labelSmall,
                                 color = Color.White,
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                             )
@@ -554,6 +604,16 @@ fun CaptureScreen(
             )
         }
 
+        (uiState as? CaptureUiState.Preview)?.let { preview ->
+            PostCapturePreviewOverlay(
+                preview = preview,
+                onDone = {
+                    captureViewModel.resetToIdle()
+                    onFinishedCapture(preview.photoId)
+                },
+            )
+        }
+
         if (showPaywall) {
             PaywallDialog(
                 quotaState = quotaState,
@@ -563,6 +623,112 @@ fun CaptureScreen(
                 onBuyUnlimited = onBuyUnlimited,
                 onDismiss = { showPaywall = false },
             )
+        }
+    }
+}
+
+@Composable
+private fun PostCapturePreviewOverlay(
+    preview: CaptureUiState.Preview,
+    onDone: () -> Unit,
+) {
+    var minPreviewElapsed by remember(preview.photoId) { mutableStateOf(false) }
+    LaunchedEffect(preview.photoId) {
+        kotlinx.coroutines.delay(5000)
+        minPreviewElapsed = true
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.92f))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {},
+            ),
+    ) {
+        AsyncImage(
+            model = java.io.File(preview.photoPath),
+            contentDescription = stringResource(R.string.capture_preview_photo),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentScale = ContentScale.Fit,
+        )
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            val status = preview.uploadStatus
+            when {
+                status is UploadStatus.Complete && minPreviewElapsed -> {
+                    val qrBitmap = remember(status.url) {
+                        QrCodeGenerator.generate(status.url, 360)
+                    }
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                    ) {
+                        Box(
+                            modifier = Modifier.padding(12.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Image(
+                                bitmap = qrBitmap.asImageBitmap(),
+                                contentDescription = stringResource(R.string.gallery_qr_code),
+                                modifier = Modifier.size(180.dp),
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = stringResource(R.string.capture_scan_to_get_photo),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White,
+                    )
+                }
+                status is UploadStatus.Failed -> {
+                    Text(
+                        text = stringResource(R.string.capture_upload_failed, status.message),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                else -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(
+                            color = Rose,
+                            strokeWidth = 3.dp,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = stringResource(R.string.capture_preview_uploading),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White,
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            FilledTonalButton(
+                onClick = onDone,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = Rose,
+                    contentColor = Color.White,
+                ),
+            ) {
+                Text(stringResource(R.string.capture_preview_done), fontWeight = FontWeight.Medium)
+            }
         }
     }
 }

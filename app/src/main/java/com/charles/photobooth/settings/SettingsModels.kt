@@ -4,6 +4,7 @@ import com.charles.photobooth.template.WatermarkPosition
 
 data class EventSettings(
     val eventName: String = "My Event",
+    val eventDate: String = "",
     val filenamePattern: String = "EVENT_yyyyMMdd_HHmmss",
     val currentTemplateId: Long? = null,
     val selectedFrameId: Long? = null,
@@ -31,6 +32,7 @@ data class CaptureModeSettings(
 )
 
 data class UploadSettings(
+    val autoUploadEnabled: Boolean = false,
     val useAnonymousHost: Boolean = true,
     val immichBaseUrl: String = "",
     val immichApiToken: String = "",
@@ -39,7 +41,16 @@ data class UploadSettings(
 ) {
     val isImmichConfigured: Boolean
         get() = immichBaseUrl.isNotBlank() && immichApiToken.isNotBlank()
+
+    val isAnyUploadDestinationReady: Boolean
+        get() = useAnonymousHost || isImmichConfigured
 }
+
+data class ShareSettings(
+    val enableEmailShare: Boolean = true,
+    val enableSmsShare: Boolean = true,
+    val enablePrintShare: Boolean = true,
+)
 
 data class SmsGatewaySettings(
     val baseUrl: String = "",
@@ -68,5 +79,6 @@ data class AllSettings(
     val camera: CameraSettings = CameraSettings(),
     val watermark: WatermarkSettings = WatermarkSettings(),
     val captureMode: CaptureModeSettings = CaptureModeSettings(),
+    val share: ShareSettings = ShareSettings(),
 )
 
