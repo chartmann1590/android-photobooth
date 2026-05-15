@@ -72,6 +72,12 @@ class SettingsViewModel(
         }
     }
 
+    fun updateFrontScreenFlash(enabled: Boolean) {
+        viewModelScope.launch {
+            repo.updateCameraSettings { it.copy(frontScreenFlashEnabled = enabled) }
+        }
+    }
+
     fun updateWatermark(block: (WatermarkSettings) -> WatermarkSettings) {
         viewModelScope.launch {
             repo.updateWatermarkSettings(block)

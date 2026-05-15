@@ -108,6 +108,7 @@ class SettingsModelsTest {
     fun `camera settings defaults`() {
         val settings = CameraSettings()
         assertTrue(settings.useFrontCamera)
+        assertFalse(settings.frontScreenFlashEnabled)
     }
 
     @Test
@@ -118,6 +119,24 @@ class SettingsModelsTest {
         assertEquals(4, settings.boothPhotoCount)
         assertEquals("NONE", settings.selectedFilter)
         assertEquals("NONE", settings.selectedTemplate)
+        assertTrue(settings.disabledTemplateKeys.isEmpty())
+    }
+
+    @Test
+    fun `isTemplateEnabled treats unknown keys as enabled by default`() {
+        val settings = CaptureModeSettings()
+        assertTrue(settings.isTemplateEnabled("STRIP_2x2"))
+        assertTrue(settings.isTemplateEnabled("EVENT_BIRTHDAY"))
+        assertTrue(settings.isTemplateEnabled("EVENT_HALLOWEEN_FUTURE"))
+    }
+
+    @Test
+    fun `isTemplateEnabled is false for keys in the disabled set`() {
+        val settings = CaptureModeSettings(disabledTemplateKeys = setOf("EVENT_WEDDING", "STRIP_VERTICAL"))
+        assertFalse(settings.isTemplateEnabled("EVENT_WEDDING"))
+        assertFalse(settings.isTemplateEnabled("STRIP_VERTICAL"))
+        assertTrue(settings.isTemplateEnabled("EVENT_BIRTHDAY"))
+        assertTrue(settings.isTemplateEnabled("NONE"))
     }
 
     @Test

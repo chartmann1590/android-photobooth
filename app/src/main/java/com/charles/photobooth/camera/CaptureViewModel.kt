@@ -3,10 +3,8 @@ package com.charles.photobooth.camera
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import android.net.Uri
 import android.os.Environment
-import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.charles.photobooth.data.AppDatabase
@@ -147,12 +145,11 @@ class CaptureViewModel(
 
                 withContext(Dispatchers.IO) {
                     val exifRotation = app.contentResolver.openInputStream(uri)?.use { stream ->
-                        val exif = ExifInterface(stream)
-                        exif.getAttributeInt(
-                            ExifInterface.TAG_ORIENTATION,
-                            ExifInterface.ORIENTATION_NORMAL,
+                        androidx.exifinterface.media.ExifInterface(stream).getAttributeInt(
+                            androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
+                            androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL,
                         )
-                    } ?: ExifInterface.ORIENTATION_NORMAL
+                    } ?: androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL
 
                     val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                     app.contentResolver.openInputStream(uri)?.use { stream ->
@@ -240,12 +237,14 @@ class CaptureViewModel(
                         val encoder = GifEncoder(targetWidth, targetHeight, delayMs = 500)
                         encoder.start(out)
                         orderedPhotos.forEach { photo ->
-                            val bitmap = BitmapFactory.decodeFile(photo.localPath)
+                            val raw = BitmapFactory.decodeFile(photo.localPath)
                                 ?: throw IllegalStateException("Failed to decode ${photo.localPath}")
+                            val rotated = applyExifRotation(raw, readExifOrientation(photo.localPath))
                             try {
-                                encoder.addFrame(bitmap)
+                                encoder.addFrame(rotated)
                             } finally {
-                                bitmap.recycle()
+                                if (rotated !== raw) raw.recycle()
+                                rotated.recycle()
                             }
                         }
                         encoder.finish()
@@ -288,8 +287,11 @@ class CaptureViewModel(
                         ?: throw IllegalStateException("Failed to create photo directory")
 
                     val bitmaps = orderedPhotos.map { photo ->
-                        BitmapFactory.decodeFile(photo.localPath)
+                        val raw = BitmapFactory.decodeFile(photo.localPath)
                             ?: throw IllegalStateException("Failed to decode ${photo.localPath}")
+                        val rotated = applyExifRotation(raw, readExifOrientation(photo.localPath))
+                        if (rotated !== raw) raw.recycle()
+                        rotated
                     }
                     try {
                         val composite = TemplateRenderer(app).render(template, bitmaps)
@@ -321,24 +323,4 @@ class CaptureViewModel(
         }
     }
 
-    private fun applyExifRotation(bitmap: Bitmap, orientation: Int): Bitmap {
-        val matrix = Matrix()
-        when (orientation) {
-            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
-            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
-            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
-            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.preScale(-1f, 1f)
-            ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.preScale(1f, -1f)
-            ExifInterface.ORIENTATION_TRANSPOSE -> {
-                matrix.postRotate(90f)
-                matrix.preScale(-1f, 1f)
-            }
-            ExifInterface.ORIENTATION_TRANSVERSE -> {
-                matrix.postRotate(270f)
-                matrix.preScale(-1f, 1f)
-            }
-            else -> return bitmap
-        }
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-    }
 }

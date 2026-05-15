@@ -1,6 +1,10 @@
 package com.charles.photobooth.ui.screens
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.speech.tts.TextToSpeech
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
@@ -126,6 +130,8 @@ fun CaptureScreen(
     var gifModeEnabled by rememberSaveable { mutableStateOf(false) }
     var boothPhotoCount by rememberSaveable { mutableIntStateOf(4) }
     var selectedTemplateKey by rememberSaveable { mutableStateOf(BuiltInTemplates.KEY_NONE) }
+    var disabledTemplateKeys by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var frontScreenFlashEnabled by rememberSaveable { mutableStateOf(false) }
     var boothPhotosTaken by rememberSaveable { mutableIntStateOf(0) }
     val boothPhotoIds = remember { mutableStateListOf<Long>() }
     var pendingNextBoothShot by remember { mutableStateOf(false) }
@@ -169,7 +175,14 @@ fun CaptureScreen(
         boothMode = settings.captureMode.boothMode
         gifModeEnabled = settings.captureMode.gifModeEnabled
         boothPhotoCount = settings.captureMode.boothPhotoCount
-        selectedTemplateKey = settings.captureMode.selectedTemplate
+        disabledTemplateKeys = settings.captureMode.disabledTemplateKeys
+        val storedTemplate = settings.captureMode.selectedTemplate
+        selectedTemplateKey = if (storedTemplate in settings.captureMode.disabledTemplateKeys) {
+            BuiltInTemplates.KEY_NONE
+        } else {
+            storedTemplate
+        }
+        frontScreenFlashEnabled = settings.camera.frontScreenFlashEnabled
         selectedFilter = try { PhotoFilter.valueOf(settings.captureMode.selectedFilter) } catch (_: Exception) { PhotoFilter.NONE }
         cameraId = settings.camera.cameraId
         settingsLoaded = true
@@ -241,9 +254,30 @@ fun CaptureScreen(
             previewView ?: return@LaunchedEffect
             val outputDir = context.cacheDir
             val file = java.io.File(outputDir, "capture_${System.currentTimeMillis()}.jpg")
+            val useFrontScreenFlash = frontScreenFlashEnabled && useFrontCamera
+            val activity = context.findActivity()
+            val originalBrightness = activity?.window?.attributes?.screenBrightness
             try {
+                if (useFrontScreenFlash) {
+                    showFlash = true
+                    activity?.let { act ->
+                        act.window.attributes = act.window.attributes.apply {
+                            screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
+                        }
+                    }
+                    delay(150)
+                }
                 val uri = cameraManager.takePicture(file)
-                showFlash = true
+                if (!useFrontScreenFlash) {
+                    showFlash = true
+                } else {
+                    // Restore screen brightness after the shot is captured.
+                    activity?.let { act ->
+                        act.window.attributes = act.window.attributes.apply {
+                            screenBrightness = originalBrightness ?: WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                        }
+                    }
+                }
                 captureViewModel.saveCapturedPhoto(
                     uri = uri,
                     eventName = eventName,
@@ -293,6 +327,14 @@ fun CaptureScreen(
                     },
                 )
             } catch (e: Exception) {
+                // Make sure we don't strand the screen at max brightness on failure.
+                if (useFrontScreenFlash) {
+                    activity?.let { act ->
+                        act.window.attributes = act.window.attributes.apply {
+                            screenBrightness = originalBrightness ?: WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                        }
+                    }
+                }
                 val refundCount = (quotaReservedForSession - boothPhotosTaken).coerceAtLeast(0)
                 if (refundCount > 0) onRefundPhotos(refundCount)
                 quotaReservedForSession = 0
@@ -477,13 +519,14 @@ fun CaptureScreen(
 
         AnimatedVisibility(
             visible = showFlash,
-            enter = fadeIn(tween(100)),
+            enter = fadeIn(tween(60)),
             exit = fadeOut(tween(400)),
         ) {
+            val flashAlpha = if (frontScreenFlashEnabled && useFrontCamera) 1f else 0.85f
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White.copy(alpha = 0.85f)),
+                    .background(Color.White.copy(alpha = flashAlpha)),
             )
         }
 
@@ -494,7 +537,7 @@ fun CaptureScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (uiState is CaptureUiState.Idle) {
-                val templateChips = listOf(
+                val allChips = listOf(
                     BuiltInTemplates.KEY_NONE to stringResource(R.string.template_single),
                     BuiltInTemplates.KEY_STRIP_2X2 to stringResource(R.string.template_strip_2x2),
                     BuiltInTemplates.KEY_STRIP_VERTICAL to stringResource(R.string.template_strip_vertical),
@@ -504,6 +547,8 @@ fun CaptureScreen(
                     BuiltInTemplates.KEY_HOLIDAY to stringResource(R.string.template_holiday),
                     BuiltInTemplates.KEY_GENERIC to stringResource(R.string.template_generic),
                 )
+                // NONE always remains so users can always select "single shot"
+                val templateChips = allChips.filter { (k, _) -> k == BuiltInTemplates.KEY_NONE || k !in disabledTemplateKeys }
                 Row(
                     horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
                     modifier = Modifier
@@ -625,6 +670,12 @@ fun CaptureScreen(
             )
         }
     }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Composable

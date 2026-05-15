@@ -165,7 +165,12 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             EventSettingsSection(state, onEventChange = vm::updateEvent, textFieldColors = textFieldColors)
-            CameraSettingsSection(state, onCameraChange = vm::updateCamera, onCameraIdChange = vm::updateCameraId)
+            CameraSettingsSection(
+                state,
+                onCameraChange = vm::updateCamera,
+                onCameraIdChange = vm::updateCameraId,
+                onFrontScreenFlashChange = vm::updateFrontScreenFlash,
+            )
             FrameSettingsSection(
                 state = state,
                 frames = frames,
@@ -529,6 +534,7 @@ private fun CameraSettingsSection(
     state: AllSettings,
     onCameraChange: (Boolean) -> Unit,
     onCameraIdChange: (String?) -> Unit,
+    onFrontScreenFlashChange: (Boolean) -> Unit,
 ) {
     SettingsCard(
         title = stringResource(R.string.settings_camera),
@@ -538,6 +544,11 @@ private fun CameraSettingsSection(
             label = stringResource(R.string.settings_use_front_camera),
             checked = state.camera.useFrontCamera,
             onCheckedChange = onCameraChange,
+        )
+        StyledSwitch(
+            label = stringResource(R.string.settings_front_screen_flash),
+            checked = state.camera.frontScreenFlashEnabled,
+            onCheckedChange = onFrontScreenFlashChange,
         )
     }
 }
@@ -676,6 +687,8 @@ private fun CaptureModeSection(
                 "STRIP_VERTICAL" -> BuiltInTemplates.photoStripVertical(previewEventName)
                 else -> BuiltInTemplates.fromKey(key, previewEventName, previewEventDate)
             }
+            val isDisabled = key in state.captureMode.disabledTemplateKeys
+            val canToggle = key != "NONE"
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -697,12 +710,43 @@ private fun CaptureModeSection(
                 Text(
                     text = templateNames[key] ?: key,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (state.captureMode.selectedTemplate == key) Color.White else TextSecondary,
+                    color = when {
+                        isDisabled -> TextSecondary.copy(alpha = 0.5f)
+                        state.captureMode.selectedTemplate == key -> Color.White
+                        else -> TextSecondary
+                    },
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { onCaptureModeChange { copy(selectedTemplate = key) } }
+                        .clickable(enabled = !isDisabled) {
+                            onCaptureModeChange { copy(selectedTemplate = key) }
+                        }
                         .padding(vertical = 8.dp),
                 )
+                if (canToggle) {
+                    Switch(
+                        checked = !isDisabled,
+                        onCheckedChange = { wantEnabled ->
+                            onCaptureModeChange {
+                                val newDisabled = if (wantEnabled) {
+                                    disabledTemplateKeys - key
+                                } else {
+                                    disabledTemplateKeys + key
+                                }
+                                // If we just disabled the currently selected template,
+                                // fall back to NONE so capture isn't locked out.
+                                val nextSelected = if (!wantEnabled && selectedTemplate == key) "NONE" else selectedTemplate
+                                copy(disabledTemplateKeys = newDisabled, selectedTemplate = nextSelected)
+                            }
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Rose,
+                            uncheckedThumbColor = TextSecondary,
+                            uncheckedTrackColor = CardSurfaceLight,
+                            uncheckedBorderColor = Color.Transparent,
+                        ),
+                    )
+                }
             }
         }
 

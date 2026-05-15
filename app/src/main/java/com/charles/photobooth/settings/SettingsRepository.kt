@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
@@ -64,6 +65,8 @@ class SettingsRepository(private val context: Context) {
         val SELECTED_FRAME_ID = stringPreferencesKey("selected_frame_id")
         val USE_FRONT_CAMERA = booleanPreferencesKey("use_front_camera")
         val CAMERA_ID = stringPreferencesKey("camera_id")
+        val FRONT_SCREEN_FLASH = stringPreferencesKey("front_screen_flash")
+        val DISABLED_TEMPLATE_KEYS = stringSetPreferencesKey("disabled_template_keys")
 
         val WATERMARK_ENABLED = stringPreferencesKey("watermark_enabled")
         val WATERMARK_IMAGE_PATH = stringPreferencesKey("watermark_image_path")
@@ -126,6 +129,7 @@ class SettingsRepository(private val context: Context) {
             val updated = block(current)
             prefs[Keys.USE_FRONT_CAMERA] = updated.useFrontCamera
             prefs[Keys.CAMERA_ID] = updated.cameraId ?: ""
+            prefs[Keys.FRONT_SCREEN_FLASH] = updated.frontScreenFlashEnabled.toString()
         }
     }
 
@@ -150,6 +154,7 @@ class SettingsRepository(private val context: Context) {
             prefs[Keys.GIF_MODE_ENABLED] = updated.gifModeEnabled.toString()
             prefs[Keys.SELECTED_FILTER] = updated.selectedFilter
             prefs[Keys.SELECTED_TEMPLATE] = updated.selectedTemplate
+            prefs[Keys.DISABLED_TEMPLATE_KEYS] = updated.disabledTemplateKeys
         }
     }
 
@@ -221,6 +226,7 @@ class SettingsRepository(private val context: Context) {
         val camera = CameraSettings(
             useFrontCamera = this[Keys.USE_FRONT_CAMERA] ?: true,
             cameraId = this[Keys.CAMERA_ID]?.ifBlank { null },
+            frontScreenFlashEnabled = (this[Keys.FRONT_SCREEN_FLASH] ?: "false").toBooleanStrictOrNull() ?: false,
         )
 
         val watermark = WatermarkSettings(
@@ -240,6 +246,7 @@ class SettingsRepository(private val context: Context) {
             gifModeEnabled = (this[Keys.GIF_MODE_ENABLED] ?: "false").toBooleanStrictOrNull() ?: false,
             selectedFilter = this[Keys.SELECTED_FILTER] ?: "NONE",
             selectedTemplate = this[Keys.SELECTED_TEMPLATE] ?: "NONE",
+            disabledTemplateKeys = this[Keys.DISABLED_TEMPLATE_KEYS] ?: emptySet(),
         )
 
         val upload = UploadSettings(

@@ -13,6 +13,7 @@ data class EventSettings(
 data class CameraSettings(
     val useFrontCamera: Boolean = true,
     val cameraId: String? = null,
+    val frontScreenFlashEnabled: Boolean = false,
 )
 
 data class WatermarkSettings(
@@ -29,7 +30,10 @@ data class CaptureModeSettings(
     val gifModeEnabled: Boolean = false,
     val selectedFilter: String = "NONE",
     val selectedTemplate: String = "NONE",
-)
+    val disabledTemplateKeys: Set<String> = emptySet(),
+) {
+    fun isTemplateEnabled(key: String): Boolean = key !in disabledTemplateKeys
+}
 
 data class UploadSettings(
     val autoUploadEnabled: Boolean = false,
