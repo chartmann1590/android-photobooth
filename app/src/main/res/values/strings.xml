@@ -82,6 +82,7 @@
     <string name="capture_scan_to_get_photo">Scan to get your photo</string>
     <string name="capture_upload_failed">Upload failed: %1$s</string>
     <string name="capture_preview_done">Done</string>
+    <string name="capture_template_failed">Could not apply the selected template — showing the original photo</string>
     <string name="settings_immich_base_url">Immich base URL</string>
     <string name="settings_immich_api_token">Immich API token</string>
     <string name="settings_immich_album_sync">Sync uploads to Immich album</string>

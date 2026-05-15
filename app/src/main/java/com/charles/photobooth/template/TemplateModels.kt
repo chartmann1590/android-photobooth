@@ -169,6 +169,7 @@ class TemplateRenderer(
 
         paint.color = Color.WHITE
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        paint.textAlign = Paint.Align.CENTER
 
         template.overlays.forEach { overlay ->
             paint.textSize = overlay.textSizeSp * context.resources.displayMetrics.scaledDensity

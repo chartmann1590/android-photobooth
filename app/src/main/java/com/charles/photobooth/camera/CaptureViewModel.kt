@@ -293,7 +293,7 @@ class CaptureViewModel(
                         if (rotated !== raw) raw.recycle()
                         rotated
                     }
-                    try {
+                    val compositeId = try {
                         val composite = TemplateRenderer(app).render(template, bitmaps)
                         val destFile = File(outputDir, "template_${System.currentTimeMillis()}.jpg")
                         try {
@@ -313,10 +313,21 @@ class CaptureViewModel(
                     } finally {
                         bitmaps.forEach { it.recycle() }
                     }
+
+                    // The composite is the finished photo; remove the raw source photos
+                    // so the gallery shows only the framed result instead of the un-framed
+                    // intermediates the user never asked for.
+                    orderedPhotos.forEach { photo ->
+                        runCatching { File(photo.localPath).delete() }
+                        runCatching { photoDao.deleteById(photo.id) }
+                    }
+
+                    compositeId
                 }
                 _uiState.value = CaptureUiState.Saved(id)
                 onComplete(id)
             } catch (e: Exception) {
+                android.util.Log.e("CaptureViewModel", "composeTemplate failed", e)
                 _uiState.value = CaptureUiState.Error(e.message ?: "Failed to compose template")
                 onComplete(null)
             }

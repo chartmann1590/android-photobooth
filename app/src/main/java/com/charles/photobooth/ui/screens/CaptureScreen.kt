@@ -308,6 +308,13 @@ fun CaptureScreen(
                                         eventName = eventName,
                                     ) { compositeId ->
                                         quotaReservedForSession = 0
+                                        if (compositeId == null) {
+                                            Toast.makeText(
+                                                context,
+                                                context.getString(R.string.capture_template_failed),
+                                                Toast.LENGTH_LONG,
+                                            ).show()
+                                        }
                                         finishOrPreview(compositeId ?: id)
                                     }
                                 } else if (gifModeEnabled && boothPhotoIds.size >= 2) {
