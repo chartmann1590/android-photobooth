@@ -23,27 +23,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Create dummy google-services.json
-        run: |
-          cat > app/google-services.json << 'EOF'
-          {
-            "project_info": {
-              "project_number": "000000000000",
-              "project_id": "test-project",
-              "storage_bucket": "test-project.appspot.com"
-            },
-            "client": [{
-              "client_info": {
-                "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
-                "android_client_info": { "package_name": "com.charles.photobooth" }
-              },
-              "oauth_client": [],
-              "api_key": [{ "current_key": "AIzaSyDummyKeyForTestingPurposesOnly12345" }],
-              "services": {}
-            }],
-            "configuration_version": "1"
-          }
-          EOF
+      - name: Restore google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
 
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
