@@ -32,6 +32,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,11 +44,13 @@ import com.charles.photobooth.template.TemplateDefinition
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.charles.photobooth.data.TemplateEntity
@@ -253,32 +256,26 @@ private fun EventSettingsSection(
         title = stringResource(R.string.settings_event),
         iconRes = android.R.drawable.ic_menu_today,
     ) {
-        OutlinedTextField(
+        StableTextField(
             value = state.event.eventName,
             onValueChange = { onEventChange(it, state.event.eventDate, state.event.filenamePattern) },
-            label = { Text(stringResource(R.string.settings_event_name)) },
+            label = stringResource(R.string.settings_event_name),
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
-            singleLine = true,
         )
-        OutlinedTextField(
+        StableTextField(
             value = state.event.eventDate,
             onValueChange = { onEventChange(state.event.eventName, it, state.event.filenamePattern) },
-            label = { Text(stringResource(R.string.settings_event_date)) },
+            label = stringResource(R.string.settings_event_date),
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
-            singleLine = true,
         )
-        OutlinedTextField(
+        StableTextField(
             value = state.event.filenamePattern,
             onValueChange = { onEventChange(state.event.eventName, state.event.eventDate, it) },
-            label = { Text(stringResource(R.string.settings_filename_pattern)) },
+            label = stringResource(R.string.settings_filename_pattern),
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
-            singleLine = true,
         )
     }
 }
@@ -308,23 +305,19 @@ private fun UploadSettingsSection(
             },
         )
         if (!state.upload.useAnonymousHost) {
-            OutlinedTextField(
+            StableTextField(
                 value = state.upload.immichBaseUrl,
                 onValueChange = { onUploadChange(state.upload.autoUploadEnabled, state.upload.useAnonymousHost, it, state.upload.immichApiToken, state.upload.immichAlbumSyncEnabled, state.upload.immichAlbumId) },
-                label = { Text(stringResource(R.string.settings_immich_base_url)) },
+                label = stringResource(R.string.settings_immich_base_url),
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
                 colors = textFieldColors,
-                singleLine = true,
             )
-            OutlinedTextField(
+            StableTextField(
                 value = state.upload.immichApiToken,
                 onValueChange = { onUploadChange(state.upload.autoUploadEnabled, state.upload.useAnonymousHost, state.upload.immichBaseUrl, it, state.upload.immichAlbumSyncEnabled, state.upload.immichAlbumId) },
-                label = { Text(stringResource(R.string.settings_immich_api_token)) },
+                label = stringResource(R.string.settings_immich_api_token),
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
                 colors = textFieldColors,
-                singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
             )
             StyledSwitch(
@@ -335,14 +328,12 @@ private fun UploadSettingsSection(
                 },
             )
             if (state.upload.immichAlbumSyncEnabled) {
-                OutlinedTextField(
+                StableTextField(
                     value = state.upload.immichAlbumId,
                     onValueChange = { onUploadChange(state.upload.autoUploadEnabled, state.upload.useAnonymousHost, state.upload.immichBaseUrl, state.upload.immichApiToken, state.upload.immichAlbumSyncEnabled, it) },
-                    label = { Text(stringResource(R.string.settings_immich_album_id)) },
+                    label = stringResource(R.string.settings_immich_album_id),
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
                     colors = textFieldColors,
-                    singleLine = true,
                 )
             }
         }
@@ -387,32 +378,26 @@ private fun SmsSettingsSection(
         title = stringResource(R.string.settings_sms_gateway),
         iconRes = android.R.drawable.ic_dialog_email,
     ) {
-        OutlinedTextField(
+        StableTextField(
             value = state.sms.baseUrl,
             onValueChange = { onSmsChange(it, state.sms.username, state.sms.password, state.sms.useCloudServer) },
-            label = { Text(stringResource(R.string.settings_base_url)) },
+            label = stringResource(R.string.settings_base_url),
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
-            singleLine = true,
         )
-        OutlinedTextField(
+        StableTextField(
             value = state.sms.username,
             onValueChange = { onSmsChange(state.sms.baseUrl, it, state.sms.password, state.sms.useCloudServer) },
-            label = { Text(stringResource(R.string.settings_username)) },
+            label = stringResource(R.string.settings_username),
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
-            singleLine = true,
         )
-        OutlinedTextField(
+        StableTextField(
             value = state.sms.password,
             onValueChange = { onSmsChange(state.sms.baseUrl, state.sms.username, it, state.sms.useCloudServer) },
-            label = { Text(stringResource(R.string.settings_password)) },
+            label = stringResource(R.string.settings_password),
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
-            singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
         )
         StyledSwitch(
@@ -450,23 +435,19 @@ private fun SmtpSettingsSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            OutlinedTextField(
+            StableTextField(
                 value = state.smtp.host,
                 onValueChange = { onSmtpChange(SmtpFieldChange.Host(it)) },
-                label = { Text(stringResource(R.string.settings_smtp_host)) },
+                label = stringResource(R.string.settings_smtp_host),
                 modifier = Modifier.weight(2f),
-                shape = RoundedCornerShape(12.dp),
                 colors = textFieldColors,
-                singleLine = true,
             )
-            OutlinedTextField(
+            StableTextField(
                 value = state.smtp.port.toString(),
                 onValueChange = { onSmtpChange(SmtpFieldChange.Port(it.toIntOrNull() ?: state.smtp.port)) },
-                label = { Text(stringResource(R.string.settings_port)) },
+                label = stringResource(R.string.settings_port),
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
                 colors = textFieldColors,
-                singleLine = true,
             )
         }
         StyledSwitch(
@@ -474,46 +455,38 @@ private fun SmtpSettingsSection(
             checked = state.smtp.useSslTls,
             onCheckedChange = { onSmtpChange(SmtpFieldChange.UseTls(it)) },
         )
-        OutlinedTextField(
+        StableTextField(
             value = state.smtp.username,
             onValueChange = { onSmtpChange(SmtpFieldChange.Username(it)) },
-            label = { Text(stringResource(R.string.settings_username)) },
+            label = stringResource(R.string.settings_username),
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
-            singleLine = true,
         )
-        OutlinedTextField(
+        StableTextField(
             value = state.smtp.password,
             onValueChange = { onSmtpChange(SmtpFieldChange.Password(it)) },
-            label = { Text(stringResource(R.string.settings_password)) },
+            label = stringResource(R.string.settings_password),
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
-            singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            OutlinedTextField(
+            StableTextField(
                 value = state.smtp.fromAddress,
                 onValueChange = { onSmtpChange(SmtpFieldChange.FromAddress(it)) },
-                label = { Text(stringResource(R.string.settings_from_address)) },
+                label = stringResource(R.string.settings_from_address),
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
                 colors = textFieldColors,
-                singleLine = true,
             )
-            OutlinedTextField(
+            StableTextField(
                 value = state.smtp.fromName,
                 onValueChange = { onSmtpChange(SmtpFieldChange.FromName(it)) },
-                label = { Text(stringResource(R.string.settings_from_name)) },
+                label = stringResource(R.string.settings_from_name),
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
                 colors = textFieldColors,
-                singleLine = true,
             )
         }
         ElevatedButton(
@@ -789,14 +762,12 @@ private fun WatermarkSection(
             onCheckedChange = { onWatermarkChange { copy(enabled = it) } },
         )
         if (state.watermark.enabled) {
-            OutlinedTextField(
+            StableTextField(
                 value = state.watermark.imagePath,
                 onValueChange = { onWatermarkChange { copy(imagePath = it) } },
-                label = { Text(stringResource(R.string.settings_watermark_path)) },
+                label = stringResource(R.string.settings_watermark_path),
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
                 colors = textFieldColors,
-                singleLine = true,
             )
             Text(
                 text = stringResource(R.string.settings_watermark_position),
@@ -976,6 +947,42 @@ private fun FullScreenTemplatePreviewDialog(
             }
         }
     }
+}
+
+/**
+ * OutlinedTextField wrapper that keeps the editing buffer in local state. Without this,
+ * round-tripping every keystroke through DataStore -> Flow -> recompose causes characters
+ * to drop and the cursor to jump during fast typing. External value changes still
+ * propagate when the field isn't focused.
+ */
+@Composable
+private fun StableTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    colors: androidx.compose.material3.TextFieldColors,
+    singleLine: Boolean = true,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+) {
+    var buffer by remember { mutableStateOf(value) }
+    var isFocused by remember { mutableStateOf(false) }
+    LaunchedEffect(value) {
+        if (!isFocused && buffer != value) buffer = value
+    }
+    OutlinedTextField(
+        value = buffer,
+        onValueChange = {
+            buffer = it
+            onValueChange(it)
+        },
+        label = { Text(label) },
+        modifier = modifier.onFocusChanged { isFocused = it.isFocused },
+        shape = RoundedCornerShape(12.dp),
+        colors = colors,
+        singleLine = singleLine,
+        visualTransformation = visualTransformation,
+    )
 }
 
 @Composable
