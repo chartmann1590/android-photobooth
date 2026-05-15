@@ -3,11 +3,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Android API](https://img.shields.io/badge/API-24%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=24)
 
-A modern Android photobooth app built with Kotlin and Jetpack Compose. It provides a fullscreen photobooth experience with event-specific templates, a 3-second countdown with audible prompt, local saving, optional cloud upload, SMS/email sharing, a built-in gallery, and wireless printing via the Android print framework.
+A modern Android photobooth app built with Kotlin and Jetpack Compose. It provides a fullscreen photobooth experience with event-specific templates, a 3-second countdown with audible prompt, local saving, optional cloud upload, SMS/email sharing, short video capture, a built-in gallery, and wireless printing via the Android print framework.
 
 This project is designed to be used at events with minimal setup: configure your event template, SMS gateway, SMTP server, and optional upload backend, then run the photobooth in landscape mode.
 
 ## Features
+
+- **Short Video Capture** - Optional 8-second MP4 videos with audio, upload, QR sharing, and Immich sync
 
 - **Fullscreen Photobooth Experience** — Immersive landscape-only interface
 - **3-Second Countdown** — Color-cycling animated countdown with voice prompt and screen flash
@@ -37,6 +39,7 @@ Visit the landing page to learn more about the app: [**chartmann1590.github.io/a
 
 - Android 7.0 (API level 24) or higher
 - Camera permission
+- Microphone permission (for video capture with audio)
 - Internet connection (for cloud upload, SMS, and email features)
 - Landscape orientation enforced
 
@@ -80,10 +83,15 @@ Configure your photobooth event in the Settings screen:
 
 ### Upload Settings (Optional)
 
-Configure Immich server for automatic cloud upload:
+Configure uploads for photos, GIFs, and videos:
+
+- **Automatic Upload** - Upload captures immediately after saving when a destination is configured
+- **Anonymous Host** - Generate public download links for QR code sharing
 
 - **Immich URL** — Your Immich server URL
 - **API Key** — Immich API key for authentication
+
+- **Immich Album Sync** - Add uploaded captures to a configured Immich album
 
 ### SMS Settings (Optional)
 
@@ -104,6 +112,15 @@ Configure email delivery:
 - **From Email** — Sender email address
 - **From Name** — Sender display name
 
+### Video Capture Settings
+
+Video capture is disabled by default and can be enabled in **Settings -> Capture Mode & Filters**:
+
+- Videos are limited to 8 seconds.
+- Videos include audio and require microphone permission.
+- Videos can be uploaded, shared by QR code after upload, and synced to Immich.
+- Videos cannot be printed, emailed, texted by SMS, or shared through the Android share sheet.
+
 ## Usage
 
 ### Basic Photobooth Workflow
@@ -116,12 +133,15 @@ Configure email delivery:
 
 ### Gallery Features
 
-- View all captured photos
-- Share individual photos via SMS, email, or other apps
-- Delete photos from local storage (tap a photo, then **Delete**)
-- Print photos wirelessly
+When video capture is enabled, guests can switch from photo mode to video mode on the capture screen. Videos skip photo-only template/filter/print/email/SMS actions and are handled through upload, QR sharing, Immich sync, playback, and delete.
 
-### Where Are My Photos?
+- View captured photos, GIFs, and videos
+- Upload photos, GIFs, and videos to generate QR codes
+- Share photos and GIFs via SMS, email, Android apps, or print
+- Delete captures from local storage (tap an item, then **Delete**)
+- Videos are intentionally limited to upload, QR sharing, Immich sync, playback, and delete
+
+### Where Are My Captures?
 
 Captured photos are saved to app-specific external storage so a stock file
 manager can find them without root:
@@ -130,8 +150,14 @@ manager can find them without root:
 Android/data/com.charles.photobooth/files/Pictures/
 ```
 
+Captured videos are saved separately:
+
+```
+Android/data/com.charles.photobooth/files/Movies/
+```
+
 Open the system **Files** app, browse to that folder, and you can copy,
-delete, or share the JPEGs directly. (Note: Android wipes this folder when
+delete, or share the files directly. (Note: Android wipes these folders when
 the app is uninstalled — back up before removing the app.)
 
 ### Multi-Photo Templates
@@ -250,7 +276,7 @@ Created by Charles Hartmann
 - [ ] Green screen / background replacement
 - [ ] Real-time live filter preview on camera feed
 - [ ] Template editor with drag-and-drop layout
-- [ ] Full video capture UI (recording controls, playback, sharing)
+- [x] Full video capture UI (8-second videos, upload/QR sharing, Immich sync)
 - [ ] Camera picker UI (select from all available cameras, not just front/back)
 
 ## Support

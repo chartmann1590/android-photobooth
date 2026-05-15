@@ -86,6 +86,34 @@ class ImmichUploaderTest {
     }
 
     @Test
+    fun sends_required_asset_metadata() {
+        runBlocking {
+            server.enqueue(MockResponse().setResponseCode(200).setBody("{\"id\":\"abc\"}"))
+            makeUploader().upload(testFile)
+            val body = server.takeRequest().body.readString(Charsets.UTF_8)
+            assertTrue(body.contains("deviceAssetId"))
+            assertTrue(body.contains("deviceId"))
+            assertTrue(body.contains("fileCreatedAt"))
+            assertTrue(body.contains("fileModifiedAt"))
+            assertTrue(body.contains("filename"))
+        }
+    }
+
+    @Test
+    fun sends_mp4_as_video_with_duration() {
+        runBlocking {
+            val videoFile = File.createTempFile("test", ".mp4")
+            videoFile.writeText("fake video data")
+            server.enqueue(MockResponse().setResponseCode(200).setBody("{\"id\":\"abc\"}"))
+            makeUploader().upload(videoFile)
+            val body = server.takeRequest().body.readString(Charsets.UTF_8)
+            assertTrue(body.contains("video/mp4"))
+            assertTrue(body.contains("duration"))
+            videoFile.delete()
+        }
+    }
+
+    @Test
     fun successful_upload_returns_asset_ID() {
         runBlocking {
             server.enqueue(MockResponse().setResponseCode(200).setBody("{\"id\":\"asset-123\"}"))

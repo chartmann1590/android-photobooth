@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.charles.photobooth.data.AppDatabase
+import com.charles.photobooth.data.MediaType
 import com.charles.photobooth.data.PhotoEntity
 import com.charles.photobooth.network.AnonymousUploader
 import com.charles.photobooth.network.ImmichUploader
@@ -30,6 +31,31 @@ sealed interface GalleryActionState {
     data object Uploading : GalleryActionState
     data object Sending : GalleryActionState
     data class Error(val message: String) : GalleryActionState
+}
+
+enum class GalleryAction {
+    UPLOAD,
+    QR_CODE,
+    EMAIL,
+    SMS,
+    PRINT,
+    ANDROID_SHARE,
+    DELETE,
+}
+
+fun availableGalleryActions(photo: PhotoEntity, shareSettings: ShareSettings): Set<GalleryAction> {
+    val actions = mutableSetOf(GalleryAction.UPLOAD, GalleryAction.DELETE)
+    if (photo.uploadedUrl != null) {
+        actions.add(GalleryAction.QR_CODE)
+    }
+    if (photo.mediaType == MediaType.VIDEO) {
+        return actions
+    }
+    actions.add(GalleryAction.ANDROID_SHARE)
+    if (shareSettings.enableEmailShare) actions.add(GalleryAction.EMAIL)
+    if (shareSettings.enableSmsShare) actions.add(GalleryAction.SMS)
+    if (shareSettings.enablePrintShare) actions.add(GalleryAction.PRINT)
+    return actions
 }
 
 class GalleryViewModel(
@@ -76,7 +102,7 @@ class GalleryViewModel(
                 _actionState.value = GalleryActionState.Uploading
                 val file = File(photo.localPath)
                 if (!file.exists()) {
-                    _actionState.value = GalleryActionState.Error("Photo file not found")
+                    _actionState.value = GalleryActionState.Error("Media file not found")
                     return@launch
                 }
                 val uploader = getUploader()
@@ -97,6 +123,10 @@ class GalleryViewModel(
         if (_actionState.value is GalleryActionState.Uploading || _actionState.value is GalleryActionState.Sending) return
         viewModelScope.launch {
             try {
+                if (photo.mediaType == MediaType.VIDEO) {
+                    _actionState.value = GalleryActionState.Error("Videos cannot be emailed")
+                    return@launch
+                }
                 _actionState.value = GalleryActionState.Sending
                 val file = File(photo.localPath)
                 if (!file.exists()) {
@@ -119,6 +149,10 @@ class GalleryViewModel(
         if (_actionState.value is GalleryActionState.Uploading || _actionState.value is GalleryActionState.Sending) return
         viewModelScope.launch {
             try {
+                if (photo.mediaType == MediaType.VIDEO) {
+                    _actionState.value = GalleryActionState.Error("Videos cannot be sent by SMS")
+                    return@launch
+                }
                 _actionState.value = GalleryActionState.Sending
                 val smsSettings = settingsRepo.getCurrentSettings().sms
                 val client = SmsGatewayClient(smsSettings)
@@ -148,6 +182,7 @@ class GalleryViewModel(
     }
 
     fun getShareIntent(photo: PhotoEntity): Intent? {
+        if (photo.mediaType == MediaType.VIDEO) return null
         val file = File(photo.localPath)
         if (!file.exists()) return null
         val mimeType = when (file.extension.lowercase()) {

@@ -570,6 +570,11 @@ private fun CaptureModeSection(
             checked = state.captureMode.boothMode,
             onCheckedChange = { onCaptureModeChange { copy(boothMode = it) } },
         )
+        StyledSwitch(
+            label = stringResource(R.string.settings_video_capture),
+            checked = state.captureMode.videoCaptureEnabled,
+            onCheckedChange = { onCaptureModeChange { copy(videoCaptureEnabled = it) } },
+        )
         if (state.captureMode.boothMode) {
             StyledSwitch(
                 label = stringResource(R.string.settings_gif_mode),

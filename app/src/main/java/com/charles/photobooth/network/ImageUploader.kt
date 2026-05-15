@@ -15,7 +15,9 @@ interface ImageUploader {
     suspend fun upload(file: File): String
 }
 
-private fun mimeTypeFor(file: File): String = when (file.extension.lowercase()) {
+internal fun mediaMimeTypeFor(file: File): String = when (file.extension.lowercase()) {
+    "mp4" -> "video/mp4"
+    "webm" -> "video/webm"
     "gif" -> "image/gif"
     "png" -> "image/png"
     else -> "image/jpeg"
@@ -71,7 +73,7 @@ class StorageToUploader(
             .addFormDataPart(
                 "file",
                 file.name,
-                file.asRequestBody(mimeTypeFor(file).toMediaTypeOrNull()),
+                file.asRequestBody(mediaMimeTypeFor(file).toMediaTypeOrNull()),
             )
             .build()
 
@@ -113,7 +115,7 @@ class CatboxUploader(
             .addFormDataPart(
                 "fileToUpload",
                 file.name,
-                file.asRequestBody(mimeTypeFor(file).toMediaTypeOrNull()),
+                file.asRequestBody(mediaMimeTypeFor(file).toMediaTypeOrNull()),
             )
             .build()
 

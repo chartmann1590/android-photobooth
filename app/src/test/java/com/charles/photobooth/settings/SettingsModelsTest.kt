@@ -119,6 +119,7 @@ class SettingsModelsTest {
         assertEquals(4, settings.boothPhotoCount)
         assertEquals("NONE", settings.selectedFilter)
         assertEquals("NONE", settings.selectedTemplate)
+        assertFalse(settings.videoCaptureEnabled)
         assertTrue(settings.disabledTemplateKeys.isEmpty())
     }
 

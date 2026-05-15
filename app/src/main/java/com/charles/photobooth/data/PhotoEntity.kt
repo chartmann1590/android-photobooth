@@ -3,6 +3,11 @@ package com.charles.photobooth.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+enum class MediaType {
+    IMAGE,
+    VIDEO,
+}
+
 @Entity(tableName = "photos")
 data class PhotoEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -11,5 +16,6 @@ data class PhotoEntity(
     val localPath: String,
     val uploadedUrl: String? = null,
     val templateId: Long? = null,
+    val mediaType: MediaType = MediaType.IMAGE,
 )
 

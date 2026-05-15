@@ -4,7 +4,7 @@
 
     <!-- Permission screen -->
     <string name="permissions_required">Permissions Required</string>
-    <string name="permissions_rationale">Photobooth needs access to your camera and storage to capture and save photos.</string>
+    <string name="permissions_rationale">Photobooth needs access to your camera, microphone, and storage to capture and save photos and videos.</string>
     <string name="grant_permissions">Grant Permissions</string>
     <string name="open_settings">Open Settings</string>
 
@@ -26,8 +26,16 @@
     <string name="capture_error">Error</string>
     <string name="capture_smile">Smile!</string>
     <string name="capture_tap">Tap to capture</string>
+    <string name="capture_tap_record_video">Tap to record up to 8 seconds</string>
+    <string name="capture_stop_recording">Tap to stop recording</string>
     <string name="capture_back">Back</string>
     <string name="capture_button">Capture</string>
+    <string name="capture_video_button">Record video</string>
+    <string name="capture_photo_mode">Photo</string>
+    <string name="capture_video_mode">Video</string>
+    <string name="capture_recording">Recording %1$d/%2$d</string>
+    <string name="capture_video_unavailable">Video capture is not available</string>
+    <string name="capture_video_save_failed">Failed to save video</string>
     <string name="capture_counter_remaining">%1$d photos left today</string>
     <string name="capture_counter_unlimited">Unlimited photos</string>
 
@@ -48,6 +56,7 @@
     <string name="gallery_empty">No photos yet</string>
     <string name="gallery_empty_subtitle">Start capturing to see them here</string>
     <string name="gallery_photo">Photo</string>
+    <string name="gallery_video_badge">VIDEO</string>
     <string name="gallery_uploaded">Uploaded</string>
     <string name="gallery_selected_photo">Selected photo</string>
     <string name="gallery_share_sms">Share via SMS</string>
@@ -109,6 +118,7 @@
     <string name="settings_selected">Selected</string>
     <string name="settings_manage_frames">Manage Frames</string>
     <string name="settings_capture_mode">Capture Mode &amp; Filters</string>
+    <string name="settings_video_capture">Enable video capture</string>
     <string name="settings_booth_mode">Booth mode (continuous capture)</string>
     <string name="settings_gif_mode">Create animated GIF</string>
     <string name="settings_photo_count">Photos per session</string>
@@ -184,7 +194,7 @@
     <string name="tutorial_step_welcome_title">Welcome to Photobooth</string>
     <string name="tutorial_step_welcome_body">Photobooth is built for events: set up your event once, start the camera, then let guests capture, share, print, and replay the tutorial whenever they need it.</string>
     <string name="tutorial_step_permissions_title">Permissions</string>
-    <string name="tutorial_step_permissions_body">The app asks for **camera** access to take photos and **media** access to save and share images. Photos stay on this device unless you upload or share them.</string>
+    <string name="tutorial_step_permissions_body">The app asks for **camera** access to take photos, **microphone** access for videos, and **media** access to save captures. Photos and videos stay on this device unless you upload or share them.</string>
     <string name="tutorial_step_home_title">Home Screen</string>
     <string name="tutorial_step_home_body">Use **Start Photobooth** for the camera, **View Gallery** for finished photos, **Settings** for event setup, and **Tutorial** to replay these instructions any time. If you have not unlocked unlimited photos, **Get More Photos** opens ad rewards and purchase options.</string>
     <string name="tutorial_step_capture_title">Taking Photos</string>
@@ -204,17 +214,17 @@
     <string name="tutorial_step_watermark_title">Watermarks &amp; Logos</string>
     <string name="tutorial_step_watermark_body">Enable **Watermark / Logo**, enter the image path, and choose its position. This brands new photos with your event or company mark.</string>
     <string name="tutorial_step_gallery_title">Photo Gallery</string>
-    <string name="tutorial_step_gallery_body">The **Gallery** stores captured photos and GIFs. Tap an item to preview it, upload it, send it, print it, or share it through Android apps.</string>
+    <string name="tutorial_step_gallery_body">The **Gallery** stores captured photos, GIFs, and videos. Tap an item to preview it, upload it, or use the sharing options available for that media type.</string>
     <string name="tutorial_step_upload_title">Cloud Upload</string>
     <string name="tutorial_step_upload_body">Tap **Upload** from a gallery item. By default, uploads use an anonymous temporary host; configure **Immich** in Settings if you want self-hosted storage.</string>
     <string name="tutorial_step_qr_title">QR Code Sharing</string>
-    <string name="tutorial_step_qr_body">After an upload succeeds, the gallery detail shows a **QR code** for the uploaded URL. Guests can scan it to open the shared photo or GIF.</string>
+    <string name="tutorial_step_qr_body">After an upload succeeds, the gallery detail shows a **QR code** for the uploaded URL. Guests can scan it to open the shared photo, GIF, or video.</string>
     <string name="tutorial_step_share_title">Sharing</string>
     <string name="tutorial_step_share_body">Use **SMS** and **Email** after configuring your gateway or SMTP settings. Use **Share to Apps** for the Android share sheet.</string>
     <string name="tutorial_step_print_title">Printing</string>
     <string name="tutorial_step_print_body">Tap **Print** from a gallery item to use Android printing. Choose any printer or print service already available on the device.</string>
     <string name="tutorial_step_settings_title">Settings</string>
-    <string name="tutorial_step_settings_body">Settings control the event name, filenames, camera, booth mode, GIF mode, filters, templates, frames, watermark, upload destination, SMS, and email.</string>
+    <string name="tutorial_step_settings_body">Settings control the event name, filenames, camera, video capture, booth mode, GIF mode, filters, templates, frames, watermark, upload destination, SMS, and email.</string>
     <string name="tutorial_step_privacy_title">Privacy</string>
     <string name="tutorial_step_privacy_body">Photos and credentials are stored locally. Analytics and crash reporting only run if you allow them during the consent prompt.</string>
     <string name="tutorial_step_support_title">Support</string>
@@ -227,7 +237,7 @@
         <p><b>Last updated:</b> May 2026</p>
         <p>This privacy policy applies to the Photobooth mobile application.</p>
         <h4>Information We Collect</h4>
-        <p><b>Photos:</b> All photos are stored locally on your device. We do not transmit, access, or store your photos on any external server unless you explicitly configure an upload destination (such as Immich) in the app settings.</p>
+        <p><b>Photos and videos:</b> All captures are stored locally on your device. We do not transmit, access, or store your captures on any external server unless you explicitly configure an upload destination (such as Immich) in the app settings.</p>
         <p><b>Crash Reports:</b> If you grant consent, we collect anonymous crash reports via Firebase Crashlytics to help us fix bugs. These reports contain device information (model, OS version) and stack traces — no personal data.</p>
         <p><b>Usage Analytics:</b> If you grant consent, we collect anonymous usage statistics via Firebase Analytics to understand how the app is used (e.g., screen visits, feature usage). No personally identifiable information is collected.</p>
         <h4>Information You Configure</h4>

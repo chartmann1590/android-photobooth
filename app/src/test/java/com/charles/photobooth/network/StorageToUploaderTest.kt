@@ -76,6 +76,19 @@ class StorageToUploaderTest {
     }
 
     @Test
+    fun sends_mp4_mime_type() {
+        runBlocking {
+            val mp4File = File.createTempFile("test", ".mp4")
+            mp4File.writeText("fake video data")
+            server.enqueue(MockResponse().setBody("""{"success":true,"url":"https://storage.to/abc.mp4"}"""))
+            makeUploader().upload(mp4File)
+            val body = server.takeRequest().body.readString(Charsets.UTF_8)
+            assertTrue(body.contains("video/mp4"))
+            mp4File.delete()
+        }
+    }
+
+    @Test
     fun upload_throws_when_host_rejects_file() {
         runBlocking {
             server.enqueue(MockResponse().setBody("""{"success":false,"message":"No file"}"""))

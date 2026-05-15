@@ -1,11 +1,13 @@
 package com.charles.photobooth.camera
 
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.provider.MediaStore
 import androidx.camera.core.CameraSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.MediaStoreOutputOptions
+import androidx.camera.video.FileOutputOptions
 import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.camera.video.Recorder
@@ -25,6 +27,8 @@ sealed interface VideoCaptureState {
     data class Finished(val uri: android.net.Uri) : VideoCaptureState
     data class Error(val message: String) : VideoCaptureState
 }
+
+const val MAX_VIDEO_DURATION_SECONDS = 8
 
 class VideoCaptureManager(
     private val context: Context,
@@ -73,6 +77,7 @@ class VideoCaptureManager(
         this.videoCapture = videoCapture
     }
 
+    @SuppressLint("MissingPermission")
     fun startRecording(
         context: Context,
         onEvent: (VideoRecordEvent) -> Unit,
@@ -93,6 +98,22 @@ class VideoCaptureManager(
             .build()
 
         activeRecording = recorder.prepareRecording(context, outputOptions)
+            .withAudioEnabled()
+            .start(ContextCompat.getMainExecutor(context)) { event ->
+                onEvent(event)
+            }
+        return true
+    }
+
+    @SuppressLint("MissingPermission")
+    fun startRecordingToFile(
+        outputFile: java.io.File,
+        onEvent: (VideoRecordEvent) -> Unit,
+    ): Boolean {
+        val capture = videoCapture ?: return false
+        val outputOptions = FileOutputOptions.Builder(outputFile).build()
+        activeRecording = capture.output.prepareRecording(context, outputOptions)
+            .withAudioEnabled()
             .start(ContextCompat.getMainExecutor(context)) { event ->
                 onEvent(event)
             }

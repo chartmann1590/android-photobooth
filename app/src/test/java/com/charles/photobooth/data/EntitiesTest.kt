@@ -18,6 +18,7 @@ class PhotoEntityTest {
         assertEquals("/data/photos/test.jpg", photo.localPath)
         assertNull(photo.uploadedUrl)
         assertNull(photo.templateId)
+        assertEquals(MediaType.IMAGE, photo.mediaType)
     }
 
     @Test
@@ -29,12 +30,14 @@ class PhotoEntityTest {
             localPath = "/photos/wedding.jpg",
             uploadedUrl = "https://photos.example.com/abc123",
             templateId = 5,
+            mediaType = MediaType.VIDEO,
         )
         assertEquals(42, photo.id)
         assertEquals("Wedding", photo.eventName)
         assertEquals(1700000000L, photo.takenAtEpochSeconds)
         assertEquals("https://photos.example.com/abc123", photo.uploadedUrl)
         assertEquals(5L, photo.templateId)
+        assertEquals(MediaType.VIDEO, photo.mediaType)
     }
 
     @Test

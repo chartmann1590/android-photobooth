@@ -1,11 +1,15 @@
 package com.charles.photobooth.ui.screens
 
 import android.app.Activity
+import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
 import android.speech.tts.TextToSpeech
 import android.view.WindowManager
+import android.net.Uri
+import android.widget.VideoView
 import android.widget.Toast
+import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -75,14 +79,18 @@ import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import androidx.lifecycle.LifecycleEventObserver
 import com.charles.photobooth.R
+import com.charles.photobooth.data.MediaType
 import com.charles.photobooth.camera.CameraCaptureManager
 import com.charles.photobooth.camera.CaptureUiState
 import com.charles.photobooth.camera.CaptureViewModel
+import com.charles.photobooth.camera.MAX_VIDEO_DURATION_SECONDS
 import com.charles.photobooth.camera.PhotoFilter
 import com.charles.photobooth.monetization.BillingUiState
 import com.charles.photobooth.monetization.PhotoQuotaState
 import com.charles.photobooth.monetization.RewardedAdState
 import com.charles.photobooth.camera.UploadStatus
+import com.charles.photobooth.camera.VideoCaptureManager
+import com.charles.photobooth.camera.videoOutputDir
 import com.charles.photobooth.settings.SettingsRepository
 import com.charles.photobooth.settings.UploadSettings
 import com.charles.photobooth.template.BuiltInTemplates
@@ -118,6 +126,7 @@ fun CaptureScreen(
 
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
     val cameraManager = remember { CameraCaptureManager(context) }
+    val videoManager = remember { VideoCaptureManager(context) }
     var tts by remember { mutableStateOf<TextToSpeech?>(null) }
     var countdown by rememberSaveable { mutableIntStateOf(0) }
     var useFrontCamera by rememberSaveable { mutableStateOf(true) }
@@ -128,6 +137,11 @@ fun CaptureScreen(
     var uploadSettings by remember { mutableStateOf(UploadSettings()) }
     var boothMode by rememberSaveable { mutableStateOf(false) }
     var gifModeEnabled by rememberSaveable { mutableStateOf(false) }
+    var videoCaptureEnabled by rememberSaveable { mutableStateOf(false) }
+    var videoModeSelected by rememberSaveable { mutableStateOf(false) }
+    var isRecordingVideo by rememberSaveable { mutableStateOf(false) }
+    var recordingSeconds by rememberSaveable { mutableIntStateOf(0) }
+    var pendingVideoPath by rememberSaveable { mutableStateOf<String?>(null) }
     var boothPhotoCount by rememberSaveable { mutableIntStateOf(4) }
     var selectedTemplateKey by rememberSaveable { mutableStateOf(BuiltInTemplates.KEY_NONE) }
     var disabledTemplateKeys by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -176,6 +190,10 @@ fun CaptureScreen(
         uploadSettings = settings.upload
         boothMode = settings.captureMode.boothMode
         gifModeEnabled = settings.captureMode.gifModeEnabled
+        videoCaptureEnabled = settings.captureMode.videoCaptureEnabled
+        if (!settings.captureMode.videoCaptureEnabled) {
+            videoModeSelected = false
+        }
         boothPhotoCount = settings.captureMode.boothPhotoCount
         disabledTemplateKeys = settings.captureMode.disabledTemplateKeys
         val storedTemplate = settings.captureMode.selectedTemplate
@@ -190,16 +208,25 @@ fun CaptureScreen(
         settingsLoaded = true
     }
 
-    LaunchedEffect(previewView, settingsLoaded) {
+    LaunchedEffect(previewView, settingsLoaded, videoModeSelected) {
         val view = previewView ?: return@LaunchedEffect
         if (!settingsLoaded) return@LaunchedEffect
         try {
-            cameraManager.bindToLifecycle(
-                lifecycleOwner = lifecycleOwner,
-                previewView = view,
-                useFrontCamera = useFrontCamera,
-                specificCameraId = cameraId,
-            )
+            if (videoModeSelected) {
+                videoManager.bindToLifecycle(
+                    lifecycleOwner = lifecycleOwner,
+                    previewView = view,
+                    useFrontCamera = useFrontCamera,
+                    specificCameraId = cameraId,
+                )
+            } else {
+                cameraManager.bindToLifecycle(
+                    lifecycleOwner = lifecycleOwner,
+                    previewView = view,
+                    useFrontCamera = useFrontCamera,
+                    specificCameraId = cameraId,
+                )
+            }
         } catch (_: Exception) {
         }
     }
@@ -240,6 +267,18 @@ fun CaptureScreen(
             pendingNextBoothShot = false
             captureViewModel.startCountdown()
             countdown = 3
+        }
+    }
+
+    LaunchedEffect(isRecordingVideo) {
+        if (!isRecordingVideo) return@LaunchedEffect
+        recordingSeconds = 0
+        while (isRecordingVideo && recordingSeconds < MAX_VIDEO_DURATION_SECONDS) {
+            delay(1000)
+            recordingSeconds += 1
+        }
+        if (isRecordingVideo) {
+            videoManager.stopRecording()
         }
     }
 
@@ -446,7 +485,11 @@ fun CaptureScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
                 val statusText = when (uiState) {
-                    is CaptureUiState.Idle -> stringResource(R.string.capture_ready)
+                    is CaptureUiState.Idle -> if (isRecordingVideo) {
+                        stringResource(R.string.capture_recording, recordingSeconds, MAX_VIDEO_DURATION_SECONDS)
+                    } else {
+                        stringResource(R.string.capture_ready)
+                    }
                     is CaptureUiState.CountingDown -> stringResource(R.string.capture_get_ready)
                     is CaptureUiState.Capturing -> stringResource(R.string.capture_capturing)
                     is CaptureUiState.Saved -> stringResource(R.string.capture_saved)
@@ -546,6 +589,36 @@ fun CaptureScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (uiState is CaptureUiState.Idle) {
+                if (videoCaptureEnabled) {
+                    Row(
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(bottom = 12.dp),
+                    ) {
+                        FilledTonalButton(
+                            onClick = { videoModeSelected = false },
+                            enabled = !isRecordingVideo,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = if (!videoModeSelected) Rose else DarkBackground.copy(alpha = 0.65f),
+                                contentColor = Color.White,
+                            ),
+                        ) {
+                            Text(stringResource(R.string.capture_photo_mode))
+                        }
+                        FilledTonalButton(
+                            onClick = { videoModeSelected = true },
+                            enabled = !isRecordingVideo,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = if (videoModeSelected) Rose else DarkBackground.copy(alpha = 0.65f),
+                                contentColor = Color.White,
+                            ),
+                        ) {
+                            Text(stringResource(R.string.capture_video_mode))
+                        }
+                    }
+                }
+
                 val allChips = listOf(
                     BuiltInTemplates.KEY_NONE to stringResource(R.string.template_single),
                     BuiltInTemplates.KEY_STRIP_2X2 to stringResource(R.string.template_strip_2x2),
@@ -556,46 +629,48 @@ fun CaptureScreen(
                     BuiltInTemplates.KEY_HOLIDAY to stringResource(R.string.template_holiday),
                     BuiltInTemplates.KEY_GENERIC to stringResource(R.string.template_generic),
                 )
-                // NONE always remains so users can always select "single shot"
-                val templateChips = allChips.filter { (k, _) -> k == BuiltInTemplates.KEY_NONE || k !in disabledTemplateKeys }
-                Row(
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp, vertical = 0.dp)
-                        .padding(bottom = 12.dp),
-                ) {
-                    templateChips.forEach { (key, label) ->
-                        val selected = selectedTemplateKey == key
-                        val previewTemplate = when (key) {
-                            BuiltInTemplates.KEY_NONE -> null
-                            BuiltInTemplates.KEY_STRIP_2X2 -> BuiltInTemplates.photoStrip2x2(eventName)
-                            BuiltInTemplates.KEY_STRIP_VERTICAL -> BuiltInTemplates.photoStripVertical(eventName)
-                            else -> BuiltInTemplates.fromKey(key, eventName, eventDate.ifBlank { "Date" })
-                        }
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(if (selected) Rose else DarkBackground.copy(alpha = 0.65f))
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                ) { selectedTemplateKey = key }
-                                .padding(horizontal = 10.dp, vertical = 8.dp),
-                        ) {
-                            TemplatePreview(
-                                template = previewTemplate,
-                                modifier = Modifier.width(64.dp),
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Color.White,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                            )
+                if (!videoModeSelected) {
+                    // NONE always remains so users can always select "single shot"
+                    val templateChips = allChips.filter { (k, _) -> k == BuiltInTemplates.KEY_NONE || k !in disabledTemplateKeys }
+                    Row(
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp, vertical = 0.dp)
+                            .padding(bottom = 12.dp),
+                    ) {
+                        templateChips.forEach { (key, label) ->
+                            val selected = selectedTemplateKey == key
+                            val previewTemplate = when (key) {
+                                BuiltInTemplates.KEY_NONE -> null
+                                BuiltInTemplates.KEY_STRIP_2X2 -> BuiltInTemplates.photoStrip2x2(eventName)
+                                BuiltInTemplates.KEY_STRIP_VERTICAL -> BuiltInTemplates.photoStripVertical(eventName)
+                                else -> BuiltInTemplates.fromKey(key, eventName, eventDate.ifBlank { "Date" })
+                            }
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(if (selected) Rose else DarkBackground.copy(alpha = 0.65f))
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                    ) { selectedTemplateKey = key }
+                                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                            ) {
+                                TemplatePreview(
+                                    template = previewTemplate,
+                                    modifier = Modifier.width(64.dp),
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.White,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                )
+                            }
                         }
                     }
                 }
@@ -623,6 +698,44 @@ fun CaptureScreen(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                     ) {
+                        if (videoModeSelected) {
+                            if (isRecordingVideo) {
+                                videoManager.stopRecording()
+                            } else {
+                                val outputDir = videoOutputDir(context.applicationContext as Application)
+                                if (outputDir == null) {
+                                    Toast.makeText(context, context.getString(R.string.capture_video_save_failed), Toast.LENGTH_LONG).show()
+                                    return@clickable
+                                }
+                                val videoFile = java.io.File(outputDir, "video_${System.currentTimeMillis()}.mp4")
+                                pendingVideoPath = videoFile.absolutePath
+                                val started = videoManager.startRecordingToFile(videoFile) { event ->
+                                    if (event is VideoRecordEvent.Finalize) {
+                                        isRecordingVideo = false
+                                        recordingSeconds = 0
+                                        val path = pendingVideoPath
+                                        pendingVideoPath = null
+                                        if (event.hasError()) {
+                                            runCatching { videoFile.delete() }
+                                            Toast.makeText(context, event.cause?.message ?: context.getString(R.string.capture_video_save_failed), Toast.LENGTH_LONG).show()
+                                            return@startRecordingToFile
+                                        }
+                                        val savedFile = path?.let { java.io.File(it) } ?: videoFile
+                                        captureViewModel.saveCapturedVideo(savedFile, eventName) { id ->
+                                            finishOrPreview(id)
+                                        }
+                                    }
+                                }
+                                if (started) {
+                                    isRecordingVideo = true
+                                    recordingSeconds = 0
+                                } else {
+                                    pendingVideoPath = null
+                                    Toast.makeText(context, context.getString(R.string.capture_video_unavailable), Toast.LENGTH_LONG).show()
+                                }
+                            }
+                            return@clickable
+                        }
                         scope.launch {
                             val requiredPhotos = if (effectiveBoothMode) effectiveBoothCount else 1
                             if (onReservePhotos(requiredPhotos)) {
@@ -641,8 +754,8 @@ fun CaptureScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(id = android.R.drawable.ic_menu_camera),
-                    contentDescription = stringResource(R.string.capture_button),
+                    painter = painterResource(id = if (videoModeSelected) android.R.drawable.presence_video_online else android.R.drawable.ic_menu_camera),
+                    contentDescription = stringResource(if (videoModeSelected) R.string.capture_video_button else R.string.capture_button),
                     tint = Color.White,
                     modifier = Modifier.size(32.dp),
                 )
@@ -651,7 +764,12 @@ fun CaptureScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = if (isCountingDown) "" else stringResource(R.string.capture_tap),
+                text = when {
+                    isCountingDown -> ""
+                    videoModeSelected && isRecordingVideo -> stringResource(R.string.capture_stop_recording)
+                    videoModeSelected -> stringResource(R.string.capture_tap_record_video)
+                    else -> stringResource(R.string.capture_tap)
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.White.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
@@ -708,14 +826,31 @@ private fun PostCapturePreviewOverlay(
                 onClick = {},
             ),
     ) {
-        AsyncImage(
-            model = java.io.File(preview.photoPath),
-            contentDescription = stringResource(R.string.capture_preview_photo),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            contentScale = ContentScale.Fit,
-        )
+        if (preview.mediaType == MediaType.VIDEO) {
+            AndroidView(
+                factory = { ctx ->
+                    VideoView(ctx).apply {
+                        setVideoURI(Uri.fromFile(java.io.File(preview.photoPath)))
+                        setOnPreparedListener { player ->
+                            player.isLooping = true
+                            start()
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+            )
+        } else {
+            AsyncImage(
+                model = java.io.File(preview.photoPath),
+                contentDescription = stringResource(R.string.capture_preview_photo),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                contentScale = ContentScale.Fit,
+            )
+        }
 
         Column(
             modifier = Modifier

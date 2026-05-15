@@ -156,4 +156,17 @@ class CatboxUploaderTest {
             gifFile.delete()
         }
     }
+
+    @Test
+    fun detects_mp4_mime_type() {
+        runBlocking {
+            val mp4File = File.createTempFile("test", ".mp4")
+            mp4File.writeText("data")
+            server.enqueue(MockResponse().setBody("https://example.com/a.mp4"))
+            makeUploader().upload(mp4File)
+            val body = server.takeRequest().body.readString(Charsets.UTF_8)
+            assertTrue(body.contains("video/mp4"))
+            mp4File.delete()
+        }
+    }
 }

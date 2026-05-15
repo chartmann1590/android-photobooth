@@ -35,4 +35,9 @@ class VideoCaptureStateTest {
         val state = VideoCaptureState.Error("Recording failed")
         assertEquals("Recording failed", state.message)
     }
+
+    @Test
+    fun `video duration limit is 8 seconds`() {
+        assertEquals(8, MAX_VIDEO_DURATION_SECONDS)
+    }
 }

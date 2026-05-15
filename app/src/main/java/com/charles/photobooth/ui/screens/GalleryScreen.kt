@@ -2,7 +2,9 @@ package com.charles.photobooth.ui.screens
 
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
+import android.widget.VideoView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -66,6 +68,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.print.PrintHelper
 import coil.ImageLoader
@@ -73,8 +76,11 @@ import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import com.charles.photobooth.R
+import com.charles.photobooth.data.MediaType
+import com.charles.photobooth.gallery.GalleryAction
 import com.charles.photobooth.gallery.GalleryActionState
 import com.charles.photobooth.gallery.GalleryViewModel
+import com.charles.photobooth.gallery.availableGalleryActions
 import com.charles.photobooth.util.QrCodeGenerator
 import com.charles.photobooth.ui.theme.CardSurface
 import com.charles.photobooth.ui.theme.CardSurfaceLight
@@ -95,6 +101,9 @@ fun GalleryScreen(
     var selectedPhotoId by rememberSaveable { mutableStateOf<Long?>(null) }
     val selected = remember(photos, selectedPhotoId) {
         selectedPhotoId?.let { id -> photos.firstOrNull { it.id == id } }
+    }
+    val selectedActions = remember(selected, shareSettings) {
+        selected?.let { availableGalleryActions(it, shareSettings) }.orEmpty()
     }
     var email by rememberSaveable { mutableStateOf("") }
     var phone by rememberSaveable { mutableStateOf("") }
@@ -227,6 +236,23 @@ fun GalleryScreen(
                                         .aspectRatio(4f / 3f)
                                         .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
                                 )
+                                if (photo.mediaType == MediaType.VIDEO) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(8.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(DarkBackground.copy(alpha = 0.75f))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.gallery_video_badge),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                    }
+                                }
                             }
                             Row(
                                 modifier = Modifier
@@ -296,13 +322,32 @@ fun GalleryScreen(
                             shape = RoundedCornerShape(16.dp),
                             elevation = CardDefaults.cardElevation(4.dp),
                         ) {
-                            AsyncImage(
-                                model = photo.localPath,
-                                imageLoader = imageLoader,
-                                contentDescription = stringResource(R.string.gallery_selected_photo),
-                                contentScale = ContentScale.Fit,
-                                modifier = Modifier.fillMaxSize(),
-                            )
+                            if (photo.mediaType == MediaType.VIDEO) {
+                                AndroidView(
+                                    factory = { ctx ->
+                                        VideoView(ctx).apply {
+                                            setVideoURI(Uri.fromFile(java.io.File(photo.localPath)))
+                                            setOnPreparedListener { player ->
+                                                player.isLooping = true
+                                                start()
+                                            }
+                                        }
+                                    },
+                                    update = { view ->
+                                        view.setVideoURI(Uri.fromFile(java.io.File(photo.localPath)))
+                                        view.start()
+                                    },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            } else {
+                                AsyncImage(
+                                    model = photo.localPath,
+                                    imageLoader = imageLoader,
+                                    contentDescription = stringResource(R.string.gallery_selected_photo),
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
                         }
 
                         Column(
@@ -406,7 +451,7 @@ fun GalleryScreen(
                                 )
                             }
 
-                            if (shareSettings.enableSmsShare) {
+                            if (GalleryAction.SMS in selectedActions) {
                                 Text(
                                     text = stringResource(R.string.gallery_share_sms),
                                     style = MaterialTheme.typography.labelLarge,
@@ -443,7 +488,7 @@ fun GalleryScreen(
                                 Spacer(modifier = Modifier.height(4.dp))
                             }
 
-                            if (shareSettings.enableEmailShare) {
+                            if (GalleryAction.EMAIL in selectedActions) {
                                 Text(
                                     text = stringResource(R.string.gallery_share_email),
                                     style = MaterialTheme.typography.labelLarge,
@@ -501,7 +546,7 @@ fun GalleryScreen(
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(stringResource(R.string.gallery_upload))
                                 }
-                                if (shareSettings.enablePrintShare) {
+                                if (GalleryAction.PRINT in selectedActions) {
                                     ElevatedButton(
                                         onClick = {
                                             val helper = PrintHelper(context)
@@ -531,27 +576,29 @@ fun GalleryScreen(
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            FilledTonalButton(
-                                onClick = {
-                                    vm.getShareIntent(photo)?.let { shareIntent ->
-                                        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.gallery_share_via)))
-                                    }
-                                },
-                                enabled = actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = CardSurfaceLight,
-                                    contentColor = Color.White,
-                                ),
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = android.R.drawable.ic_menu_share),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.gallery_share_social))
+                            if (GalleryAction.ANDROID_SHARE in selectedActions) {
+                                FilledTonalButton(
+                                    onClick = {
+                                        vm.getShareIntent(photo)?.let { shareIntent ->
+                                            context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.gallery_share_via)))
+                                        }
+                                    },
+                                    enabled = actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = CardSurfaceLight,
+                                        contentColor = Color.White,
+                                    ),
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = android.R.drawable.ic_menu_share),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(stringResource(R.string.gallery_share_social))
+                                }
                             }
 
                             Spacer(modifier = Modifier.height(4.dp))

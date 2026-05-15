@@ -8,6 +8,7 @@ import android.os.Environment
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.charles.photobooth.data.AppDatabase
+import com.charles.photobooth.data.MediaType
 import com.charles.photobooth.data.PhotoEntity
 import com.charles.photobooth.network.AnonymousUploader
 import com.charles.photobooth.network.ImageUploader
@@ -31,6 +32,12 @@ internal fun photoOutputDir(app: Application): File? {
     return if (target.exists() || target.mkdirs()) target else null
 }
 
+internal fun videoOutputDir(app: Application): File? {
+    val external = app.getExternalFilesDir(Environment.DIRECTORY_MOVIES)
+    val target = external ?: File(app.filesDir, "videos")
+    return if (target.exists() || target.mkdirs()) target else null
+}
+
 sealed interface CaptureUiState {
     data object Idle : CaptureUiState
     data class CountingDown(val secondsLeft: Int) : CaptureUiState
@@ -39,6 +46,7 @@ sealed interface CaptureUiState {
     data class Preview(
         val photoId: Long,
         val photoPath: String,
+        val mediaType: MediaType = MediaType.IMAGE,
         val uploadStatus: UploadStatus,
     ) : CaptureUiState
     data class Error(val message: String) : CaptureUiState
@@ -75,6 +83,7 @@ class CaptureViewModel(
             _uiState.value = CaptureUiState.Preview(
                 photoId = photo.id,
                 photoPath = photo.localPath,
+                mediaType = photo.mediaType,
                 uploadStatus = UploadStatus.Uploading,
             )
             try {
@@ -200,6 +209,34 @@ class CaptureViewModel(
                 onComplete(id)
             } catch (e: Exception) {
                 _uiState.value = CaptureUiState.Error(e.message ?: "Failed to save photo")
+                onComplete(null)
+            }
+        }
+    }
+
+    fun saveCapturedVideo(
+        videoFile: File,
+        eventName: String,
+        onComplete: (Long?) -> Unit,
+    ) {
+        viewModelScope.launch {
+            try {
+                if (!videoFile.exists() || videoFile.length() <= 0L) {
+                    _uiState.value = CaptureUiState.Error("Failed to save video")
+                    onComplete(null)
+                    return@launch
+                }
+                val entity = PhotoEntity(
+                    eventName = eventName,
+                    localPath = videoFile.absolutePath,
+                    templateId = null,
+                    mediaType = MediaType.VIDEO,
+                )
+                val id = photoDao.insert(entity)
+                _uiState.value = CaptureUiState.Saved(id)
+                onComplete(id)
+            } catch (e: Exception) {
+                _uiState.value = CaptureUiState.Error(e.message ?: "Failed to save video")
                 onComplete(null)
             }
         }

@@ -10,6 +10,10 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import org.json.JSONObject
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
 class ImmichUploader(
@@ -27,19 +31,27 @@ class ImmichUploader(
         if (settings.immichBaseUrl.isBlank()) {
             throw IllegalStateException("Immich base URL not configured")
         }
-        val mimeType = when (file.extension.lowercase()) {
-            "gif" -> "image/gif"
-            "png" -> "image/png"
-            else -> "image/jpeg"
-        }
+        val mimeType = mediaMimeTypeFor(file)
+        val modifiedAt = file.lastModified().takeIf { it > 0L } ?: System.currentTimeMillis()
+        val timestamp = isoTimestamp(modifiedAt)
 
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
+            .addFormDataPart("deviceAssetId", "${file.nameWithoutExtension}-${modifiedAt}")
+            .addFormDataPart("deviceId", "android-photobooth")
+            .addFormDataPart("fileCreatedAt", timestamp)
+            .addFormDataPart("fileModifiedAt", timestamp)
+            .addFormDataPart("filename", file.name)
             .addFormDataPart(
                 "assetData",
                 file.name,
                 file.asRequestBody(mimeType.toMediaTypeOrNull()),
             )
+            .apply {
+                if (mimeType.startsWith("video/")) {
+                    addFormDataPart("duration", "0:00:08.000000")
+                }
+            }
             .apply {
                 if (settings.immichAlbumSyncEnabled && settings.immichAlbumId.isNotBlank()) {
                     addFormDataPart("albumId", settings.immichAlbumId)
@@ -67,5 +79,11 @@ class ImmichUploader(
             }
             id
         }
+    }
+
+    private fun isoTimestamp(epochMillis: Long): String {
+        val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+        formatter.timeZone = TimeZone.getTimeZone("UTC")
+        return formatter.format(Date(epochMillis))
     }
 }

@@ -128,9 +128,10 @@ private fun MainEntry() {
 }
 
 private fun requiredPermissions(): Array<String> {
-    val perms = mutableListOf(Manifest.permission.CAMERA)
+    val perms = mutableListOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         perms.add(Manifest.permission.READ_MEDIA_IMAGES)
+        perms.add(Manifest.permission.READ_MEDIA_VIDEO)
     } else {
         perms.add(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
