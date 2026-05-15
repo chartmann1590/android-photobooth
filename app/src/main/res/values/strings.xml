@@ -120,6 +120,8 @@
     <string name="settings_template_anniversary">Anniversary — title + date overlay</string>
     <string name="settings_template_holiday">Holiday — title + date overlay</string>
     <string name="settings_template_generic">Event — title + date overlay</string>
+    <string name="settings_template_tap_to_preview">Tap thumbnail to preview</string>
+    <string name="settings_template_use_this">Use this template</string>
     <string name="template_single">Single</string>
     <string name="template_strip_2x2">2x2</string>
     <string name="template_strip_vertical">Strip</string>

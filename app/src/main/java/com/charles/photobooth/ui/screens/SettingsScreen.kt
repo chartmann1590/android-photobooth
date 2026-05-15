@@ -34,7 +34,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.charles.photobooth.template.TemplateDefinition
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -622,11 +627,22 @@ private fun CaptureModeSection(
             }
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = stringResource(R.string.settings_template_layout),
-            style = MaterialTheme.typography.labelLarge,
-            color = TextSecondary,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.settings_template_layout),
+                style = MaterialTheme.typography.labelLarge,
+                color = TextSecondary,
+            )
+            Text(
+                text = stringResource(R.string.settings_template_tap_to_preview),
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary.copy(alpha = 0.7f),
+            )
+        }
         val templateOptions = listOf(
             "NONE",
             "SINGLE",
@@ -651,6 +667,7 @@ private fun CaptureModeSection(
         )
         val previewEventName = state.event.eventName.ifBlank { "Event Title" }
         val previewEventDate = state.event.eventDate.ifBlank { "Date here" }
+        var zoomedKey by remember { mutableStateOf<String?>(null) }
         templateOptions.forEach { key ->
             val previewTemplate = when (key) {
                 "NONE" -> null
@@ -667,21 +684,47 @@ private fun CaptureModeSection(
                         if (state.captureMode.selectedTemplate == key) Rose.copy(alpha = 0.2f)
                         else Color.Transparent,
                     )
-                    .clickable { onCaptureModeChange { copy(selectedTemplate = key) } }
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 TemplatePreview(
                     template = previewTemplate,
-                    modifier = Modifier.width(40.dp),
+                    modifier = Modifier
+                        .width(80.dp)
+                        .clickable { zoomedKey = key },
                 )
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(14.dp))
                 Text(
                     text = templateNames[key] ?: key,
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (state.captureMode.selectedTemplate == key) Color.White else TextSecondary,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onCaptureModeChange { copy(selectedTemplate = key) } }
+                        .padding(vertical = 8.dp),
                 )
             }
+        }
+
+        if (zoomedKey != null) {
+            val key = zoomedKey!!
+            val zoomedTemplate = when (key) {
+                "NONE" -> null
+                "SINGLE" -> BuiltInTemplates.singlePortrait(previewEventName)
+                "STRIP_2x2" -> BuiltInTemplates.photoStrip2x2(previewEventName)
+                "STRIP_VERTICAL" -> BuiltInTemplates.photoStripVertical(previewEventName)
+                else -> BuiltInTemplates.fromKey(key, previewEventName, previewEventDate)
+            }
+            FullScreenTemplatePreviewDialog(
+                template = zoomedTemplate,
+                title = templateNames[key] ?: key,
+                isSelected = state.captureMode.selectedTemplate == key,
+                onSelect = {
+                    onCaptureModeChange { copy(selectedTemplate = key) }
+                    zoomedKey = null
+                },
+                onDismiss = { zoomedKey = null },
+            )
         }
     }
 }
@@ -810,6 +853,83 @@ private fun FrameSettingsSection(
             ),
         ) {
             Text(stringResource(R.string.settings_manage_frames), fontWeight = FontWeight.Medium)
+        }
+    }
+}
+
+@Composable
+private fun FullScreenTemplatePreviewDialog(
+    template: TemplateDefinition?,
+    title: String,
+    isSelected: Boolean,
+    onSelect: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.92f))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onDismiss,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth(),
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                TemplatePreview(
+                    template = template,
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {},
+                        ),
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    if (!isSelected) {
+                        ElevatedButton(
+                            onClick = onSelect,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.elevatedButtonColors(
+                                containerColor = Rose,
+                                contentColor = Color.White,
+                            ),
+                        ) {
+                            Text(stringResource(R.string.settings_template_use_this), fontWeight = FontWeight.Medium)
+                        }
+                    }
+                    ElevatedButton(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.elevatedButtonColors(
+                            containerColor = CardSurfaceLight,
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Text(stringResource(R.string.gallery_close), fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
         }
     }
 }

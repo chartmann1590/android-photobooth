@@ -523,22 +523,22 @@ fun CaptureScreen(
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (selected) Rose else DarkBackground.copy(alpha = 0.6f))
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(if (selected) Rose else DarkBackground.copy(alpha = 0.65f))
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
                                 ) { selectedTemplateKey = key }
-                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
                         ) {
                             TemplatePreview(
                                 template = previewTemplate,
-                                modifier = Modifier.width(36.dp),
+                                modifier = Modifier.width(64.dp),
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = label,
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.labelMedium,
                                 color = Color.White,
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                             )

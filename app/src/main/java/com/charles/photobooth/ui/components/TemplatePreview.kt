@@ -5,10 +5,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,15 +42,15 @@ fun TemplatePreview(
         Box(
             modifier = modifier
                 .aspectRatio(aspect)
-                .clip(RoundedCornerShape(6.dp))
+                .clip(RoundedCornerShape(8.dp))
                 .background(Color(0xFF333A47))
-                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(6.dp)),
+                .border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(8.dp)),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = "Photo",
-                color = Color.White.copy(alpha = 0.6f),
-                fontSize = 8.sp,
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 10.sp,
                 textAlign = TextAlign.Center,
             )
         }
@@ -60,9 +60,9 @@ fun TemplatePreview(
     BoxWithConstraints(
         modifier = modifier
             .aspectRatio(aspect)
-            .clip(RoundedCornerShape(6.dp))
+            .clip(RoundedCornerShape(8.dp))
             .background(Color(template.backgroundColor))
-            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(6.dp)),
+            .border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(8.dp)),
     ) {
         val w = maxWidth
         val h = maxHeight
@@ -72,27 +72,31 @@ fun TemplatePreview(
                 modifier = Modifier
                     .offset(x = w * frame.leftPercent, y = h * frame.topPercent)
                     .size(width = w * frame.widthPercent, height = h * frame.heightPercent)
-                    .background(Color(0xFFB8BEC8).copy(alpha = 0.85f)),
+                    .background(Color(0xFFB8BEC8).copy(alpha = 0.9f)),
             )
         }
 
+        // Overlays in the real renderer are drawn with baseline ~ y = yPercent * height.
+        // Approximate that here: place a full-width centered Text whose top sits a bit
+        // above yPercent so the visual center aligns with the renderer's baseline.
         template.overlays.forEach { overlay ->
-            // Render overlays at a much smaller font scaled to thumbnail size.
-            // Approximate: textSizeSp at full canvas → scale to preview height.
-            val scaledFontSp = (overlay.textSizeSp * (h.value / OUTPUT_4X6_HEIGHT.toFloat()) * 18f)
-                .coerceAtLeast(5f)
-            Text(
-                text = overlay.text.ifBlank { " " },
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = scaledFontSp.sp,
-                style = MaterialTheme.typography.labelSmall,
+            // Font size scales with preview height; 18sp full-canvas → ~10% of preview h.
+            val fontSp = (h.value * 0.085f * (overlay.textSizeSp / 14f)).coerceIn(7f, 18f)
+            val verticalOffset = h * overlay.yPercent - h * 0.07f
+            Box(
                 modifier = Modifier
-                    .offset(
-                        x = (w * overlay.xPercent) - (w * 0.18f),
-                        y = (h * overlay.yPercent) - (h * 0.02f),
-                    ),
-            )
+                    .fillMaxWidth()
+                    .offset(y = verticalOffset),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = overlay.text.ifBlank { " " },
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = fontSp.sp,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }
