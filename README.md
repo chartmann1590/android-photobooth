@@ -236,15 +236,24 @@ Created by Charles Hartmann
 - [x] Support for multiple cameras
 - [x] Animated countdown effects (color-cycling, screen flash, booth counter)
 - [x] Custom watermark/logo support
-- [x] Real-time photo filters (Grayscale, Sepia, B&W, Vintage, Cool, Warm, Vivid)
+- [x] Photo filters (Grayscale, Sepia, B&W, Vintage, Cool, Warm, Vivid)
 - [x] Photo booth booth mode (continuous capture)
-- [ ] GIF/Boomerang creation from burst captures
-- [ ] QR code sharing for instant guest download
-- [ ] Remote trigger via Bluetooth/BLE shutter
+- [x] GIF/Boomerang creation from burst captures
+- [x] QR code sharing for instant guest download
 - [x] Collage builder (multi-photo compositions)
+- [x] Anonymous image hosting (storage.to / catbox.moe fallback)
+- [x] Monetization system (free tier, rewarded ads, in-app purchase)
+- [x] Interactive onboarding tutorial (19 steps)
+- [x] GDPR-style consent dialog
+- [x] Encrypted credential storage (AES256)
+- [x] Firebase Analytics, Crashlytics & Performance Monitoring
+- [x] PNG frame overlay upload system
+- [ ] Remote trigger via Bluetooth/BLE shutter
 - [ ] Green screen / background replacement
-- [ ] Live photo previews with filter applied
+- [ ] Real-time live filter preview on camera feed
 - [ ] Template editor with drag-and-drop layout
+- [ ] Full video capture UI (recording controls, playback, sharing)
+- [ ] Camera picker UI (select from all available cameras, not just front/back)
 
 ## Support
 
