@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy - Photobooth</title>
-    <meta name="description" content="Privacy policy for the Android Photobooth app.">
+    <meta name="description" content="Privacy policy for the Photobooth Event Camera Android app.">
     <meta name="theme-color" content="#0F0F1A">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,24 +67,29 @@
     <main>
         <div class="container">
             <h1>Privacy Policy</h1>
-            <p class="updated">Last updated: May 15, 2026</p>
-            <p>This privacy policy applies to the Android Photobooth application ("App") developed by Charles Hartmann and the associated landing page at <a href="https://chartmann1590.github.io/android-photobooth/" style="color: #FF5C8D;">chartmann1590.github.io/android-photobooth</a>.</p>
+            <p class="updated">Last updated: May 16, 2026</p>
+            <p>This privacy policy applies to the Photobooth Event Camera application ("App") developed by Charles Hartmann and the associated landing page at <a href="https://chartmann1590.github.io/android-photobooth/" style="color: #FF5C8D;">chartmann1590.github.io/android-photobooth</a>.</p>
 
             <h2>1. Data We Collect</h2>
-            <p>The App is designed with privacy in mind. We collect the absolute minimum amount of data required for the app to function:</p>
+            <p>The App is designed with privacy in mind. We collect the absolute minimum amount of data required for the app to function. All data listed below is stored <strong>locally on your device</strong> unless you explicitly configure a cloud service:</p>
             <ul>
-                <li><strong>Photos you capture.</strong> Photos are stored locally on your device only. They are never sent to any server unless you explicitly configure and initiate an upload.</li>
-                <li><strong>App settings.</strong> Configuration such as event name, template selection, and optional server credentials are stored locally using Android DataStore. Credentials are encrypted at rest using Android EncryptedSharedPreferences.</li>
+                <li><strong>Photos, videos, and GIFs you capture.</strong> Media is stored locally on your device only. It is never sent to any server unless you explicitly configure and initiate an upload.</li>
+                <li><strong>App settings.</strong> Configuration such as event name, template selection, camera preferences, watermark settings, capture mode, and optional server credentials are stored locally using Android DataStore.</li>
+                <li><strong>Encrypted credentials.</strong> API tokens (Immich), SMTP passwords, and SMS gateway passwords are encrypted at rest using AES256 via Android EncryptedSharedPreferences. Usernames, server URLs, email addresses, and other non-password settings are stored in standard DataStore without encryption.</li>
+                <li><strong>Local database records.</strong> The App stores metadata for each capture in a local Room database, including: event name, capture timestamp, local file path, uploaded URL (if any), template ID, and media type (photo or video).</li>
+                <li><strong>Usage quota data.</strong> The App tracks daily photo counts, ad-earned photo credits, and unlimited purchase status locally for quota management. This data never leaves your device.</li>
+                <li><strong>Consent preference.</strong> Your analytics consent choice is stored locally.</li>
             </ul>
-            <p>We do <strong>not</strong> collect personal information, device identifiers, or tracking data by default. If you consent to analytics on first launch, Firebase collects anonymized usage data and crash reports (see Section 3).</p>
+            <p>We do <strong>not</strong> collect personal information or device identifiers by default. If you consent to analytics on first launch, Firebase and Google AdMob may collect anonymized data (see Sections 3 and 4).</p>
 
             <h2>2. Optional Cloud Services</h2>
             <p>The App supports optional integrations that may transmit data over the internet. These are <strong>disabled by default</strong> and only activated when you configure them:</p>
             <ul>
-                <li><strong>Immich Server Upload.</strong> If configured, photos may be uploaded to your own self-hosted Immich server. We do not have access to your server or uploaded content.</li>
-                <li><strong>Anonymous Image Hosting.</strong> If Immich is not configured, the App can upload photos to third-party anonymous hosts (storage.to, catbox.moe) to generate shareable links and QR codes. These services are public &mdash; anyone with the link can view the uploaded photo. Their respective privacy policies apply.</li>
-                <li><strong>SMS Gateway.</strong> If configured, phone numbers and photo links may be sent to a third-party SMS gateway provider for the purpose of sharing photos via text message. Their privacy policy applies to data they process.</li>
-                <li><strong>SMTP Email.</strong> If configured, email addresses and photo attachments are sent through your own SMTP server. We do not have access to your email server or its logs.</li>
+                <li><strong>Immich Server Upload.</strong> If configured, photos, videos, and GIFs may be uploaded to your own self-hosted Immich server. The upload includes the file, its filename, a device identifier (<code>android-photobooth</code>), file creation and modification timestamps, and (for videos) duration. If album sync is enabled, uploads are added to the specified album. We do not have access to your server or uploaded content. Your API token is encrypted at rest.</li>
+                <li><strong>Anonymous Image Hosting.</strong> When no Immich server is configured, the App defaults to uploading photos, videos, and GIFs to third-party anonymous hosts (<a href="https://storage.to" style="color: #FF5C8D;">storage.to</a> and <a href="https://catbox.moe" style="color: #FF5C8D;">catbox.moe</a>) to generate shareable links and QR codes. These services are public &mdash; <strong>anyone with the link can view the uploaded content</strong>. Uploads include the file and its filename (which may contain your event name and timestamp). <strong>There is no deletion mechanism</strong> for anonymously uploaded content through the App or these services. Their respective privacy policies apply.</li>
+                <li><strong>SMS Gateway.</strong> If configured, phone numbers and photo/video links may be sent to a third-party SMS gateway provider (including a cloud server option) for the purpose of sharing media via text message. The gateway URL, username, and password are stored locally (password encrypted). Their privacy policy applies to data they process.</li>
+                <li><strong>SMTP Email.</strong> If configured, recipient email addresses, subject, body text, and photo/video/GIF attachments are sent through your own SMTP server. Your SMTP credentials are stored locally (password encrypted). We do not have access to your email server or its logs.</li>
+                <li><strong>QR Codes.</strong> When media is uploaded, a QR code is generated locally on your device encoding the upload URL. Anyone who scans the QR code can access the uploaded content. QR code generation uses the ZXing library and does not transmit data externally.</li>
             </ul>
 
             <h2>3. Firebase Analytics, Crashlytics &amp; Performance</h2>
@@ -102,56 +107,93 @@
                 <li>Anonymized usage events and performance traces</li>
                 <li>Approximate location (country/region level, not precise)</li>
             </ul>
-            <p>No personally identifiable information is collected through Firebase. On first launch, the App presents a consent dialog where you can choose to enable or disable analytics and crash reporting. You can change this choice at any time in your device settings. Firebase data is processed according to <a href="https://firebase.google.com/policies/analytics" style="color: #FF5C8D;">Google's Privacy Policy</a> and <a href="https://firebase.google.com/terms/crashlytics" style="color: #FF5C8D;">Crashlytics Terms</a>.</p>
+            <p>On first launch, the App presents a consent dialog where you can choose to enable or disable analytics and crash reporting. <strong>Note:</strong> Crashlytics is fully controlled by your consent choice. Firebase Analytics and Performance Monitoring may continue to collect limited anonymized data regardless of your consent selection. No personally identifiable information is collected through Firebase. You can change your consent preference at any time through the App's settings screen. Firebase data is processed according to <a href="https://firebase.google.com/policies/analytics" style="color: #FF5C8D;">Google's Privacy Policy</a> and <a href="https://firebase.google.com/terms/crashlytics" style="color: #FF5C8D;">Crashlytics Terms</a>.</p>
 
             <h2>4. Advertising (Google AdMob)</h2>
-            <p>The App uses <strong>Google AdMob</strong> to display rewarded video ads. Ads are entirely optional &mdash; you choose to watch an ad in exchange for additional photo captures. We do not serve banner, interstitial, or other non-optional ads.</p>
-            <p>When you choose to watch a rewarded ad, Google AdMob may collect certain device data to serve the advertisement, including:</p>
+            <p>The App uses <strong>Google AdMob</strong> to display rewarded video ads. Ads are entirely optional &mdash; you choose to watch an ad in exchange for additional photo captures (15 extra captures per ad, up to 60 per day). We do not serve banner, interstitial, or other non-optional ads.</p>
+            <p>The Google Mobile Ads SDK initializes when the App starts. During initialization and when ads are loaded or displayed, Google AdMob may collect certain device data, including:</p>
             <ul>
                 <li>Device model and OS version</li>
                 <li>Advertising ID (a resettable device identifier)</li>
                 <li>IP address (for approximate location)</li>
                 <li>App version</li>
             </ul>
-            <p>Google may use this data to serve personalized or non-personalized ads. You can limit ad personalization by resetting your advertising ID in your device settings under <strong>Settings &gt; Google &gt; Ads</strong>, or by opting out of interest-based ads. For more information, see <a href="https://support.google.com/admob/answer/6128543" style="color: #FF5C8D;">AdMob's privacy information</a>.</p>
+            <p>This data collection occurs regardless of whether you choose to watch an ad. Google may use this data to serve personalized or non-personalized ads. You can limit ad personalization by resetting your advertising ID in your device settings under <strong>Settings &gt; Google &gt; Ads</strong>, or by opting out of interest-based ads. The App's ad serving is configured to comply with COPPA and Google's families policy. For more information, see <a href="https://support.google.com/admob/answer/6128543" style="color: #FF5C8D;">AdMob's privacy information</a> and <a href="https://policies.google.com/privacy" style="color: #FF5C8D;">Google's Privacy Policy</a>.</p>
 
             <h2>5. In-App Purchases (Google Play Billing)</h2>
-            <p>The App offers an optional one-time in-app purchase ("Unlimited Photos") through <strong>Google Play Billing</strong>. Payment processing is handled entirely by Google. We receive a transaction confirmation but do not collect or store your payment card details. Google's purchase data is subject to <a href="https://payments.google.com/payments/apis-secure/get_legal_document?ldo=0&ldt=privacynotice" style="color: #FF5C8D;">Google Payments Privacy Notice</a>.</p>
+            <p>The App offers an optional one-time in-app purchase ("Unlimited Photos") through <strong>Google Play Billing</strong>. Payment processing is handled entirely by Google. We receive a transaction confirmation but do not collect or store your payment card details. The purchase status is stored locally on your device for quota management. Google's purchase data is subject to the <a href="https://payments.google.com/payments/apis-secure/get_legal_document?ldo=0&ldt=privacynotice" style="color: #FF5C8D;">Google Payments Privacy Notice</a>.</p>
 
-            <h2>6. Website / Landing Page</h2>
-            <p>The GitHub Pages landing page is a static website. It does not use cookies, tracking scripts, or analytics. No personal data is collected when you visit the landing page.</p>
+            <h2>6. Video &amp; Audio Capture</h2>
+            <p>The App can record short video clips (up to 8 seconds) that include <strong>audio</strong>. Audio recording requires the microphone permission and only activates when you explicitly enable video capture mode and start recording. Videos are stored locally and can be uploaded, shared via QR code, or synced to Immich if configured. Videos cannot be printed, sent via email, sent via SMS, or shared through the Android share sheet.</p>
 
-            <h2>7. Permissions</h2>
+            <h2>7. Website / Landing Page</h2>
+            <p>The GitHub Pages landing page is a static website hosted on GitHub Pages. It does not use cookies, tracking scripts, analytics, or any third-party tracking. An embedded YouTube iframe loads content from YouTube's domain, which is subject to <a href="https://policies.google.com/privacy" style="color: #FF5C8D;">Google/YouTube's Privacy Policy</a>. No personal data is collected by the landing page itself.</p>
+
+            <h2>8. Permissions</h2>
             <p>The App requests the following Android permissions:</p>
             <ul>
                 <li><strong>Camera</strong> &mdash; Required to capture photos and video.</li>
+                <li><strong>Microphone (RECORD_AUDIO)</strong> &mdash; Required for video capture with audio. Only used when video mode is enabled.</li>
                 <li><strong>Internet</strong> &mdash; Required for optional cloud upload, SMS, email features, and ad serving.</li>
-                <li><strong>Storage / Media</strong> &mdash; Required to save photos to local storage.</li>
+                <li><strong>Network State (ACCESS_NETWORK_STATE)</strong> &mdash; Required to check network connectivity before attempting uploads.</li>
+                <li><strong>Storage / Media</strong> &mdash; The following permissions are used to save and read media files:
+                    <ul>
+                        <li><code>READ_EXTERNAL_STORAGE</code> (Android 12 and below) &mdash; Read photos from local storage.</li>
+                        <li><code>WRITE_EXTERNAL_STORAGE</code> (Android 9 and below) &mdash; Save photos to local storage.</li>
+                        <li><code>READ_MEDIA_IMAGES</code> (Android 13+) &mdash; Read image files.</li>
+                        <li><code>READ_MEDIA_VIDEO</code> (Android 13+) &mdash; Read video files.</li>
+                    </ul>
+                </li>
+                <li><strong>Billing</strong> &mdash; Required for optional in-app purchases through Google Play.</li>
             </ul>
-            <p>No permission is requested beyond what is strictly necessary for app functionality.</p>
+            <p>No permission is requested beyond what is strictly necessary for app functionality. The App enforces HTTPS for network connections via a network security configuration that blocks cleartext (HTTP) traffic.</p>
 
-            <h2>8. Data Retention &amp; Deletion</h2>
+            <h2>9. Third-Party Libraries &amp; Services</h2>
+            <p>The App uses the following third-party libraries and services that may process data:</p>
             <ul>
-                <li><strong>Local photos</strong> are stored on your device until you delete them through the app gallery or uninstall the app.</li>
-                <li><strong>Uploaded photos</strong> are subject to the data retention policy of your configured server.</li>
-                <li><strong>SMS/Email data</strong> is processed by the respective third-party services and subject to their policies.</li>
-                <li><strong>Firebase data</strong> is retained according to <a href="https://firebase.google.com/terms/data-processing-terms" style="color: #FF5C8D;">Google's data retention policies</a>.</li>
+                <li><strong>Google Firebase</strong> (Analytics, Crashlytics, Performance Monitoring) &mdash; See Section 3.</li>
+                <li><strong>Google AdMob</strong> &mdash; See Section 4.</li>
+                <li><strong>Google Play Billing</strong> &mdash; See Section 5.</li>
+                <li><strong>CameraX</strong> (Google) &mdash; Camera capture library. Processes camera input locally. No data transmitted.</li>
+                <li><strong>OkHttp</strong> (Square) &mdash; HTTP client for network requests to your configured servers. No independent data collection.</li>
+                <li><strong>JavaMail</strong> (Oracle/GlassFish) &mdash; Email library for SMTP delivery to your configured server. No independent data collection.</li>
+                <li><strong>ZXing</strong> &mdash; QR code generation library. Operates entirely locally. No data transmitted.</li>
+                <li><strong>Coil</strong> &mdash; Image loading library. Loads images from local storage only. No independent data collection.</li>
             </ul>
 
-            <h2>9. Children's Privacy</h2>
+            <h2>10. Data Retention &amp; Deletion</h2>
+            <ul>
+                <li><strong>Local photos, videos, and GIFs</strong> are stored on your device until you delete them through the App's gallery or uninstall the App. Uninstalling the App deletes all app-specific files.</li>
+                <li><strong>Local database records</strong> (capture metadata, uploaded URLs) are stored in the App's Room database until the App is uninstalled.</li>
+                <li><strong>Uploaded content</strong> is subject to the data retention policy of your configured server or hosting service. <strong>Content uploaded to anonymous hosts (storage.to, catbox.moe) cannot be deleted</strong> through the App and may persist indefinitely on those services.</li>
+                <li><strong>SMS/Email data</strong> is processed by the respective third-party services and subject to their retention policies.</li>
+                <li><strong>Firebase data</strong> is retained according to <a href="https://firebase.google.com/terms/data-processing-terms" style="color: #FF5C8D;">Google's data retention policies</a>.</li>
+                <li><strong>Usage quota data and settings</strong> are stored locally until the App is uninstalled.</li>
+            </ul>
+
+            <h2>11. Children's Privacy</h2>
             <p>The App is not directed at children under 13. We do not knowingly collect personal information from children. The App's ad serving is configured to comply with COPPA and Google's families policy.</p>
 
-            <h2>10. Third-Party Links</h2>
+            <h2>12. Third-Party Links</h2>
             <p>The App and landing page may contain links to third-party websites or services. We are not responsible for the privacy practices of those third parties.</p>
 
-            <h2>11. Security</h2>
-            <p>We take reasonable measures to protect any data stored on your device, including using Android's encrypted storage (AES256 via EncryptedSharedPreferences) for sensitive credentials such as API keys, SMTP passwords, and SMS gateway passwords. However, no method of electronic storage is 100% secure.</p>
+            <h2>13. Security</h2>
+            <p>We take reasonable measures to protect data stored on your device:</p>
+            <ul>
+                <li><strong>Encrypted credentials:</strong> API keys, SMTP passwords, and SMS gateway passwords are encrypted at rest using AES256 via Android EncryptedSharedPreferences (hardware-backed keystore).</li>
+                <li><strong>Network security:</strong> The App enforces HTTPS for all network connections via a network security configuration that blocks cleartext (HTTP) traffic.</li>
+                <li><strong>No cloud backup:</strong> App data is excluded from Android cloud backup via <code>android:allowBackup="false"</code>.</li>
+            </ul>
+            <p>Limitations: Usernames, server URLs, email addresses, and other non-password settings are stored in standard Android DataStore without encryption. No method of electronic storage is 100% secure.</p>
 
-            <h2>12. Changes to This Policy</h2>
-            <p>We may update this privacy policy from time to time. Changes will be posted on this page with an updated "Last updated" date.</p>
+            <h2>14. Changes to This Policy</h2>
+            <p>We may update this privacy policy from time to time. Changes will be posted on this page with an updated "Last updated" date. Continued use of the App after changes constitutes acceptance of the updated policy.</p>
 
-            <h2>13. Contact</h2>
-            <p>If you have questions about this privacy policy, please open an issue on the <a href="https://github.com/chartmann1590/android-photobooth/issues" style="color: #FF5C8D;">GitHub repository</a>.</p>
+            <h2>15. Contact</h2>
+            <p>If you have questions about this privacy policy or your data, please open an issue on the <a href="https://github.com/chartmann1590/android-photobooth/issues" style="color: #FF5C8D;">GitHub repository</a>.</p>
+
+            <h2>16. Effective Date</h2>
+            <p>This privacy policy is effective as of <strong>May 16, 2026</strong>.</p>
         </div>
     </main>
     <footer>
