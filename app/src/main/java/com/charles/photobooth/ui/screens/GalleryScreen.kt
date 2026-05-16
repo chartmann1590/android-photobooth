@@ -4,7 +4,6 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
-import android.widget.VideoView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -49,10 +48,14 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
@@ -324,31 +327,35 @@ fun GalleryScreen(
                             shape = RoundedCornerShape(16.dp),
                             elevation = CardDefaults.cardElevation(4.dp),
                         ) {
-                            if (photo.mediaType == MediaType.VIDEO) {
-                                AndroidView(
-                                    factory = { ctx ->
-                                        VideoView(ctx).apply {
-                                            setVideoURI(Uri.fromFile(java.io.File(photo.localPath)))
-                                            setOnPreparedListener { player ->
-                                                player.isLooping = true
-                                                start()
-                                            }
-                                        }
-                                    },
-                                    update = { view ->
-                                        view.setVideoURI(Uri.fromFile(java.io.File(photo.localPath)))
-                                        view.start()
-                                    },
-                                    modifier = Modifier.fillMaxSize(),
-                                )
-                            } else {
-                                AsyncImage(
-                                    model = photo.localPath,
-                                    imageLoader = imageLoader,
-                                    contentDescription = stringResource(R.string.gallery_selected_photo),
-                                    contentScale = ContentScale.Fit,
-                                    modifier = Modifier.fillMaxSize(),
-                                )
+                            val isAnimatedGif = photo.mediaType == MediaType.IMAGE &&
+                                photo.localPath.endsWith(".gif", ignoreCase = true)
+                            when {
+                                photo.mediaType == MediaType.VIDEO -> {
+                                    key(photo.id) {
+                                        VideoPlayer(
+                                            path = photo.localPath,
+                                            modifier = Modifier.fillMaxSize(),
+                                        )
+                                    }
+                                }
+                                isAnimatedGif -> {
+                                    key(photo.id) {
+                                        GifFramePlayer(
+                                            gifPath = photo.localPath,
+                                            fallbackImageLoader = imageLoader,
+                                            modifier = Modifier.fillMaxSize(),
+                                        )
+                                    }
+                                }
+                                else -> {
+                                    AsyncImage(
+                                        model = photo.localPath,
+                                        imageLoader = imageLoader,
+                                        contentDescription = stringResource(R.string.gallery_selected_photo),
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                }
                             }
                         }
 
@@ -665,4 +672,123 @@ fun GalleryScreen(
             },
         )
     }
+}
+
+/**
+ * Animates a GIF by reading its sidecar `.frames.txt` file (one source-image path
+ * per line) and cycling through the decoded bitmaps in Compose. This avoids the
+ * hand-rolled GIF encoder's compatibility issues with [android.graphics.ImageDecoder]
+ * and [android.graphics.Movie], both of which crash on our generated files.
+ * Falls back to a static AsyncImage if no sidecar is present.
+ */
+@Composable
+private fun GifFramePlayer(
+    gifPath: String,
+    fallbackImageLoader: coil.ImageLoader,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val sidecar = remember(gifPath) { java.io.File(gifPath + ".frames.txt") }
+    val framePaths = remember(gifPath) {
+        runCatching {
+            if (sidecar.exists()) sidecar.readLines().filter { it.isNotBlank() } else emptyList()
+        }.getOrDefault(emptyList())
+    }
+
+    if (framePaths.isEmpty()) {
+        AsyncImage(
+            model = gifPath,
+            imageLoader = fallbackImageLoader,
+            contentDescription = stringResource(R.string.gallery_selected_photo),
+            contentScale = ContentScale.Fit,
+            modifier = modifier,
+        )
+        return
+    }
+
+    val frames by produceState<List<android.graphics.Bitmap>>(initialValue = emptyList(), framePaths) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            framePaths.mapNotNull { path -> BitmapFactory.decodeFile(path) }
+        }
+    }
+
+    var frameIndex by remember(framePaths) { mutableIntStateOf(0) }
+    LaunchedEffect(frames) {
+        if (frames.isEmpty()) return@LaunchedEffect
+        while (true) {
+            kotlinx.coroutines.delay(500)
+            frameIndex = (frameIndex + 1) % frames.size
+        }
+    }
+
+    val current = frames.getOrNull(frameIndex)
+    if (current != null) {
+        Image(
+            bitmap = current.asImageBitmap(),
+            contentDescription = stringResource(R.string.gallery_selected_photo),
+            contentScale = ContentScale.Fit,
+            modifier = modifier,
+        )
+    } else {
+        // Frames still loading
+        Box(modifier = modifier)
+    }
+}
+
+/**
+ * Plays a video using Media3 ExoPlayer + PlayerView. This is the official Android
+ * media playback library and handles all the edge cases (codecs, surface lifecycle,
+ * Compose integration, looping, controls) properly. VideoView/MediaPlayer with
+ * SurfaceView renders as a black box inside Compose due to surface Z-order issues;
+ * PlayerView uses a SurfaceView with proper Compose integration via AndroidView.
+ */
+@androidx.media3.common.util.UnstableApi
+@Composable
+private fun VideoPlayer(path: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val exoPlayer = remember(path) {
+        // The Pixel 8 Pro's Tensor hardware H.264 decoder (c2.exynos.h264.decoder)
+        // rejects the bitstream that the Tensor hardware H.264 encoder itself
+        // wrote — a known firmware bug. Force ExoPlayer to fall back to the
+        // software AVC decoder when the hardware one fails so playback recovers.
+        val renderersFactory = androidx.media3.exoplayer.DefaultRenderersFactory(context)
+            .setEnableDecoderFallback(true)
+            .setMediaCodecSelector(
+                androidx.media3.exoplayer.mediacodec.MediaCodecSelector { mimeType, requiresSecure, requiresTunneling ->
+                    val all = androidx.media3.exoplayer.mediacodec.MediaCodecUtil
+                        .getDecoderInfos(mimeType, requiresSecure, requiresTunneling)
+                    // Move software decoders (and non-Exynos hardware) ahead of the
+                    // broken Exynos decoder so playback isn't sabotaged by it.
+                    val (broken, ok) = all.partition {
+                        it.name.contains("exynos", ignoreCase = true)
+                    }
+                    ok + broken
+                }
+            )
+        androidx.media3.exoplayer.ExoPlayer.Builder(context, renderersFactory).build().apply {
+            addListener(object : androidx.media3.common.Player.Listener {
+                override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                    android.util.Log.e("GalleryVideo", "ExoPlayer error: ${error.errorCodeName}", error)
+                }
+            })
+            setMediaItem(androidx.media3.common.MediaItem.fromUri(Uri.fromFile(java.io.File(path))))
+            repeatMode = androidx.media3.common.Player.REPEAT_MODE_ALL
+            playWhenReady = true
+            prepare()
+        }
+    }
+    DisposableEffect(path) {
+        onDispose { exoPlayer.release() }
+    }
+    AndroidView(
+        factory = { ctx ->
+            androidx.media3.ui.PlayerView(ctx).apply {
+                player = exoPlayer
+                useController = true
+                setShowBuffering(androidx.media3.ui.PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+                resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
+            }
+        },
+        modifier = modifier,
+    )
 }

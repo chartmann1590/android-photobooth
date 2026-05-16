@@ -221,6 +221,10 @@ class CaptureViewModel(
     ) {
         viewModelScope.launch {
             try {
+                android.util.Log.i(
+                    "VideoSave",
+                    "saveCapturedVideo path=${videoFile.absolutePath} exists=${videoFile.exists()} size=${if (videoFile.exists()) videoFile.length() else -1L}",
+                )
                 if (!videoFile.exists() || videoFile.length() <= 0L) {
                     _uiState.value = CaptureUiState.Error("Failed to save video")
                     onComplete(null)
@@ -248,11 +252,13 @@ class CaptureViewModel(
         onComplete: (Long?) -> Unit,
     ) {
         val app = getApplication<Application>()
+        android.util.Log.i("GifFlow", "createGifFromPhotos called with ${photoIds.size} photoIds=$photoIds")
         viewModelScope.launch {
             try {
                 val id = withContext(Dispatchers.IO) {
                     val photosById = photoDao.getPhotosByIds(photoIds).associateBy { it.id }
                     val orderedPhotos = photoIds.mapNotNull { photosById[it] }
+                    android.util.Log.i("GifFlow", "Resolved ${orderedPhotos.size}/${photoIds.size} photos from DB")
                     if (orderedPhotos.size < 2) {
                         throw IllegalStateException("At least two photos are required to create a GIF")
                     }
@@ -287,6 +293,13 @@ class CaptureViewModel(
                         encoder.finish()
                     }
 
+                    // Sidecar file listing the source frame paths. The gallery uses this for
+                    // in-app animated playback because our hand-rolled GIF encoder produces
+                    // files that both ImageDecoder and Movie reject. The GIF file itself
+                    // remains valid for export/sharing.
+                    val sidecar = File(outputDir, destFile.name + ".frames.txt")
+                    sidecar.writeText(orderedPhotos.joinToString("\n") { it.localPath })
+
                     photoDao.insert(
                         PhotoEntity(
                             eventName = eventName,
@@ -295,9 +308,11 @@ class CaptureViewModel(
                         ),
                     )
                 }
+                android.util.Log.i("GifFlow", "GIF inserted into DB with id=$id")
                 _uiState.value = CaptureUiState.Saved(id)
                 onComplete(id)
             } catch (e: Exception) {
+                android.util.Log.e("GifFlow", "createGifFromPhotos failed", e)
                 _uiState.value = CaptureUiState.Error(e.message ?: "Failed to create GIF")
                 onComplete(null)
             }

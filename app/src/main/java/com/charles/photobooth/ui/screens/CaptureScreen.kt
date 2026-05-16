@@ -22,6 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -291,6 +292,72 @@ fun CaptureScreen(
             val next = countdown - 1
             captureViewModel.tickCountdown(next)
             countdown = next
+        } else if (uiState is CaptureUiState.Capturing && videoModeSelected) {
+            // Video path: countdown finished, kick off the actual recording. The recording
+            // is managed by VideoCaptureManager and runs for MAX_VIDEO_DURATION_SECONDS.
+            val outputDir = videoOutputDir(context.applicationContext as Application)
+            if (outputDir == null) {
+                captureViewModel.resetToIdle()
+                Toast.makeText(context, context.getString(R.string.capture_video_save_failed), Toast.LENGTH_LONG).show()
+                return@LaunchedEffect
+            }
+            val videoFile = java.io.File(outputDir, "video_${System.currentTimeMillis()}.mp4")
+            pendingVideoPath = videoFile.absolutePath
+
+            val useFrontScreenFlashVideo = frontScreenFlashEnabled && useFrontCamera
+            val activityV = context.findActivity()
+            val originalBrightnessV = activityV?.window?.attributes?.screenBrightness
+            if (useFrontScreenFlashVideo) {
+                showFlash = true
+                activityV?.let { act ->
+                    act.window.attributes = act.window.attributes.apply {
+                        screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
+                    }
+                }
+            }
+            fun restoreVideoBrightness() {
+                if (useFrontScreenFlashVideo) {
+                    showFlash = false
+                    activityV?.let { act ->
+                        act.window.attributes = act.window.attributes.apply {
+                            screenBrightness = originalBrightnessV ?: WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                        }
+                    }
+                }
+            }
+            val started = videoManager.startRecordingToFile(videoFile) { event ->
+                if (event is VideoRecordEvent.Finalize) {
+                    isRecordingVideo = false
+                    recordingSeconds = 0
+                    restoreVideoBrightness()
+                    val path = pendingVideoPath
+                    pendingVideoPath = null
+                    if (event.hasError()) {
+                        android.util.Log.e(
+                            "VideoCapture",
+                            "Recording finalize failed: code=${event.error}",
+                            event.cause,
+                        )
+                        runCatching { videoFile.delete() }
+                        captureViewModel.resetToIdle()
+                        Toast.makeText(context, event.cause?.message ?: context.getString(R.string.capture_video_save_failed), Toast.LENGTH_LONG).show()
+                        return@startRecordingToFile
+                    }
+                    val savedFile = path?.let { java.io.File(it) } ?: videoFile
+                    captureViewModel.saveCapturedVideo(savedFile, eventName) { id ->
+                        finishOrPreview(id)
+                    }
+                }
+            }
+            if (started) {
+                isRecordingVideo = true
+                recordingSeconds = 0
+            } else {
+                restoreVideoBrightness()
+                pendingVideoPath = null
+                captureViewModel.resetToIdle()
+                Toast.makeText(context, context.getString(R.string.capture_video_unavailable), Toast.LENGTH_LONG).show()
+            }
         } else if (uiState is CaptureUiState.Capturing) {
             previewView ?: return@LaunchedEffect
             val outputDir = context.cacheDir
@@ -340,7 +407,27 @@ fun CaptureScreen(
                                 if (boothPhotosTaken < effectiveBoothCount) {
                                     captureViewModel.resetToIdle()
                                     pendingNextBoothShot = true
+                                } else if (gifModeEnabled && boothPhotoIds.size >= 2) {
+                                    // GIF mode takes priority over template composing: if the
+                                    // user explicitly opted into an animated GIF, that's what
+                                    // they want — even when a multi-frame template is selected.
+                                    android.util.Log.i(
+                                        "BoothFlow",
+                                        "Booth complete → creating GIF from ${boothPhotoIds.size} photos (gifModeEnabled=true, template=${multiPhotoTemplate != null})",
+                                    )
+                                    captureViewModel.createGifFromPhotos(
+                                        photoIds = boothPhotoIds.toList(),
+                                        eventName = eventName,
+                                    ) { gifId ->
+                                        quotaReservedForSession = 0
+                                        android.util.Log.i("BoothFlow", "GIF creation completed → gifId=$gifId")
+                                        finishOrPreview(gifId ?: id)
+                                    }
                                 } else if (multiPhotoTemplate != null) {
+                                    android.util.Log.i(
+                                        "BoothFlow",
+                                        "Booth complete → composing template (gifModeEnabled=$gifModeEnabled, photos=${boothPhotoIds.size})",
+                                    )
                                     captureViewModel.composeTemplate(
                                         photoIds = boothPhotoIds.toList(),
                                         template = multiPhotoTemplate,
@@ -356,15 +443,11 @@ fun CaptureScreen(
                                         }
                                         finishOrPreview(compositeId ?: id)
                                     }
-                                } else if (gifModeEnabled && boothPhotoIds.size >= 2) {
-                                    captureViewModel.createGifFromPhotos(
-                                        photoIds = boothPhotoIds.toList(),
-                                        eventName = eventName,
-                                    ) { gifId ->
-                                        quotaReservedForSession = 0
-                                        finishOrPreview(gifId ?: id)
-                                    }
                                 } else {
+                                    android.util.Log.i(
+                                        "BoothFlow",
+                                        "Booth complete → no GIF/template (gifModeEnabled=$gifModeEnabled, photos=${boothPhotoIds.size}, template=null)",
+                                    )
                                     quotaReservedForSession = 0
                                     finishOrPreview(id)
                                 }
@@ -582,6 +665,49 @@ fun CaptureScreen(
             )
         }
 
+        // Recording timer — drawn AFTER the flash overlay so it remains visible even
+        // when front-screen flash is active during video recording.
+        AnimatedVisibility(
+            visible = isRecordingVideo,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.align(Alignment.TopCenter),
+        ) {
+            val secondsLeft = (MAX_VIDEO_DURATION_SECONDS - recordingSeconds).coerceAtLeast(0)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .padding(top = 24.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(DarkBackground.copy(alpha = 0.78f))
+                    .padding(horizontal = 24.dp, vertical = 14.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .clip(CircleShape)
+                            .background(Rose),
+                    )
+                    Text(
+                        text = stringResource(R.string.capture_recording_label),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                Text(
+                    text = "${secondsLeft}s",
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                )
+            }
+        }
+
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -702,37 +828,11 @@ fun CaptureScreen(
                             if (isRecordingVideo) {
                                 videoManager.stopRecording()
                             } else {
-                                val outputDir = videoOutputDir(context.applicationContext as Application)
-                                if (outputDir == null) {
-                                    Toast.makeText(context, context.getString(R.string.capture_video_save_failed), Toast.LENGTH_LONG).show()
-                                    return@clickable
-                                }
-                                val videoFile = java.io.File(outputDir, "video_${System.currentTimeMillis()}.mp4")
-                                pendingVideoPath = videoFile.absolutePath
-                                val started = videoManager.startRecordingToFile(videoFile) { event ->
-                                    if (event is VideoRecordEvent.Finalize) {
-                                        isRecordingVideo = false
-                                        recordingSeconds = 0
-                                        val path = pendingVideoPath
-                                        pendingVideoPath = null
-                                        if (event.hasError()) {
-                                            runCatching { videoFile.delete() }
-                                            Toast.makeText(context, event.cause?.message ?: context.getString(R.string.capture_video_save_failed), Toast.LENGTH_LONG).show()
-                                            return@startRecordingToFile
-                                        }
-                                        val savedFile = path?.let { java.io.File(it) } ?: videoFile
-                                        captureViewModel.saveCapturedVideo(savedFile, eventName) { id ->
-                                            finishOrPreview(id)
-                                        }
-                                    }
-                                }
-                                if (started) {
-                                    isRecordingVideo = true
-                                    recordingSeconds = 0
-                                } else {
-                                    pendingVideoPath = null
-                                    Toast.makeText(context, context.getString(R.string.capture_video_unavailable), Toast.LENGTH_LONG).show()
-                                }
+                                // Trigger the same 3-second countdown used for photos. The actual
+                                // recording starts in LaunchedEffect(countdown) when it reaches 0.
+                                showFlash = false
+                                captureViewModel.startCountdown()
+                                countdown = 3
                             }
                             return@clickable
                         }

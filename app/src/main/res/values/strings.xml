@@ -36,6 +36,7 @@
     <string name="capture_recording">Recording %1$d/%2$d</string>
     <string name="capture_video_unavailable">Video capture is not available</string>
     <string name="capture_video_save_failed">Failed to save video</string>
+    <string name="capture_recording_label">REC</string>
     <string name="capture_counter_remaining">%1$d photos left today</string>
     <string name="capture_counter_unlimited">Unlimited photos</string>
 
