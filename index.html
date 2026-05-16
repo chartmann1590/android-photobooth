@@ -3,14 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photobooth - Capture the Moment</title>
-    <meta name="description" content="Turn any Android device into a professional event photobooth. Capture, frame, print, and share photos instantly.">
+    <title>Photobooth Event Camera - Capture the Moment</title>
+    <meta name="description" content="Turn any Android device into a professional event photobooth. Capture, frame, print, and share photos instantly. Free & open source.">
     <meta name="theme-color" content="#0F0F1A">
-    <meta property="og:title" content="Photobooth - Capture the Moment">
-    <meta property="og:description" content="Turn any Android device into a professional event photobooth.">
+    <meta property="og:title" content="Photobooth Event Camera">
+    <meta property="og:description" content="Turn any Android device into a professional event photobooth. Capture, frame, print, and share photos instantly.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://chartmann1590.github.io/android-photobooth/">
+    <meta property="og:image" content="https://chartmann1590.github.io/android-photobooth/images/feature-graphic.png">
+    <meta property="og:image:width" content="1024">
+    <meta property="og:image:height" content="500">
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://chartmann1590.github.io/android-photobooth/images/feature-graphic.png">
+    <link rel="icon" type="image/png" href="images/icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -30,7 +35,7 @@
             --radius: 16px;
         }
 
-        html { scroll-behavior: smooth; }
+        html { scroll-behavior: smooth; scroll-padding-top: 72px; }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -42,13 +47,99 @@
 
         .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
-        /* Hero */
+        /* ===== NAV ===== */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(15,15,26,0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(46,46,74,0.5);
+            height: 64px;
+            display: flex;
+            align-items: center;
+        }
+
+        nav .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .nav-brand img {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+        }
+
+        .nav-brand span {
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+
+        .nav-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            background: linear-gradient(135deg, var(--rose), var(--rose-light));
+            color: #fff;
+            transition: box-shadow 0.2s;
+        }
+
+        .nav-cta:hover { box-shadow: 0 4px 20px rgba(233,30,99,0.35); }
+
+        .nav-mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        /* ===== HERO ===== */
         .hero {
             min-height: 100vh;
             display: flex;
             align-items: center;
             position: relative;
             overflow: hidden;
+            padding-top: 64px;
         }
 
         .hero::before {
@@ -99,7 +190,7 @@
         .hero-badge span { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; }
 
         h1 {
-            font-size: clamp(40px, 5vw, 64px);
+            font-size: clamp(36px, 5vw, 60px);
             font-weight: 800;
             line-height: 1.1;
             letter-spacing: -1px;
@@ -118,6 +209,27 @@
             color: var(--text-muted);
             margin-bottom: 36px;
             max-width: 480px;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 32px;
+            margin-top: 24px;
+        }
+
+        .hero-stat { text-align: left; }
+
+        .hero-stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .hero-stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .buttons { display: flex; gap: 16px; flex-wrap: wrap; }
@@ -174,42 +286,58 @@
             transform: rotate(-5deg);
         }
 
-        .phone-screen {
+        .phone-frame img {
             width: 100%;
             height: 100%;
-            background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 32px;
+            object-fit: cover;
         }
 
-        .phone-camera {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--rose), var(--rose-light));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 40px rgba(233,30,99,0.3);
+        /* ===== FEATURE PROMO BANNER ===== */
+        .promo-banner {
+            padding: 0 0 100px;
         }
 
-        .phone-camera svg { width: 48px; height: 48px; }
-
-        .phone-text {
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: 4px;
-            color: var(--text);
-            margin-bottom: 8px;
+        .promo-banner-inner {
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid var(--card-light);
+            box-shadow: 0 16px 64px rgba(0,0,0,0.3);
+            position: relative;
         }
 
-        .phone-tagline { font-size: 12px; color: var(--text-muted); }
+        .promo-banner-inner img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
 
-        /* Sections */
+        /* ===== VIDEO ===== */
+        .video-section {
+            padding: 0 0 100px;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--card-light);
+            box-shadow: 0 16px 64px rgba(0,0,0,0.4);
+            aspect-ratio: 16 / 9;
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* ===== SECTIONS ===== */
         section { padding: 100px 0; }
 
         h2 {
@@ -229,17 +357,32 @@
             margin-right: auto;
         }
 
+        /* ===== FEATURES ===== */
+        .feature-category {
+            margin-bottom: 48px;
+        }
+
+        .feature-category-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--rose-light);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
         .features-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
+            gap: 20px;
         }
 
         .feature-card {
             background: var(--card);
             border: 1px solid var(--card-light);
             border-radius: var(--radius);
-            padding: 32px;
+            padding: 28px;
             transition: transform 0.2s, border-color 0.2s;
         }
 
@@ -249,27 +392,117 @@
         }
 
         .feature-icon {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             border-radius: 12px;
             background: rgba(233,30,99,0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
-        .feature-icon svg { width: 24px; height: 24px; color: var(--rose); }
+        .feature-icon svg { width: 22px; height: 22px; color: var(--rose); }
 
         .feature-card h3 {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
-        .feature-card p { color: var(--text-muted); font-size: 14px; }
+        .feature-card p { color: var(--text-muted); font-size: 13px; line-height: 1.5; }
 
-        /* How it works */
+        /* ===== SCREENSHOTS ===== */
+        .screenshots-scroll {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 16px;
+        }
+
+        .screenshot-card {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--card-light);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .screenshot-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+            border-color: var(--rose);
+        }
+
+        .screenshot-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .screenshot-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 16px;
+            background: linear-gradient(transparent, rgba(15,15,26,0.95));
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        /* ===== ROADMAP ===== */
+        .roadmap-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        .roadmap-column {
+            background: var(--card);
+            border: 1px solid var(--card-light);
+            border-radius: var(--radius);
+            padding: 32px;
+        }
+
+        .roadmap-column h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .roadmap-column h3 .icon-done { color: #4CAF50; }
+        .roadmap-column h3 .icon-planned { color: var(--gold); }
+
+        .roadmap-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .roadmap-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .roadmap-list li svg {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .roadmap-done li svg { color: #4CAF50; }
+        .roadmap-planned li svg { color: var(--gold); }
+
+        /* ===== HOW IT WORKS ===== */
         .steps {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -298,7 +531,67 @@
         .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
         .step p { font-size: 14px; color: var(--text-muted); }
 
-        /* CTA */
+        /* ===== FAQ ===== */
+        .faq-list {
+            max-width: 760px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .faq-item {
+            background: var(--card);
+            border: 1px solid var(--card-light);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .faq-item.active { border-color: var(--rose); }
+
+        .faq-question {
+            width: 100%;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            text-align: left;
+            padding: 20px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .faq-question:hover { color: var(--rose-light); }
+
+        .faq-chevron {
+            flex-shrink: 0;
+            transition: transform 0.3s;
+        }
+
+        .faq-item.active .faq-chevron { transform: rotate(180deg); }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .faq-answer-inner {
+            padding: 0 24px 20px;
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .faq-item.active .faq-answer { max-height: 300px; }
+
+        /* ===== CTA ===== */
         .cta {
             text-align: center;
             background: var(--card);
@@ -324,7 +617,7 @@
         .cta h2 { margin-bottom: 12px; position: relative; }
         .cta .section-subtitle { margin-bottom: 40px; position: relative; }
 
-        /* Footer */
+        /* ===== FOOTER ===== */
         footer {
             border-top: 1px solid var(--card-light);
             padding: 32px 0;
@@ -339,18 +632,68 @@
         .footer-links { margin-top: 12px; }
         .footer-links a { margin: 0 12px; }
 
-        /* Responsive */
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 900px) {
             .hero-inner { grid-template-columns: 1fr; text-align: center; }
             .hero-subtitle { margin-left: auto; margin-right: auto; }
             .buttons { justify-content: center; }
             .phone-mockup { display: none; }
             .features-grid { grid-template-columns: 1fr; }
+            .screenshots-scroll { grid-template-columns: repeat(3, 1fr); }
+            .roadmap-columns { grid-template-columns: 1fr; }
             .steps { grid-template-columns: repeat(2, 1fr); }
+            .hero-stats { justify-content: center; }
+
+            .nav-links { display: none; }
+            .nav-links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 64px;
+                left: 0;
+                right: 0;
+                background: rgba(15,15,26,0.98);
+                padding: 20px 24px;
+                gap: 16px;
+                border-bottom: 1px solid var(--card-light);
+            }
+            .nav-mobile-toggle { display: block; }
+        }
+
+        @media (max-width: 600px) {
+            .screenshots-scroll { grid-template-columns: repeat(2, 1fr); }
+            .hero-stats { flex-direction: column; gap: 16px; align-items: center; }
+            .steps { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
+    <!-- NAV -->
+    <nav>
+        <div class="container">
+            <a href="#" class="nav-brand">
+                <img src="images/icon.png" alt="Photobooth icon">
+                <span>PHOTOBOOTH</span>
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#screenshots">Screenshots</a></li>
+                <li><a href="#roadmap">Roadmap</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li>
+                    <a href="https://github.com/chartmann1590/android-photobooth" class="nav-cta">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        GitHub
+                    </a>
+                </li>
+            </ul>
+            <button class="nav-mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="Toggle menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- HERO -->
     <section class="hero">
         <div class="container">
             <div class="hero-inner">
@@ -365,80 +708,291 @@
                         </a>
                         <a href="#features" class="btn btn-secondary">See Features</a>
                     </div>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <div class="hero-stat-value">15+</div>
+                            <div class="hero-stat-label">Features</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-value">8</div>
+                            <div class="hero-stat-label">Photo Filters</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-value">100%</div>
+                            <div class="hero-stat-label">Free</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="phone-mockup">
                     <div class="phone-frame">
-                        <div class="phone-screen">
-                            <div class="phone-camera">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                            </div>
-                            <div class="phone-text">PHOTOBOOTH</div>
-                            <div class="phone-tagline">Capture the moment</div>
-                        </div>
+                        <img src="images/screenshots/01-home.png" alt="Photobooth home screen">
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- FEATURE PROMO BANNER -->
+    <div class="promo-banner">
+        <div class="container">
+            <div class="promo-banner-inner">
+                <img src="images/feature-graphic.png" alt="Photobooth Event Camera - Capture, frame, print, and share photos at events">
+            </div>
+        </div>
+    </div>
+
+    <!-- VIDEO -->
+    <div class="video-section">
+        <div class="container">
+            <h2>See it in action</h2>
+            <p class="section-subtitle">Watch how Photobooth turns any Android device into a complete event photo station.</p>
+            <div class="video-wrapper">
+                <iframe src="https://www.youtube.com/embed/mCZgzEYB8uk" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" title="Photobooth Event Camera promo video" loading="lazy"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- FEATURES -->
     <section id="features">
         <div class="container">
             <h2>Everything you need</h2>
             <p class="section-subtitle">Professional photobooth features without the professional price tag.</p>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+
+            <div class="feature-category">
+                <div class="feature-category-title">Capture</div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        </div>
+                        <h3>Instant Capture</h3>
+                        <p>3-second countdown with voice prompt, screen flash, and color-cycling animation. Photos ready in seconds with EXIF rotation handling.</p>
                     </div>
-                    <h3>Instant Capture</h3>
-                    <p>Countdown timer with voice prompt. Photos are captured, processed, and ready in seconds with EXIF rotation handling.</p>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                        </div>
+                        <h3>8 Photo Filters</h3>
+                        <p>Original, Grayscale, Sepia, B&amp;W, Vintage, Cool, Warm, and Vivid. Apply per-capture for creative variety.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
+                        </div>
+                        <h3>Multi-Photo Layouts</h3>
+                        <p>Single portrait, 2x2 grid, and vertical photo strip. Composited into one image with automatic countdown between shots.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        </div>
+                        <h3>Booth Mode</h3>
+                        <p>Continuous capture with configurable photo count. Runs unattended so guests can snap away without help.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l3-9 4 18 3-9h4"/></svg>
+                        </div>
+                        <h3>GIF / Boomerang</h3>
+                        <p>Create animated GIFs from burst captures with configurable delay. Fun shareable moments guests love.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                        </div>
+                        <h3>Short Video Capture</h3>
+                        <p>8-second MP4 clips with audio. Playback in gallery, upload, QR sharing, and Immich sync included.</p>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            </div>
+
+            <div class="feature-category">
+                <div class="feature-category-title">Customize</div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        </div>
+                        <h3>Custom Frame Overlays</h3>
+                        <p>Upload transparent PNG frames that composite over every photo. Brand each event uniquely with the built-in frame designer.</p>
                     </div>
-                    <h3>Custom Frame Overlays</h3>
-                    <p>Design and upload transparent PNG frames that composite perfectly over every photo. Brand each event uniquely.</p>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                        </div>
+                        <h3>Event Templates</h3>
+                        <p>Built-in presets for Birthday, Wedding, Anniversary, Holiday, and generic events. Colored caption bands auto-applied.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                        </div>
+                        <h3>Watermark / Logo</h3>
+                        <p>Custom watermark with configurable position (6 options), size, and opacity. Perfect for branded events.</p>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            </div>
+
+            <div class="feature-category">
+                <div class="feature-category-title">Share</div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="8" height="8" rx="1"/></svg>
+                        </div>
+                        <h3>QR Code Sharing</h3>
+                        <p>Upload and generate a QR code instantly. Guests scan with their phone to download &mdash; no app needed.</p>
                     </div>
-                    <h3>Wireless Printing</h3>
-                    <p>Print photos directly to any wireless printer connected to your device. No extra hardware needed.</p>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        </div>
+                        <h3>Email &amp; SMS</h3>
+                        <p>Send via SMTP email with custom templates or SMS gateway. Guests get their photos delivered instantly.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        </div>
+                        <h3>Wireless Printing</h3>
+                        <p>Print directly to any wireless printer on the same network. No extra hardware or setup required.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        </div>
+                        <h3>Social Media</h3>
+                        <p>Android share sheet sends photos to Instagram, WhatsApp, Twitter, and any app on the device.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        </div>
+                        <h3>Self-Hosted Upload</h3>
+                        <p>Upload to your own Immich server or use anonymous hosting (storage.to, catbox.moe). Your photos, your rules.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        </div>
+                        <h3>Multiple Cameras</h3>
+                        <p>Use front, back, or any additional camera on the device. Full support for multi-camera hardware.</p>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+
+            <div class="feature-category">
+                <div class="feature-category-title">Privacy &amp; Security</div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </div>
+                        <h3>Encrypted Credentials</h3>
+                        <p>All API keys, passwords, and server credentials encrypted at rest with AES256 via EncryptedSharedPreferences.</p>
                     </div>
-                    <h3>Email &amp; SMS Sharing</h3>
-                    <p>Send photos via email with custom templates or SMS gateway. Guests get their photos instantly.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <h3>Privacy First</h3>
+                        <p>GDPR consent dialog on first launch. No tracking without permission. Offline capable. All photos stored locally by default.</p>
                     </div>
-                    <h3>Self-Hosted Upload</h3>
-                    <p>Upload to your own Immich server or use anonymous hosting. Your photos, your server, your rules.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                        <h3>Interactive Tutorial</h3>
+                        <p>19-step guided onboarding walks new users through every feature. Up and running in under 2 minutes.</p>
                     </div>
-                    <h3>Short Video Capture</h3>
-                    <p>Optional 8-second MP4 clips with audio. Play back in the gallery, upload, and share via QR — Immich sync included.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    </div>
-                    <h3>Privacy First</h3>
-                    <p>Credentials encrypted at rest. No tracking without consent. Offline capable. All photos stored locally.</p>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- SCREENSHOTS -->
+    <section id="screenshots">
+        <div class="container">
+            <h2>See the app</h2>
+            <p class="section-subtitle">A clean, full-screen experience designed for events.</p>
+            <div class="screenshots-scroll">
+                <div class="screenshot-card">
+                    <img src="images/screenshots/01-home.png" alt="Photobooth home screen" loading="lazy">
+                    <div class="screenshot-label">Home</div>
+                </div>
+                <div class="screenshot-card">
+                    <img src="images/screenshots/02-capture-countdown.png" alt="Capture screen with countdown" loading="lazy">
+                    <div class="screenshot-label">Capture</div>
+                </div>
+                <div class="screenshot-card">
+                    <img src="images/screenshots/03-gallery.png" alt="Photo gallery view" loading="lazy">
+                    <div class="screenshot-label">Gallery</div>
+                </div>
+                <div class="screenshot-card">
+                    <img src="images/screenshots/04-sharing-qr-print.png" alt="Sharing options with QR code and print" loading="lazy">
+                    <div class="screenshot-label">Sharing</div>
+                </div>
+                <div class="screenshot-card">
+                    <img src="images/screenshots/05-settings-capture.png" alt="Settings screen for capture mode" loading="lazy">
+                    <div class="screenshot-label">Settings</div>
+                </div>
+                <div class="screenshot-card">
+                    <img src="images/screenshots/06-frame-designer.png" alt="Frame designer tool" loading="lazy">
+                    <div class="screenshot-label">Frame Designer</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ROADMAP -->
+    <section id="roadmap">
+        <div class="container">
+            <h2>Roadmap</h2>
+            <p class="section-subtitle">What's done and what's coming next.</p>
+            <div class="roadmap-columns">
+                <div class="roadmap-column">
+                    <h3>
+                        <svg class="icon-done" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        Completed
+                    </h3>
+                    <ul class="roadmap-list roadmap-done">
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Multi-photo templates (single, 2x2, strip)</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Social media sharing (Android share sheet)</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Multiple cameras support</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Animated countdown effects</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Custom watermark / logo</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> 8 photo filters</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Booth mode (continuous capture)</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> GIF / Boomerang creation</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> QR code sharing</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Anonymous image hosting</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Monetization (free tier, ads, IAP)</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Interactive onboarding tutorial</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> GDPR consent dialog</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Encrypted credential storage</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Firebase Analytics &amp; Crashlytics</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> PNG frame overlay system</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Full video capture (8-sec clips)</li>
+                    </ul>
+                </div>
+                <div class="roadmap-column">
+                    <h3>
+                        <svg class="icon-planned" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Planned
+                    </h3>
+                    <ul class="roadmap-list roadmap-planned">
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Remote trigger via Bluetooth / BLE shutter</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Green screen / background replacement</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Real-time live filter preview on camera feed</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Template editor with drag-and-drop layout</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Camera picker UI (select from all cameras)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
     <section id="how-it-works">
         <div class="container">
             <h2>Up and running in minutes</h2>
@@ -450,7 +1004,7 @@
                 </div>
                 <div class="step">
                     <h3>Configure</h3>
-                    <p>Set your event name, optional frame overlay, and sharing preferences.</p>
+                    <p>Set your event name, frame overlay, filters, and sharing preferences.</p>
                 </div>
                 <div class="step">
                     <h3>Capture</h3>
@@ -458,12 +1012,113 @@
                 </div>
                 <div class="step">
                     <h3>Share</h3>
-                    <p>Guests browse the gallery, get their photo emailed, texted, printed, or uploaded.</p>
+                    <p>Guests browse the gallery, get their photo emailed, texted, printed, or scan a QR code.</p>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- FAQ -->
+    <section id="faq">
+        <div class="container">
+            <h2>Frequently asked questions</h2>
+            <p class="section-subtitle">Everything you need to know about Photobooth.</p>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <button class="faq-question">
+                        What Android devices does Photobooth support?
+                        <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">Photobooth runs on any Android device running Android 7.0 (API 24) or higher. It works on phones and tablets in landscape orientation. A front or rear camera is required.</div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Is Photobooth really free?
+                        <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">Yes. The app is open source under the MIT license. You get 15 free captures per day, earn up to 60 more by watching optional rewarded ads, or unlock unlimited photos with a one-time in-app purchase. There are no subscriptions.</div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Do I need an internet connection?
+                        <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">Only for optional features. Core capture, gallery, and printing work offline. Upload, email, SMS, QR code generation, and ad rewards require internet.</div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        How do I print photos?
+                        <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">Tap any photo in the gallery and select Print. Photobooth uses the Android Print framework, so it works with any wireless printer connected to your device &mdash; no additional drivers or setup needed.</div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        How do guests get their photos?
+                        <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">Guests can receive their photos several ways: scan a QR code to download instantly, receive an email with the photo attached, get an SMS with a link, use the Android share sheet to send to social media, or pick up a wireless printout.</div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Can I use my own server for uploads?
+                        <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">Yes. Photobooth supports self-hosted <a href="https://immich.app/" style="color: var(--rose-light);">Immich</a> servers with album sync. If you don't have a server, anonymous hosting (storage.to and catbox.moe) generates public download links automatically.</div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Is my data private?
+                        <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">Absolutely. Photos are stored locally on your device unless you explicitly upload or share them. All credentials (API keys, passwords) are encrypted at rest with AES256. Analytics and crash reporting are opt-in via a GDPR consent dialog on first launch. See our <a href="privacy.html" style="color: var(--rose-light);">Privacy Policy</a> for full details.</div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        What photo filters are available?
+                        <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">Eight filters are built in: Original, Grayscale, Sepia, Black &amp; White, Vintage, Cool, Warm, and Vivid. You can set a default filter in Settings or choose per-capture from the filter chip row.</div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        What is Booth Mode?
+                        <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">Booth Mode enables continuous capture &mdash; the camera takes a configurable number of photos back-to-back with a countdown between each. It can also create animated GIFs from the burst. Great for unattended setups at events.</div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Can I add custom event frames?
+                        <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">Yes. Upload any transparent PNG as a frame overlay &mdash; it composites on top of every captured photo. Use the built-in Frame Designer to create frames visually, or design them in any image editor and upload. You can also pick from built-in event templates (Birthday, Wedding, Anniversary, Holiday).</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
     <section>
         <div class="container">
             <div class="cta">
@@ -483,14 +1138,37 @@
         </div>
     </section>
 
+    <!-- FOOTER -->
     <footer>
         <div class="container">
             <p>&copy; 2026 Photobooth &middot; <a href="https://github.com/chartmann1590/android-photobooth">GitHub</a> &middot; Built with Kotlin &amp; Jetpack Compose</p>
             <div class="footer-links">
-                <a href="https://buymeacoffee.com/charleshartmann" style="color: #FF813F;">☕ Support the Project</a>
+                <a href="https://buymeacoffee.com/charleshartmann" style="color: #FF813F;">Support the Project</a>
                 <a href="privacy.html">Privacy Policy</a>
+                <a href="#faq">FAQ</a>
             </div>
         </div>
     </footer>
+
+    <script>
+        document.querySelectorAll('.faq-question').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var item = btn.parentElement;
+                var wasActive = item.classList.contains('active');
+                document.querySelectorAll('.faq-item').forEach(function(i) {
+                    i.classList.remove('active');
+                });
+                if (!wasActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+
+        document.querySelectorAll('.nav-links a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                document.getElementById('navLinks').classList.remove('open');
+            });
+        });
+    </script>
 </body>
 </html>
