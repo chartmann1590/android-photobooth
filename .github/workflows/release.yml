@@ -116,21 +116,21 @@ jobs:
              app/build/outputs/bundle/release/photobooth-v${{ steps.bump.outputs.version_name }}.aab
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: photobooth-apk-v${{ steps.bump.outputs.version_name }}
           path: app/build/outputs/apk/release/photobooth-v${{ steps.bump.outputs.version_name }}.apk
           retention-days: 90
 
       - name: Upload AAB artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: photobooth-aab-v${{ steps.bump.outputs.version_name }}
           path: app/build/outputs/bundle/release/photobooth-v${{ steps.bump.outputs.version_name }}.aab
           retention-days: 90
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-results-v${{ steps.bump.outputs.version_name }}
