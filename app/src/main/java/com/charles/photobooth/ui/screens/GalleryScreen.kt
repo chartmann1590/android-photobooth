@@ -75,6 +75,7 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import coil.decode.VideoFrameDecoder
 import com.charles.photobooth.R
 import com.charles.photobooth.data.MediaType
 import com.charles.photobooth.gallery.GalleryAction
@@ -119,6 +120,7 @@ fun GalleryScreen(
                 } else {
                     add(GifDecoder.Factory())
                 }
+                add(VideoFrameDecoder.Factory())
             }
             .build()
     }

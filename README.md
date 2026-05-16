@@ -9,10 +9,9 @@ This project is designed to be used at events with minimal setup: configure your
 
 ## Features
 
-- **Short Video Capture** - Optional 8-second MP4 videos with audio, upload, QR sharing, and Immich sync
-
 - **Fullscreen Photobooth Experience** — Immersive landscape-only interface
 - **3-Second Countdown** — Color-cycling animated countdown with voice prompt and screen flash
+- **Short Video Capture** — Optional 8-second MP4 clips with audio, in-gallery playback, upload, QR sharing, and Immich sync
 - **Event-Specific Templates** — Customizable photo frames, overlays, and layout templates
 - **Booth Mode** — Continuous capture mode with configurable photo count
 - **Photo Filters** — 8 filters: Original, Grayscale, Sepia, B&W, Vintage, Cool, Warm, Vivid
@@ -22,7 +21,7 @@ This project is designed to be used at events with minimal setup: configure your
 - **SMS Sharing** — Share photos via SMS gateway API
 - **Email Sharing** — SMTP-based email delivery with attachments
 - **Social Media Sharing** — Android share sheet for Instagram, Twitter, WhatsApp, and more
-- **Built-in Gallery** — View and share previously captured photos
+- **Built-in Gallery** — View and share previously captured photos and videos
 - **Wireless Printing** — Android Print framework integration
 - **Multiple Cameras** — Support for all device cameras beyond front/back
 - **Room Database** — Local persistence for photos and templates
@@ -208,7 +207,7 @@ com.charles.photobooth/
 | DataStore Preferences | 1.1.0 | Settings storage |
 | OkHttp | 4.12.0 | HTTP client |
 | kotlinx-serialization | 1.6.2 | JSON parsing |
-| Coil | 2.5.0 | Image loading in Compose |
+| Coil | 2.6.0 | Image loading in Compose (with GIF + video-frame decoders) |
 | android-mail | 1.6.7 | SMTP email |
 | Navigation Compose | 2.7.7 | Screen navigation |
 | Print | 1.0.0 | Wireless printing |
