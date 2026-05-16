@@ -56,10 +56,13 @@ jobs:
           # Inject real AdMob IDs from repo secrets when set. If either secret
           # is missing, build.gradle falls back to Google's published test IDs
           # so MobileAdsInitProvider can still initialize without crashing.
-          {
-            [ -n "$ADMOB_APP_ID" ] && echo "ADMOB_APP_ID=$ADMOB_APP_ID"
-            [ -n "$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID" ] && echo "ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID=$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID"
-          } > local.properties
+          : > local.properties
+          if [ -n "$ADMOB_APP_ID" ]; then
+            echo "ADMOB_APP_ID=$ADMOB_APP_ID" >> local.properties
+          fi
+          if [ -n "$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID" ]; then
+            echo "ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID=$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID" >> local.properties
+          fi
 
       - name: Bump version
         id: bump
