@@ -53,3 +53,8 @@ updates:
     commit-message:
       prefix: ci
       include: scope
+    ignore:
+      # gradle/actions v5+ moves caching into a non-OSS component under
+      # Gradle's commercial Terms of Use. Pin to v4 to stay fully Apache 2.0.
+      - dependency-name: gradle/actions
+        versions: [">=5"]
