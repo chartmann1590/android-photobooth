@@ -48,6 +48,19 @@ jobs:
           storePassword=${{ secrets.KEYSTORE_PASSWORD }}
           EOF
 
+      - name: Write local.properties (AdMob IDs)
+        env:
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID: ${{ secrets.ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID }}
+        run: |
+          # Inject real AdMob IDs from repo secrets when set. If either secret
+          # is missing, build.gradle falls back to Google's published test IDs
+          # so MobileAdsInitProvider can still initialize without crashing.
+          {
+            [ -n "$ADMOB_APP_ID" ] && echo "ADMOB_APP_ID=$ADMOB_APP_ID"
+            [ -n "$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID" ] && echo "ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID=$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID"
+          } > local.properties
+
       - name: Bump version
         id: bump
         run: |
@@ -172,4 +185,4 @@ jobs:
 
       - name: Cleanup signing files
         if: always()
-        run: rm -f app/release.keystore app/google-services.json keystore.properties
+        run: rm -f app/release.keystore app/google-services.json keystore.properties local.properties

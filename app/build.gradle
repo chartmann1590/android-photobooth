@@ -55,8 +55,15 @@ android {
         versionName vName
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        def admobAppId = localProperties["ADMOB_APP_ID"] ?: ""
-        def admobRewardedInterstitialAdUnitId = localProperties["ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID"] ?: ""
+        // Google's published AdMob test IDs (developers.google.com/admob/android/test-ads).
+        // Fall back to them when local.properties / CI hasn't supplied real values, so
+        // MobileAdsInitProvider doesn't crash at process start with an empty APPLICATION_ID.
+        def admobTestAppId = "ca-app-pub-3940256099942544~3347511713"
+        def admobTestRewardedInterstitialUnitId = "ca-app-pub-3940256099942544/5354046379"
+        def admobAppId = (localProperties["ADMOB_APP_ID"] ?: "").trim()
+        if (admobAppId.isEmpty()) admobAppId = admobTestAppId
+        def admobRewardedInterstitialAdUnitId = (localProperties["ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID"] ?: "").trim()
+        if (admobRewardedInterstitialAdUnitId.isEmpty()) admobRewardedInterstitialAdUnitId = admobTestRewardedInterstitialUnitId
         manifestPlaceholders["admobAppId"] = admobAppId
         buildConfigField "String", "ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID", "\"${admobRewardedInterstitialAdUnitId}\""
 
