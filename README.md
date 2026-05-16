@@ -28,11 +28,15 @@ This project is designed to be used at events with minimal setup: configure your
 - **DataStore Settings** — Modern key-value settings storage
 - **Material 3 Design** — Beautiful, consistent UI theme
 
+## Download
+
+[![Get it on Google Play](https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png)](https://play.google.com/store/apps/details?id=com.charles.photobooth)
+
+Or build from source (see below).
+
 ## 🌐 Landing Page
 
 Visit the landing page to learn more about the app: [**chartmann1590.github.io/android-photobooth**](https://chartmann1590.github.io/android-photobooth/)
-
-*Note: This is a marketing/landing page showcasing the app features. To use the actual photobooth app, you'll need to build and install the APK on an Android device.*
 
 ## Requirements
 
