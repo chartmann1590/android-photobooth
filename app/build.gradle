@@ -55,15 +55,28 @@ android {
         versionName vName
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        // Google's published AdMob test IDs (developers.google.com/admob/android/test-ads).
-        // Fall back to them when local.properties / CI hasn't supplied real values, so
-        // MobileAdsInitProvider doesn't crash at process start with an empty APPLICATION_ID.
-        def admobTestAppId = "ca-app-pub-3940256099942544~3347511713"
-        def admobTestRewardedInterstitialUnitId = "ca-app-pub-3940256099942544/5354046379"
+        // AdMob IDs come from local.properties (developer machines) or are injected by
+        // CI from the ADMOB_APP_ID / ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID repo secrets.
+        // RELEASE builds fail hard if either is missing — production must NEVER ship with
+        // Google's test ad IDs. Debug-only builds (PR CI, local dev) fall back to test
+        // IDs so the SDK still initializes without a real account configured.
         def admobAppId = (localProperties["ADMOB_APP_ID"] ?: "").trim()
-        if (admobAppId.isEmpty()) admobAppId = admobTestAppId
         def admobRewardedInterstitialAdUnitId = (localProperties["ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID"] ?: "").trim()
-        if (admobRewardedInterstitialAdUnitId.isEmpty()) admobRewardedInterstitialAdUnitId = admobTestRewardedInterstitialUnitId
+        def isReleaseTask = gradle.startParameter.taskNames.any { tn ->
+            def n = tn.toLowerCase()
+            n.contains("release") || n.contains("bundlerelease")
+        }
+        if (isReleaseTask) {
+            if (admobAppId.isEmpty()) {
+                throw new GradleException("ADMOB_APP_ID is not set for a release build. Add it to local.properties or to the ADMOB_APP_ID repo secret.")
+            }
+            if (admobRewardedInterstitialAdUnitId.isEmpty()) {
+                throw new GradleException("ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID is not set for a release build. Add it to local.properties or to the ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID repo secret.")
+            }
+        } else {
+            if (admobAppId.isEmpty()) admobAppId = "ca-app-pub-3940256099942544~3347511713"
+            if (admobRewardedInterstitialAdUnitId.isEmpty()) admobRewardedInterstitialAdUnitId = "ca-app-pub-3940256099942544/5354046379"
+        }
         manifestPlaceholders["admobAppId"] = admobAppId
         buildConfigField "String", "ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID", "\"${admobRewardedInterstitialAdUnitId}\""
 
