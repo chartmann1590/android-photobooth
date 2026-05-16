@@ -2,6 +2,7 @@ package com.charles.photobooth.monetization
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 const val UNLIMITED_PRODUCT_ID = "unlimited_photos"
+private const val TAG = "BillingRepository"
 
 data class BillingUiState(
     val isReady: Boolean = false,
@@ -57,16 +59,23 @@ class BillingRepository(
         billingClient.startConnection(
             object : BillingClientStateListener {
                 override fun onBillingSetupFinished(billingResult: BillingResult) {
+                    Log.d(
+                        TAG,
+                        "onBillingSetupFinished code=${billingResult.responseCode} msg=${billingResult.debugMessage}",
+                    )
                     if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                         _state.value = _state.value.copy(isReady = true, message = null)
                         queryProductDetails()
                         queryExistingPurchases()
                     } else {
-                        _state.value = _state.value.copy(message = billingResult.debugMessage)
+                        _state.value = _state.value.copy(
+                            message = "Billing setup failed (${responseCodeName(billingResult.responseCode)}): ${billingResult.debugMessage}",
+                        )
                     }
                 }
 
                 override fun onBillingServiceDisconnected() {
+                    Log.w(TAG, "onBillingServiceDisconnected")
                     _state.value = _state.value.copy(isReady = false)
                 }
             },
@@ -115,19 +124,74 @@ class BillingRepository(
             .setProductList(listOf(product))
             .build()
         billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsResult ->
+            Log.d(
+                TAG,
+                "queryProductDetails code=${billingResult.responseCode} " +
+                    "msg=${billingResult.debugMessage} " +
+                    "fetched=${productDetailsResult.productDetailsList.size} " +
+                    "unfetched=${productDetailsResult.unfetchedProductList.size} " +
+                    "pkg=${appContext.packageName}",
+            )
+            productDetailsResult.unfetchedProductList.forEach { unfetched ->
+                Log.w(
+                    TAG,
+                    "Unfetched product id=${unfetched.productId} statusCode=${unfetched.statusCode} type=${unfetched.productType}",
+                )
+            }
             if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                _state.value = _state.value.copy(message = billingResult.debugMessage)
+                _state.value = _state.value.copy(
+                    message = "Play product query failed (${responseCodeName(billingResult.responseCode)}): ${billingResult.debugMessage}",
+                )
                 return@queryProductDetailsAsync
             }
             val productDetails = productDetailsResult.productDetailsList.firstOrNull()
             unlimitedProductDetails = productDetails
-            val offer = productDetails?.oneTimePurchaseOfferDetails
-            _state.value = _state.value.copy(
-                isReady = true,
-                price = offer?.formattedPrice ?: "$9.99",
-                message = if (productDetails == null) "Unlimited purchase is not configured in Google Play." else null,
-            )
+            if (productDetails != null) {
+                val offer = productDetails.oneTimePurchaseOfferDetails
+                _state.value = _state.value.copy(
+                    isReady = true,
+                    price = offer?.formattedPrice ?: "$9.99",
+                    message = null,
+                )
+            } else {
+                val unfetched = productDetailsResult.unfetchedProductList
+                    .firstOrNull { it.productId == UNLIMITED_PRODUCT_ID }
+                val diagnostic = if (unfetched != null) {
+                    "Play could not fetch '$UNLIMITED_PRODUCT_ID' (statusCode=${unfetched.statusCode}). " +
+                        diagnosticHint(appContext.packageName)
+                } else {
+                    "Play returned no details for '$UNLIMITED_PRODUCT_ID'. " +
+                        diagnosticHint(appContext.packageName)
+                }
+                _state.value = _state.value.copy(
+                    isReady = true,
+                    message = diagnostic,
+                )
+            }
         }
+    }
+
+    private fun diagnosticHint(packageName: String): String =
+        "Check: (1) installed from Play (internal testing OK) — sideloaded debug builds cannot fetch IAPs; " +
+            "(2) signed with the upload key matching the Play listing; " +
+            "(3) package '$packageName' matches the Play Console app; " +
+            "(4) product is Active and you waited ~2h after activation; " +
+            "(5) the signed-in Google account is a licensed tester."
+
+    private fun responseCodeName(code: Int): String = when (code) {
+        BillingClient.BillingResponseCode.OK -> "OK"
+        BillingClient.BillingResponseCode.USER_CANCELED -> "USER_CANCELED"
+        BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE -> "SERVICE_UNAVAILABLE"
+        BillingClient.BillingResponseCode.BILLING_UNAVAILABLE -> "BILLING_UNAVAILABLE"
+        BillingClient.BillingResponseCode.ITEM_UNAVAILABLE -> "ITEM_UNAVAILABLE"
+        BillingClient.BillingResponseCode.DEVELOPER_ERROR -> "DEVELOPER_ERROR"
+        BillingClient.BillingResponseCode.ERROR -> "ERROR"
+        BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> "ITEM_ALREADY_OWNED"
+        BillingClient.BillingResponseCode.ITEM_NOT_OWNED -> "ITEM_NOT_OWNED"
+        BillingClient.BillingResponseCode.NETWORK_ERROR -> "NETWORK_ERROR"
+        BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED -> "FEATURE_NOT_SUPPORTED"
+        BillingClient.BillingResponseCode.SERVICE_DISCONNECTED -> "SERVICE_DISCONNECTED"
+        else -> "UNKNOWN($code)"
     }
 
     private fun queryExistingPurchases() {

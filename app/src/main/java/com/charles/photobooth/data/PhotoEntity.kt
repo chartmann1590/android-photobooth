@@ -17,5 +17,6 @@ data class PhotoEntity(
     val uploadedUrl: String? = null,
     val templateId: Long? = null,
     val mediaType: MediaType = MediaType.IMAGE,
+    val filter: String = "NONE",
 )
 
