@@ -143,11 +143,11 @@ dependencies {
     implementation "com.google.android.gms:play-services-ads:24.7.0"
     implementation "com.android.billingclient:billing-ktx:8.3.0"
 
-    implementation "androidx.core:core-ktx:1.13.1"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.0"
-    implementation "androidx.lifecycle:lifecycle-runtime-compose:2.8.0"
-    implementation "androidx.activity:activity-compose:1.9.0"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0"
+    implementation "androidx.core:core-ktx:1.18.0"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.10.0"
+    implementation "androidx.lifecycle:lifecycle-runtime-compose:2.10.0"
+    implementation "androidx.activity:activity-compose:1.13.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0"
 
     // Compose UI
     implementation "androidx.compose.ui:ui:1.11.1"
@@ -156,7 +156,7 @@ dependencies {
     implementation "androidx.compose.material3:material3:1.4.0"
 
     // Navigation
-    implementation "androidx.navigation:navigation-compose:2.8.4"
+    implementation "androidx.navigation:navigation-compose:2.9.8"
 
     // CameraX
     def camerax_version = "1.4.2"
@@ -176,10 +176,10 @@ dependencies {
     implementation "androidx.room:room-ktx:$room_version"
 
     // DataStore
-    implementation "androidx.datastore:datastore-preferences:1.1.1"
+    implementation "androidx.datastore:datastore-preferences:1.2.1"
 
     // Encrypted SharedPreferences for credential storage
-    implementation "androidx.security:security-crypto:1.1.0-alpha06"
+    implementation "androidx.security:security-crypto:1.1.0"
 
     // Image loading
     implementation "io.coil-kt:coil-compose:2.7.0"
@@ -197,10 +197,10 @@ dependencies {
     implementation "com.sun.mail:android-activation:1.6.7"
 
     // EXIF
-    implementation "androidx.exifinterface:exifinterface:1.3.7"
+    implementation "androidx.exifinterface:exifinterface:1.4.2"
 
     // Printing
-    implementation "androidx.print:print:1.0.0"
+    implementation "androidx.print:print:1.1.0"
 
     // QR code generation (zxing)
     implementation "com.google.zxing:core:3.5.3"
@@ -209,9 +209,9 @@ dependencies {
     testImplementation "org.robolectric:robolectric:4.12.1"
     testImplementation "com.squareup.okhttp3:mockwebserver:4.12.0"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1"
-    testImplementation "androidx.test.ext:junit:1.1.5"
-    testImplementation "androidx.test:core:1.5.0"
-    androidTestImplementation "androidx.test.ext:junit:1.1.5"
-    androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"
+    testImplementation "androidx.test.ext:junit:1.3.0"
+    testImplementation "androidx.test:core:1.7.0"
+    androidTestImplementation "androidx.test.ext:junit:1.3.0"
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.7.0"
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:1.11.1"
 }
