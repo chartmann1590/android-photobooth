@@ -207,7 +207,7 @@ dependencies {
     implementation "io.coil-kt:coil-video:2.7.0"
 
     // Video playback (Media3 / ExoPlayer)
-    def media3_version = "1.4.1"
+    def media3_version = "1.10.1"
     implementation "androidx.media3:media3-exoplayer:$media3_version"
     implementation "androidx.media3:media3-ui:$media3_version"
     implementation "androidx.media3:media3-common:$media3_version"
