@@ -21,7 +21,6 @@ class HomeScreenTest {
                 onOpenGallery = {},
                 onOpenSettings = {},
                 onOpenTutorial = {},
-                onDonate = {},
             )
         }
 
@@ -31,7 +30,6 @@ class HomeScreenTest {
         composeTestRule.onNodeWithText("View Gallery").assertIsDisplayed()
         composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
         composeTestRule.onNodeWithText("Tutorial").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Support Charles on Buy Me a Coffee").assertIsDisplayed()
     }
 
     @Test
@@ -44,7 +42,6 @@ class HomeScreenTest {
                 onOpenGallery = {},
                 onOpenSettings = {},
                 onOpenTutorial = {},
-                onDonate = {},
             )
         }
 

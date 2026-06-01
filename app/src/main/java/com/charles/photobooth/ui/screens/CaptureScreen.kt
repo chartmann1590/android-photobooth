@@ -561,6 +561,24 @@ fun CaptureScreen(
 
             Spacer(modifier = Modifier.width(12.dp))
 
+            if (selectedFilter != PhotoFilter.NONE) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Rose.copy(alpha = 0.85f))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.capture_filter_badge, selectedFilter.displayName),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+            }
+
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
@@ -755,6 +773,46 @@ fun CaptureScreen(
                     BuiltInTemplates.KEY_HOLIDAY to stringResource(R.string.template_holiday),
                     BuiltInTemplates.KEY_GENERIC to stringResource(R.string.template_generic),
                 )
+                if (!videoModeSelected) {
+                    Row(
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 8.dp),
+                    ) {
+                        PhotoFilter.entries.forEach { filter ->
+                            val selected = selectedFilter == filter
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(if (selected) Rose else DarkBackground.copy(alpha = 0.65f))
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                    ) {
+                                        if (selectedFilter != filter) {
+                                            selectedFilter = filter
+                                            scope.launch {
+                                                settingsRepo.updateCaptureModeSettings { it.copy(selectedFilter = filter.name) }
+                                            }
+                                        }
+                                    }
+                                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                            ) {
+                                Text(
+                                    text = filter.displayName,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.White,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                )
+                            }
+                        }
+                    }
+                }
+
                 if (!videoModeSelected) {
                     // NONE always remains so users can always select "single shot"
                     val templateChips = allChips.filter { (k, _) -> k == BuiltInTemplates.KEY_NONE || k !in disabledTemplateKeys }

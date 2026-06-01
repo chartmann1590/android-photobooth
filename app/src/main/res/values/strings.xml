@@ -15,7 +15,6 @@
     <string name="view_gallery">View Gallery</string>
     <string name="settings">Settings</string>
     <string name="tutorial_home_button">Tutorial</string>
-    <string name="support_developer">Support Charles on Buy Me a Coffee</string>
     <string name="paywall_menu_button">Get More Photos</string>
 
     <!-- Capture screen -->
@@ -39,6 +38,9 @@
     <string name="capture_recording_label">REC</string>
     <string name="capture_counter_remaining">%1$d photos left today</string>
     <string name="capture_counter_unlimited">Unlimited photos</string>
+    <string name="capture_filter_badge">Filter: %1$s</string>
+    <string name="capture_filter_label">Filter</string>
+    <string name="gallery_filter_label">Filter: %1$s</string>
 
     <!-- Paywall -->
     <string name="paywall_title">Get more photos</string>
@@ -139,6 +141,10 @@
     <string name="settings_template_enabled">Enabled</string>
     <string name="settings_template_disabled">Disabled</string>
     <string name="settings_front_screen_flash">Front screen flash (lights up the screen)</string>
+    <string name="settings_about">About</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_website_caption">Visit the website to learn more, view the privacy policy, and support the developer.</string>
+    <string name="about_visit_website">Visit Website</string>
     <string name="settings_debug">Debug</string>
     <string name="settings_debug_caption">Debug builds only — daily quota also auto-resets to 15 each time it hits zero.</string>
     <string name="settings_debug_reset_quota">Reset daily photo quota to 15</string>
@@ -229,7 +235,7 @@
     <string name="tutorial_step_privacy_title">Privacy</string>
     <string name="tutorial_step_privacy_body">Photos and credentials are stored locally. Analytics and crash reporting only run if you allow them during the consent prompt.</string>
     <string name="tutorial_step_support_title">Support</string>
-    <string name="tutorial_step_support_body">The **Support Charles on Buy Me a Coffee** link opens a browser page. It is always optional and stays below the main controls on the Home screen.</string>
+    <string name="tutorial_step_support_body">Open **Settings → About** and tap **Visit Website**. From there you can learn more about the app and find the optional link to support the developer.</string>
 
     <!-- Privacy policy screen -->
     <string name="privacy_policy_title">Privacy Policy</string>

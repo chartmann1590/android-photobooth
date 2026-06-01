@@ -52,7 +52,6 @@ fun NavGraph(
                 onOpenGallery = { navController.navigate(Screen.Gallery.route) },
                 onOpenSettings = { navController.navigate(Screen.Settings.route) },
                 onOpenTutorial = { navController.navigate(Screen.Tutorial.route) },
-                onDonate = { uriHandler.openUri("https://buymeacoffee.com/charleshartmann") },
                 quotaState = quotaState,
                 rewardedAdState = rewardedAdState,
                 billingState = billingState,
@@ -101,6 +100,7 @@ fun NavGraph(
             SettingsScreen(
                 onBack = { navController.popBackStack() },
                 onOpenFrameDesigner = { navController.navigate(Screen.FrameDesigner.route) },
+                onOpenWebsite = { uriHandler.openUri("https://chartmann1590.github.io/android-photobooth/") },
             )
         }
         composable(Screen.FrameDesigner.route) {

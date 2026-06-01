@@ -11,7 +11,7 @@ import com.charles.photobooth.BuildConfig
         PhotoEntity::class,
         TemplateEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {

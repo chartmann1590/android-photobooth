@@ -203,6 +203,7 @@ class CaptureViewModel(
                     eventName = eventName,
                     localPath = destFile.absolutePath,
                     templateId = templateId,
+                    filter = filter.name,
                 )
                 val id = photoDao.insert(entity)
                 _uiState.value = CaptureUiState.Saved(id)

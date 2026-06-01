@@ -28,7 +28,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,7 +62,6 @@ fun HomeScreen(
     onOpenGallery: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenTutorial: () -> Unit = {},
-    onDonate: () -> Unit = {},
     quotaState: PhotoQuotaState = PhotoQuotaState(),
     rewardedAdState: RewardedAdState = RewardedAdState(),
     billingState: BillingUiState = BillingUiState(),
@@ -316,22 +314,6 @@ fun HomeScreen(
                         }
                     }
                 }
-            }
-
-            TextButton(
-                onClick = onDonate,
-                colors = ButtonDefaults.textButtonColors(contentColor = Gold),
-            ) {
-                Icon(
-                    painter = painterResource(id = android.R.drawable.ic_menu_send),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.support_developer),
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                )
             }
         }
 

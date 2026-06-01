@@ -80,6 +80,7 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.decode.VideoFrameDecoder
 import com.charles.photobooth.R
+import com.charles.photobooth.camera.PhotoFilter
 import com.charles.photobooth.data.MediaType
 import com.charles.photobooth.gallery.GalleryAction
 import com.charles.photobooth.gallery.GalleryActionState
@@ -258,6 +259,23 @@ fun GalleryScreen(
                                         )
                                     }
                                 }
+                                photoFilterOrNull(photo.filter)?.let { filter ->
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.BottomStart)
+                                            .padding(8.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(Rose.copy(alpha = 0.85f))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                                    ) {
+                                        Text(
+                                            text = filter.displayName,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                    }
+                                }
                             }
                             Row(
                                 modifier = Modifier
@@ -374,6 +392,14 @@ fun GalleryScreen(
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                             )
+
+                            photoFilterOrNull(photo.filter)?.let { filter ->
+                                Text(
+                                    text = stringResource(R.string.gallery_filter_label, filter.displayName),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Gold,
+                                )
+                            }
 
                             Spacer(modifier = Modifier.height(4.dp))
 
@@ -672,6 +698,11 @@ fun GalleryScreen(
             },
         )
     }
+}
+
+private fun photoFilterOrNull(stored: String): PhotoFilter? {
+    val parsed = runCatching { PhotoFilter.valueOf(stored) }.getOrNull()
+    return parsed?.takeUnless { it == PhotoFilter.NONE }
 }
 
 /**

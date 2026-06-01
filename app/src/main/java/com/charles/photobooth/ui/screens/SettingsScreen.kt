@@ -77,6 +77,7 @@ import com.charles.photobooth.ui.theme.TextSecondary
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenFrameDesigner: () -> Unit = {},
+    onOpenWebsite: () -> Unit = {},
 ) {
     val vm: SettingsViewModel = viewModel()
     val state by vm.settings.collectAsState()
@@ -201,6 +202,7 @@ fun SettingsScreen(
                 textFieldColors = textFieldColors,
             )
             SmtpSettingsSection(state, onSmtpChange = vm::updateSmtp, onTestEmail = vm::testEmail, textFieldColors = textFieldColors)
+            AboutSection(onOpenWebsite = onOpenWebsite)
             if (BuildConfig.DEBUG) {
                 DebugSection(onResetQuota = vm::resetDailyPhotoQuota)
             }
@@ -980,6 +982,49 @@ private fun FullScreenTemplatePreviewDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AboutSection(
+    onOpenWebsite: () -> Unit,
+) {
+    SettingsCard(
+        title = stringResource(R.string.settings_about),
+        iconRes = android.R.drawable.ic_dialog_info,
+    ) {
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.White,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary,
+        )
+        Text(
+            text = stringResource(R.string.about_website_caption),
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextSecondary,
+        )
+        ElevatedButton(
+            onClick = onOpenWebsite,
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.elevatedButtonColors(
+                containerColor = Gold,
+                contentColor = Color.Black,
+            ),
+        ) {
+            Icon(
+                painter = painterResource(id = android.R.drawable.ic_menu_view),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(stringResource(R.string.about_visit_website), fontWeight = FontWeight.Medium)
         }
     }
 }
