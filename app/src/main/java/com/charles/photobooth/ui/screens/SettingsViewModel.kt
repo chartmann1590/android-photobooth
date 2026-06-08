@@ -19,6 +19,13 @@ import com.charles.photobooth.R
 import com.charles.photobooth.network.SmtpEmailClient
 import com.charles.photobooth.network.SmsGatewayClient
 import kotlinx.coroutines.flow.MutableStateFlow
+import android.net.Uri
+import com.charles.photobooth.network.GitHubComment
+import com.charles.photobooth.network.GitHubIssue
+import com.charles.photobooth.network.GitHubService
+import com.charles.photobooth.settings.BugReport
+import com.charles.photobooth.settings.BugReportRepository
+import com.charles.photobooth.util.DiagnosticsHelper
 
 sealed interface SmtpFieldChange {
     data class Host(val value: String) : SmtpFieldChange
@@ -39,6 +46,43 @@ class SettingsViewModel(
     private val quotaRepo = PhotoQuotaRepository(application)
     private val _testStatus = MutableStateFlow<String?>(null)
     val testStatus: kotlinx.coroutines.flow.StateFlow<String?> = _testStatus
+
+    private val bugReportRepo = BugReportRepository(application)
+    private val gitHubService = GitHubService()
+
+    val bugReports: StateFlow<List<BugReport>> =
+        bugReportRepo.bugReports.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList(),
+        )
+
+    private val _isSubmitting = MutableStateFlow(false)
+    val isSubmitting: StateFlow<Boolean> = _isSubmitting
+
+    private val _submitError = MutableStateFlow<String?>(null)
+    val submitError: StateFlow<String?> = _submitError
+
+    private val _submitSuccess = MutableStateFlow(false)
+    val submitSuccess: StateFlow<Boolean> = _submitSuccess
+
+    private val _comments = MutableStateFlow<List<GitHubComment>>(emptyList())
+    val comments: StateFlow<List<GitHubComment>> = _comments
+
+    private val _commentsLoading = MutableStateFlow(false)
+    val commentsLoading: StateFlow<Boolean> = _commentsLoading
+
+    private val _commentsError = MutableStateFlow<String?>(null)
+    val commentsError: StateFlow<String?> = _commentsError
+
+    private val _issueDetails = MutableStateFlow<GitHubIssue?>(null)
+    val issueDetails: StateFlow<GitHubIssue?> = _issueDetails
+
+    fun clearSubmitStatus() {
+        _submitSuccess.value = false
+        _submitError.value = null
+        _isSubmitting.value = false
+    }
 
     val settings: StateFlow<AllSettings> =
         repo.settingsFlow.stateIn(
@@ -230,6 +274,140 @@ class SettingsViewModel(
                 }
             } catch (e: Exception) {
                 _testStatus.value = "SMTP test error: ${e.message}"
+            }
+        }
+    }
+
+    fun submitBugReport(
+        title: String,
+        description: String,
+        name: String,
+        email: String,
+        includeDiagnostics: Boolean,
+        screenshotUri: Uri?
+    ) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            _isSubmitting.value = true
+            _submitError.value = null
+            _submitSuccess.value = false
+            try {
+                var screenshotUrl: String? = null
+                if (screenshotUri != null) {
+                    val contentResolver = getApplication<Application>().contentResolver
+                    val bytes = contentResolver.openInputStream(screenshotUri)?.use { it.readBytes() }
+                    if (bytes != null) {
+                        val base64Data = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                        val filename = "screenshot_${System.currentTimeMillis()}.png"
+                        val uploadResult = gitHubService.uploadAsset(filename, base64Data)
+                        screenshotUrl = uploadResult.getOrThrow()
+                    }
+                }
+
+                val bodyBuilder = StringBuilder()
+                if (name.isNotBlank() || email.isNotBlank()) {
+                    bodyBuilder.append("### Reporter Info\n")
+                    if (name.isNotBlank()) bodyBuilder.append("- **Name**: $name\n")
+                    if (email.isNotBlank()) bodyBuilder.append("- **Email**: $email\n")
+                    bodyBuilder.append("\n")
+                }
+                bodyBuilder.append("### Description\n")
+                bodyBuilder.append(description)
+                bodyBuilder.append("\n\n")
+
+                if (screenshotUrl != null) {
+                    bodyBuilder.append("### Attachments\n")
+                    bodyBuilder.append("![Screenshot]($screenshotUrl)\n\n")
+                }
+
+                if (includeDiagnostics) {
+                    val diagnostics = DiagnosticsHelper.gatherDiagnostics(getApplication(), true)
+                    bodyBuilder.append(diagnostics)
+                }
+
+                val issueResult = gitHubService.createIssue(title, bodyBuilder.toString())
+                val issue = issueResult.getOrThrow()
+
+                // Save locally
+                val localReport = BugReport(
+                    number = issue.number,
+                    title = issue.title,
+                    status = issue.state,
+                    createdAt = issue.createdAt,
+                    htmlUrl = issue.htmlUrl
+                )
+                bugReportRepo.saveBugReport(localReport)
+
+                _submitSuccess.value = true
+            } catch (e: Exception) {
+                _submitError.value = e.localizedMessage ?: "Failed to submit bug report"
+            } finally {
+                _isSubmitting.value = false
+            }
+        }
+    }
+
+    fun loadIssueDetailsAndComments(issueNumber: Int) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            _commentsLoading.value = true
+            _commentsError.value = null
+            try {
+                val issueResult = gitHubService.getIssue(issueNumber)
+                val issue = issueResult.getOrThrow()
+                _issueDetails.value = issue
+
+                // Sync status
+                bugReportRepo.updateBugReportStatus(issue.number, issue.state)
+
+                val commentsResult = gitHubService.getComments(issueNumber)
+                val commentsList = commentsResult.getOrThrow()
+                _comments.value = commentsList
+            } catch (e: Exception) {
+                _commentsError.value = e.localizedMessage ?: "Failed to load thread details"
+            } finally {
+                _commentsLoading.value = false
+            }
+        }
+    }
+
+    fun postReply(issueNumber: Int, commentText: String, screenshotUri: Uri?, onComplete: () -> Unit = {}) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            _commentsLoading.value = true
+            _commentsError.value = null
+            try {
+                var screenshotUrl: String? = null
+                if (screenshotUri != null) {
+                    val contentResolver = getApplication<Application>().contentResolver
+                    val bytes = contentResolver.openInputStream(screenshotUri)?.use { it.readBytes() }
+                    if (bytes != null) {
+                        val base64Data = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                        val filename = "screenshot_${System.currentTimeMillis()}.png"
+                        val uploadResult = gitHubService.uploadAsset(filename, base64Data)
+                        screenshotUrl = uploadResult.getOrThrow()
+                    }
+                }
+
+                val bodyBuilder = StringBuilder()
+                bodyBuilder.append("**[User Reply from App]**\n\n")
+                bodyBuilder.append(commentText)
+                bodyBuilder.append("\n\n")
+
+                if (screenshotUrl != null) {
+                    bodyBuilder.append("### Attachments\n")
+                    bodyBuilder.append("![Screenshot]($screenshotUrl)\n\n")
+                }
+
+                gitHubService.postComment(issueNumber, bodyBuilder.toString()).getOrThrow()
+
+                // Reload details and comments
+                loadIssueDetailsAndComments(issueNumber)
+
+                launch(kotlinx.coroutines.Dispatchers.Main) {
+                    onComplete()
+                }
+            } catch (e: Exception) {
+                _commentsError.value = e.localizedMessage ?: "Failed to post comment"
+            } finally {
+                _commentsLoading.value = false
             }
         }
     }

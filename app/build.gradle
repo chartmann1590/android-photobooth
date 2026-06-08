@@ -1,6 +1,7 @@
 plugins {
     id "com.android.application"
     id "org.jetbrains.kotlin.android"
+    id "org.jetbrains.kotlin.plugin.serialization"
     id "org.jetbrains.kotlin.plugin.compose"
     id "kotlin-kapt"
     id "com.google.gms.google-services"
@@ -79,6 +80,18 @@ android {
         }
         manifestPlaceholders["admobAppId"] = admobAppId
         buildConfigField "String", "ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID", "\"${admobRewardedInterstitialAdUnitId}\""
+
+        def githubApiToken = (localProperties["github.api.token"] ?: "").trim()
+        def githubRepoOwner = (localProperties["github.repo.owner"] ?: "").trim()
+        def githubRepoName = (localProperties["github.repo.name"] ?: "").trim()
+
+        if (githubApiToken.isEmpty()) githubApiToken = "dummy_token"
+        if (githubRepoOwner.isEmpty()) githubRepoOwner = "chartmann1590"
+        if (githubRepoName.isEmpty()) githubRepoName = "android-photobooth"
+
+        buildConfigField "String", "GITHUB_API_TOKEN", "\"${githubApiToken}\""
+        buildConfigField "String", "GITHUB_REPO_OWNER", "\"${githubRepoOwner}\""
+        buildConfigField "String", "GITHUB_REPO_NAME", "\"${githubRepoName}\""
 
         // Export Room schemas under app/schemas/ so future migrations have a
         // diffable source of truth. Commit the generated JSON.

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -72,6 +73,27 @@ import com.charles.photobooth.ui.theme.Rose
 import com.charles.photobooth.ui.theme.Success
 import com.charles.photobooth.R
 import com.charles.photobooth.ui.theme.TextSecondary
+import android.net.Uri
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.ButtonColors
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import com.charles.photobooth.settings.BugReport
+import com.charles.photobooth.network.GitHubComment
+import com.charles.photobooth.network.GitHubIssue
+
 
 @Composable
 fun SettingsScreen(
@@ -83,6 +105,15 @@ fun SettingsScreen(
     val state by vm.settings.collectAsState()
     val status by vm.testStatus.collectAsState()
     val frames by vm.frames.collectAsState()
+
+    val bugReports by vm.bugReports.collectAsState()
+    val isSubmitting by vm.isSubmitting.collectAsState()
+    val submitError by vm.submitError.collectAsState()
+    val submitSuccess by vm.submitSuccess.collectAsState()
+    val comments by vm.comments.collectAsState()
+    val commentsLoading by vm.commentsLoading.collectAsState()
+    val commentsError by vm.commentsError.collectAsState()
+    val issueDetails by vm.issueDetails.collectAsState()
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = Rose,
@@ -202,6 +233,21 @@ fun SettingsScreen(
                 textFieldColors = textFieldColors,
             )
             SmtpSettingsSection(state, onSmtpChange = vm::updateSmtp, onTestEmail = vm::testEmail, textFieldColors = textFieldColors)
+            SupportAndFeedbackSection(
+                bugReports = bugReports,
+                isSubmitting = isSubmitting,
+                submitError = submitError,
+                submitSuccess = submitSuccess,
+                comments = comments,
+                commentsLoading = commentsLoading,
+                commentsError = commentsError,
+                issueDetails = issueDetails,
+                onSubmitBugReport = vm::submitBugReport,
+                onLoadIssue = vm::loadIssueDetailsAndComments,
+                onPostReply = vm::postReply,
+                onClearSubmitStatus = vm::clearSubmitStatus,
+                textFieldColors = textFieldColors,
+            )
             AboutSection(onOpenWebsite = onOpenWebsite)
             if (BuildConfig.DEBUG) {
                 DebugSection(onResetQuota = vm::resetDailyPhotoQuota)
@@ -1118,5 +1164,804 @@ private fun StyledSwitch(
                 uncheckedBorderColor = Color.Transparent,
             ),
         )
+    }
+}
+
+@Composable
+private fun SupportAndFeedbackSection(
+    bugReports: List<BugReport>,
+    isSubmitting: Boolean,
+    submitError: String?,
+    submitSuccess: Boolean,
+    comments: List<GitHubComment>,
+    commentsLoading: Boolean,
+    commentsError: String?,
+    issueDetails: GitHubIssue?,
+    onSubmitBugReport: (String, String, String, String, Boolean, Uri?) -> Unit,
+    onLoadIssue: (Int) -> Unit,
+    onPostReply: (Int, String, Uri?, () -> Unit) -> Unit,
+    onClearSubmitStatus: () -> Unit,
+    textFieldColors: androidx.compose.material3.TextFieldColors,
+) {
+    var showReportDialog by remember { mutableStateOf(false) }
+    var selectedIssueNumber by remember { mutableStateOf<Int?>(null) }
+
+    SettingsCard(
+        title = "Support & Feedback",
+        iconRes = android.R.drawable.ic_menu_help,
+    ) {
+        Text(
+            text = "Have questions or found a bug? Report it here! Issues are tracked publicly on GitHub.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextSecondary,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ElevatedButton(
+            onClick = {
+                onClearSubmitStatus()
+                showReportDialog = true
+            },
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.elevatedButtonColors(
+                containerColor = Rose,
+                contentColor = Color.White,
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Report a Problem", fontWeight = FontWeight.Medium)
+        }
+
+        if (bugReports.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Your Submitted Reports:",
+                style = MaterialTheme.typography.titleSmall,
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                bugReports.forEach { report ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(CardSurfaceLight)
+                            .clickable {
+                                selectedIssueNumber = report.number
+                                onLoadIssue(report.number)
+                            }
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "#${report.number} ${report.title}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "Submitted on ${report.createdAt.take(10)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        val isOpen = report.status.equals("open", ignoreCase = true)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (isOpen) Success.copy(alpha = 0.2f) else TextSecondary.copy(alpha = 0.2f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (isOpen) "Open" else "Closed",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isOpen) Success else TextSecondary,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showReportDialog) {
+        ReportFormDialog(
+            isSubmitting = isSubmitting,
+            submitError = submitError,
+            submitSuccess = submitSuccess,
+            onSubmit = onSubmitBugReport,
+            onDismiss = {
+                showReportDialog = false
+                onClearSubmitStatus()
+            },
+            textFieldColors = textFieldColors,
+        )
+    }
+
+    if (selectedIssueNumber != null) {
+        IssueDetailDialog(
+            issueNumber = selectedIssueNumber!!,
+            issueDetails = issueDetails,
+            comments = comments,
+            isLoading = commentsLoading,
+            error = commentsError,
+            onPostReply = { text, uri, onComplete ->
+                onPostReply(selectedIssueNumber!!, text, uri, onComplete)
+            },
+            onDismiss = { selectedIssueNumber = null },
+            textFieldColors = textFieldColors,
+        )
+    }
+}
+
+@Composable
+private fun ReportFormDialog(
+    isSubmitting: Boolean,
+    submitError: String?,
+    submitSuccess: Boolean,
+    onSubmit: (String, String, String, String, Boolean, Uri?) -> Unit,
+    onDismiss: () -> Unit,
+    textFieldColors: androidx.compose.material3.TextFieldColors,
+) {
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var includeDiagnostics by remember { mutableStateOf(true) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri -> selectedImageUri = uri }
+    )
+
+    Dialog(
+        onDismissRequest = { if (!isSubmitting) onDismiss() },
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.85f))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { if (!isSubmitting) onDismiss() }
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .fillMaxHeight(0.9f)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {}
+                    ),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = CardSurface),
+                elevation = CardDefaults.cardElevation(8.dp),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Text(
+                        text = "Report a Problem",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    if (submitSuccess) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Success.copy(alpha = 0.15f))
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "Thank you!",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Success,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Your bug report has been submitted successfully.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White,
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                ElevatedButton(
+                                    onClick = onDismiss,
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.elevatedButtonColors(
+                                        containerColor = Success,
+                                        contentColor = Color.White
+                                    )
+                                ) {
+                                    Text("Close")
+                                }
+                            }
+                        }
+                    } else {
+                        submitError?.let {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Rose.copy(alpha = 0.15f))
+                                    .padding(12.dp)
+                            ) {
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Rose,
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(1.dp, Rose.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                .background(Rose.copy(alpha = 0.1f))
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = "⚠️ Warning: Anything submitted here will be posted publicly to a GitHub repository issue tracker, including any screenshots or diagnostics you attach.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Rose,
+                            )
+                        }
+
+                        StableTextField(
+                            value = title,
+                            onValueChange = { title = it },
+                            label = "Title / Subject",
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = textFieldColors,
+                        )
+
+                        StableTextField(
+                            value = description,
+                            onValueChange = { description = it },
+                            label = "Description / Steps to Reproduce",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp),
+                            colors = textFieldColors,
+                            singleLine = false,
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            StableTextField(
+                                value = name,
+                                onValueChange = { name = it },
+                                label = "Name (Optional)",
+                                modifier = Modifier.weight(1f),
+                                colors = textFieldColors,
+                            )
+                            StableTextField(
+                                value = email,
+                                onValueChange = { email = it },
+                                label = "Email (Optional)",
+                                modifier = Modifier.weight(1f),
+                                colors = textFieldColors,
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = includeDiagnostics,
+                                onCheckedChange = { includeDiagnostics = it },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = Rose,
+                                    uncheckedColor = TextSecondary,
+                                    checkmarkColor = Color.White
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Include Device Diagnostics & Model config",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White,
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            ElevatedButton(
+                                onClick = {
+                                    launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.elevatedButtonColors(
+                                    containerColor = CardSurfaceLight,
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text("Attach Screenshot")
+                            }
+
+                            selectedImageUri?.let { uri ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(60.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color.Black)
+                                ) {
+                                    AsyncImage(
+                                        model = uri,
+                                        contentDescription = "Selected screenshot preview",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clip(CircleShape)
+                                            .background(Rose)
+                                            .align(Alignment.TopEnd)
+                                            .clickable { selectedImageUri = null },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = android.R.drawable.ic_menu_close_clear_cancel),
+                                            contentDescription = "Remove screenshot",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(10.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(
+                                onClick = onDismiss,
+                                enabled = !isSubmitting,
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = Color.White,
+                                    disabledContentColor = TextSecondary
+                                )
+                            ) {
+                                Text("Cancel")
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            ElevatedButton(
+                                onClick = {
+                                    if (title.isNotBlank() && description.isNotBlank()) {
+                                        onSubmit(title, description, name, email, includeDiagnostics, selectedImageUri)
+                                    }
+                                },
+                                enabled = !isSubmitting && title.isNotBlank() && description.isNotBlank(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.elevatedButtonColors(
+                                    containerColor = Rose,
+                                    contentColor = Color.White,
+                                    disabledContainerColor = CardSurfaceLight,
+                                    disabledContentColor = TextSecondary
+                                )
+                            ) {
+                                if (isSubmitting) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        color = Color.White,
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Text("Submit")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun IssueDetailDialog(
+    issueNumber: Int,
+    issueDetails: GitHubIssue?,
+    comments: List<GitHubComment>,
+    isLoading: Boolean,
+    error: String?,
+    onPostReply: (String, Uri?, () -> Unit) -> Unit,
+    onDismiss: () -> Unit,
+    textFieldColors: androidx.compose.material3.TextFieldColors,
+) {
+    var replyText by remember { mutableStateOf("") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    val context = LocalContext.current
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri -> selectedImageUri = uri }
+    )
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.85f))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onDismiss
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .fillMaxHeight(0.9f)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {}
+                    ),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = CardSurface),
+                elevation = CardDefaults.cardElevation(8.dp),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = issueDetails?.title ?: "Loading Issue #$issueNumber...",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                val stateText = issueDetails?.state ?: "open"
+                                val isOpen = stateText.equals("open", ignoreCase = true)
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(if (isOpen) Success.copy(alpha = 0.2f) else TextSecondary.copy(alpha = 0.2f))
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = if (isOpen) "Open" else "Closed",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (isOpen) Success else TextSecondary,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "GitHub Issue Tracker",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                )
+                            }
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (issueDetails != null) {
+                                ElevatedButton(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(issueDetails.htmlUrl))
+                                        context.startActivity(intent)
+                                    },
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.elevatedButtonColors(
+                                        containerColor = Gold,
+                                        contentColor = Color.Black,
+                                    )
+                                ) {
+                                    Text("View on GitHub", fontWeight = FontWeight.Medium)
+                                }
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(CardSurfaceLight)
+                                    .clickable(onClick = onDismiss),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = android.R.drawable.ic_menu_close_clear_cancel),
+                                    contentDescription = "Close dialog",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) {
+                        if (isLoading && comments.isEmpty() && issueDetails == null) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = Rose)
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                issueDetails?.body?.let { bodyText ->
+                                    item {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .background(CardSurfaceLight)
+                                                .padding(16.dp)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text(
+                                                    text = "Original Description",
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    color = Gold,
+                                                    fontWeight = FontWeight.Bold,
+                                                )
+                                                Text(
+                                                    text = issueDetails.createdAt.take(10),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = TextSecondary,
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = bodyText,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color.White,
+                                            )
+                                        }
+                                    }
+                                }
+
+                                items(comments) { comment ->
+                                    val isAppUserReply = comment.body.startsWith("**[User Reply from App]**")
+                                    val displayBody = if (isAppUserReply) {
+                                        comment.body.removePrefix("**[User Reply from App]**").trim()
+                                    } else {
+                                        comment.body
+                                    }
+
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(
+                                                if (isAppUserReply) Rose.copy(alpha = 0.15f)
+                                                else CardSurfaceLight
+                                            )
+                                            .border(
+                                                1.dp,
+                                                if (isAppUserReply) Rose.copy(alpha = 0.3f) else Color.Transparent,
+                                                RoundedCornerShape(16.dp)
+                                            )
+                                            .padding(16.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = if (isAppUserReply) "You (from App)" else comment.user.login,
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = if (isAppUserReply) Rose else Gold,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                            Text(
+                                                text = comment.createdAt.take(10),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = TextSecondary,
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = displayBody,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        error?.let {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .align(Alignment.TopCenter)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Rose.copy(alpha = 0.15f))
+                                    .padding(12.dp)
+                            ) {
+                                Text(text = it, style = MaterialTheme.typography.bodyMedium, color = Rose)
+                            }
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = replyText,
+                                onValueChange = { replyText = it },
+                                placeholder = { Text("Write a reply...") },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = textFieldColors,
+                                maxLines = 3,
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(CardSurfaceLight)
+                                    .clickable {
+                                        launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = android.R.drawable.ic_menu_camera),
+                                    contentDescription = "Attach screenshot to reply",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+
+                            ElevatedButton(
+                                onClick = {
+                                    if (replyText.isNotBlank()) {
+                                        onPostReply(replyText, selectedImageUri) {
+                                            replyText = ""
+                                            selectedImageUri = null
+                                        }
+                                    }
+                                },
+                                enabled = !isLoading && replyText.isNotBlank(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.elevatedButtonColors(
+                                    containerColor = Rose,
+                                    contentColor = Color.White,
+                                    disabledContainerColor = CardSurfaceLight,
+                                    disabledContentColor = TextSecondary
+                                ),
+                                modifier = Modifier.height(48.dp)
+                            ) {
+                                if (isLoading && replyText.isNotBlank()) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        color = Color.White,
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Text("Post")
+                                }
+                            }
+                        }
+
+                        selectedImageUri?.let { uri ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(CardSurfaceLight)
+                                    .padding(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                    ) {
+                                        AsyncImage(
+                                            model = uri,
+                                            contentDescription = "Reply screenshot preview",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+                                    Text(
+                                        text = "Screenshot attached",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White,
+                                    )
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(CircleShape)
+                                        .background(Rose)
+                                        .clickable { selectedImageUri = null },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = android.R.drawable.ic_menu_close_clear_cancel),
+                                        contentDescription = "Remove screenshot",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
