@@ -13,6 +13,8 @@ import com.charles.photobooth.data.PhotoEntity
 import com.charles.photobooth.network.AnonymousUploader
 import com.charles.photobooth.network.ImageUploader
 import com.charles.photobooth.network.ImmichUploader
+import com.charles.photobooth.printing.ThermalPrinterClient
+import com.charles.photobooth.settings.ThermalPrinterSettings
 import com.charles.photobooth.settings.UploadSettings
 import com.charles.photobooth.template.GifEncoder
 import com.charles.photobooth.template.TemplateDefinition
@@ -138,6 +140,7 @@ class CaptureViewModel(
         selectedFrameId: Long?,
         watermarkConfig: WatermarkConfig? = null,
         filter: PhotoFilter = PhotoFilter.NONE,
+        thermalPrinterSettings: ThermalPrinterSettings = ThermalPrinterSettings(),
         onComplete: (Long?) -> Unit,
     ) {
         val app = getApplication<Application>()
@@ -207,6 +210,15 @@ class CaptureViewModel(
                 )
                 val id = photoDao.insert(entity)
                 _uiState.value = CaptureUiState.Saved(id)
+                if (thermalPrinterSettings.enabled && thermalPrinterSettings.autoPrintAfterCapture &&
+                    thermalPrinterSettings.deviceAddress.isNotBlank()
+                ) {
+                    viewModelScope.launch(Dispatchers.IO) {
+                        val bm = BitmapFactory.decodeFile(destFile.absolutePath)
+                        bm?.let { ThermalPrinterClient(thermalPrinterSettings).print(it) }
+                        bm?.recycle()
+                    }
+                }
                 onComplete(id)
             } catch (e: Exception) {
                 _uiState.value = CaptureUiState.Error(e.message ?: "Failed to save photo")

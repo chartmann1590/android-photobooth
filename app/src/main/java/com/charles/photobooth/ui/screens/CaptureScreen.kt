@@ -93,6 +93,7 @@ import com.charles.photobooth.camera.UploadStatus
 import com.charles.photobooth.camera.VideoCaptureManager
 import com.charles.photobooth.camera.videoOutputDir
 import com.charles.photobooth.settings.SettingsRepository
+import com.charles.photobooth.settings.ThermalPrinterSettings
 import com.charles.photobooth.settings.UploadSettings
 import com.charles.photobooth.template.BuiltInTemplates
 import com.charles.photobooth.template.WatermarkConfig
@@ -153,6 +154,7 @@ fun CaptureScreen(
     var showFlash by remember { mutableStateOf(false) }
     var selectedFilter by rememberSaveable { mutableStateOf(PhotoFilter.NONE) }
     var cameraId by rememberSaveable { mutableStateOf<String?>(null) }
+    var thermalPrinterSettings by remember { mutableStateOf(ThermalPrinterSettings()) }
     var settingsLoaded by remember { mutableStateOf(false) }
     var showPaywall by remember { mutableStateOf(false) }
     var quotaReservedForSession by rememberSaveable { mutableIntStateOf(0) }
@@ -206,6 +208,7 @@ fun CaptureScreen(
         frontScreenFlashEnabled = settings.camera.frontScreenFlashEnabled
         selectedFilter = try { PhotoFilter.valueOf(settings.captureMode.selectedFilter) } catch (_: Exception) { PhotoFilter.NONE }
         cameraId = settings.camera.cameraId
+        thermalPrinterSettings = settings.thermalPrinter
         settingsLoaded = true
     }
 
@@ -393,6 +396,7 @@ fun CaptureScreen(
                     selectedFrameId = selectedFrameId,
                     watermarkConfig = watermarkConfig,
                     filter = selectedFilter,
+                    thermalPrinterSettings = thermalPrinterSettings,
                     onComplete = { id ->
                         if (id == null) {
                             val refundCount = (quotaReservedForSession - boothPhotosTaken).coerceAtLeast(0)

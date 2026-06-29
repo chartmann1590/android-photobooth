@@ -76,6 +76,15 @@ data class SmtpSettings(
     val defaultBodyTemplate: String = "Thanks for visiting {eventName}!",
 )
 
+data class ThermalPrinterSettings(
+    val enabled: Boolean = false,
+    val deviceAddress: String = "",
+    val deviceName: String = "",
+    val autoPrintAfterCapture: Boolean = false,
+    val footerText: String = "",
+    val paperWidthMm: Float = 57f,
+)
+
 data class AllSettings(
     val event: EventSettings = EventSettings(),
     val upload: UploadSettings = UploadSettings(),
@@ -85,5 +94,6 @@ data class AllSettings(
     val watermark: WatermarkSettings = WatermarkSettings(),
     val captureMode: CaptureModeSettings = CaptureModeSettings(),
     val share: ShareSettings = ShareSettings(),
+    val thermalPrinter: ThermalPrinterSettings = ThermalPrinterSettings(),
 )
 

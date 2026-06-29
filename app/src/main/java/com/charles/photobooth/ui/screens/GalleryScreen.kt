@@ -86,6 +86,7 @@ import com.charles.photobooth.gallery.GalleryAction
 import com.charles.photobooth.gallery.GalleryActionState
 import com.charles.photobooth.gallery.GalleryViewModel
 import com.charles.photobooth.gallery.availableGalleryActions
+import com.charles.photobooth.settings.ThermalPrinterSettings
 import com.charles.photobooth.util.QrCodeGenerator
 import com.charles.photobooth.ui.theme.CardSurface
 import com.charles.photobooth.ui.theme.CardSurfaceLight
@@ -103,12 +104,13 @@ fun GalleryScreen(
     val photos by vm.photos.collectAsState()
     val actionState by vm.actionState.collectAsState()
     val shareSettings by vm.shareSettings.collectAsState()
+    val thermalPrinterSettings by vm.thermalPrinterSettings.collectAsState()
     var selectedPhotoId by rememberSaveable { mutableStateOf<Long?>(null) }
     val selected = remember(photos, selectedPhotoId) {
         selectedPhotoId?.let { id -> photos.firstOrNull { it.id == id } }
     }
-    val selectedActions = remember(selected, shareSettings) {
-        selected?.let { availableGalleryActions(it, shareSettings) }.orEmpty()
+    val selectedActions = remember(selected, shareSettings, thermalPrinterSettings) {
+        selected?.let { availableGalleryActions(it, shareSettings, thermalPrinterSettings) }.orEmpty()
     }
     var email by rememberSaveable { mutableStateOf("") }
     var phone by rememberSaveable { mutableStateOf("") }
@@ -606,6 +608,28 @@ fun GalleryScreen(
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(stringResource(R.string.gallery_print))
                                     }
+                                }
+                            }
+
+                            if (GalleryAction.THERMAL_PRINT in selectedActions) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                ElevatedButton(
+                                    onClick = { vm.printPhotoThermal(photo) },
+                                    enabled = actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.elevatedButtonColors(
+                                        containerColor = CardSurfaceLight,
+                                        contentColor = Color.White,
+                                    ),
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = android.R.drawable.ic_menu_print),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Thermal Print")
                                 }
                             }
 
