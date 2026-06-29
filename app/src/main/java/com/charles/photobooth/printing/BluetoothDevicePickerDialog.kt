@@ -53,9 +53,9 @@ fun BluetoothDevicePickerDialog(
     var permissionDenied by remember { mutableStateOf(false) }
 
     val requiredPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        arrayOf(Manifest.permission.BLUETOOTH_CONNECT)
+        arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN)
     } else {
-        arrayOf(Manifest.permission.BLUETOOTH)
+        arrayOf(Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN)
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(

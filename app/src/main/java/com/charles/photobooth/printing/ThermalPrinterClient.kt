@@ -1,5 +1,7 @@
 package com.charles.photobooth.printing
 
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.ColorMatrix
@@ -12,15 +14,18 @@ import com.charles.photobooth.settings.ThermalPrinterSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class ThermalPrinterClient(private val settings: ThermalPrinterSettings) {
+class ThermalPrinterClient(
+    private val settings: ThermalPrinterSettings,
+    private val context: Context,
+) {
 
     suspend fun print(bitmap: Bitmap): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
+            val device = resolveDevice()
             val grayscale = toGrayscale(bitmap)
 
-            // EscPosPrinter uses 203 DPI internally; pass paperWidthMm for correct column count
             val printer = EscPosPrinter(
-                BluetoothConnection(settings.deviceAddress),
+                BluetoothConnection(device),
                 203,
                 settings.paperWidthMm,
                 32,
@@ -37,19 +42,24 @@ class ThermalPrinterClient(private val settings: ThermalPrinterSettings) {
             }
 
             printer.printFormattedTextAndCut(content)
+            Unit
         }
     }
 
     suspend fun testConnection(): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            if (settings.deviceAddress.isBlank()) {
-                error("No printer selected")
-            }
-            val connection = BluetoothConnection(settings.deviceAddress)
+            if (settings.deviceAddress.isBlank()) error("No printer selected")
+            val connection = BluetoothConnection(resolveDevice())
             connection.connect()
             connection.disconnect()
+            Unit
         }
     }
+
+    private fun resolveDevice() =
+        (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
+            .adapter
+            .getRemoteDevice(settings.deviceAddress)
 
     private fun toGrayscale(src: Bitmap): Bitmap {
         val out = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)

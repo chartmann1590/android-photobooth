@@ -56,6 +56,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.charles.photobooth.data.TemplateEntity
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.content.ContextCompat
 import com.charles.photobooth.printing.BluetoothDevicePickerDialog
 import com.charles.photobooth.printing.BluetoothDeviceInfo
 import com.charles.photobooth.settings.AllSettings
@@ -442,8 +446,37 @@ private fun ThermalPrinterSettingsSection(
     onTestConnection: () -> Unit,
     textFieldColors: androidx.compose.material3.TextFieldColors,
 ) {
+    val context = LocalContext.current
     val settings = state.thermalPrinter
     var showPicker by remember { mutableStateOf(false) }
+    var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    val btPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN)
+    } else {
+        arrayOf(Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN)
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        if (results.values.all { it }) {
+            pendingAction?.invoke()
+        }
+        pendingAction = null
+    }
+
+    fun withBtPermissions(action: () -> Unit) {
+        val allGranted = btPermissions.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        }
+        if (allGranted) {
+            action()
+        } else {
+            pendingAction = action
+            permissionLauncher.launch(btPermissions)
+        }
+    }
 
     if (showPicker) {
         BluetoothDevicePickerDialog(
@@ -457,7 +490,7 @@ private fun ThermalPrinterSettingsSection(
 
     SettingsCard(
         title = "Bluetooth Thermal Printer",
-        iconRes = android.R.drawable.ic_menu_print,
+        iconRes = android.R.drawable.ic_menu_send,
     ) {
         StyledSwitch(
             label = "Enable thermal printer",
@@ -486,7 +519,7 @@ private fun ThermalPrinterSettingsSection(
                 }
                 Spacer(Modifier.width(8.dp))
                 ElevatedButton(
-                    onClick = { showPicker = true },
+                    onClick = { withBtPermissions { showPicker = true } },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.elevatedButtonColors(
                         containerColor = Rose,
@@ -499,7 +532,7 @@ private fun ThermalPrinterSettingsSection(
 
             if (settings.deviceAddress.isNotBlank()) {
                 ElevatedButton(
-                    onClick = onTestConnection,
+                    onClick = { withBtPermissions(onTestConnection) },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.elevatedButtonColors(
                         containerColor = Gold,

@@ -194,7 +194,7 @@ class SettingsViewModel(
             }
             _testStatus.value = "Connecting to ${settings.deviceName.ifBlank { settings.deviceAddress }}…"
             try {
-                val result = com.charles.photobooth.printing.ThermalPrinterClient(settings).testConnection()
+                val result = com.charles.photobooth.printing.ThermalPrinterClient(settings, getApplication()).testConnection()
                 _testStatus.value = if (result.isSuccess) {
                     "Printer connection ok"
                 } else {

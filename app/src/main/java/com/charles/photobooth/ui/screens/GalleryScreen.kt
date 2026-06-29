@@ -624,7 +624,7 @@ fun GalleryScreen(
                                     ),
                                 ) {
                                     Icon(
-                                        painter = painterResource(id = android.R.drawable.ic_menu_print),
+                                        painter = painterResource(id = android.R.drawable.ic_menu_send),
                                         contentDescription = null,
                                         modifier = Modifier.size(18.dp),
                                     )

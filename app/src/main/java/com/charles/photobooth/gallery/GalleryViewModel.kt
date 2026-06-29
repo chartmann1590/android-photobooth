@@ -213,7 +213,7 @@ class GalleryViewModel(
                         return@launch
                     }
                 val settings = settingsRepo.getCurrentSettings().thermalPrinter
-                val result = ThermalPrinterClient(settings).print(bitmap)
+                val result = ThermalPrinterClient(settings, getApplication()).print(bitmap)
                 bitmap.recycle()
                 result.fold(
                     onSuccess = { _actionState.value = GalleryActionState.Idle },

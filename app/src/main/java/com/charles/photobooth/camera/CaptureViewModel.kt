@@ -215,7 +215,7 @@ class CaptureViewModel(
                 ) {
                     viewModelScope.launch(Dispatchers.IO) {
                         val bm = BitmapFactory.decodeFile(destFile.absolutePath)
-                        bm?.let { ThermalPrinterClient(thermalPrinterSettings).print(it) }
+                        bm?.let { ThermalPrinterClient(thermalPrinterSettings, getApplication()).print(it) }
                         bm?.recycle()
                     }
                 }
