@@ -25,7 +25,7 @@ private const val S002_PRINT_WIDTH_PX = 576
 private const val FOOTER_TOP_GAP_PX = 28
 private const val FOOTER_BOTTOM_GAP_PX = 28
 private const val BOTTOM_FEED_MARGIN_PX = 1600
-private const val POST_PRINT_FEED_LINES = 128
+private const val POST_PRINT_FEED_LINES = 64
 private const val POST_PRINT_FEED_COMMANDS = 1
 
 class ThermalPrinterClient(
