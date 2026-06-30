@@ -24,7 +24,8 @@ private const val DEFAULT_PAPER_WIDTH_MM = 57f
 private const val S002_PRINT_WIDTH_PX = 576
 private const val FOOTER_TOP_GAP_PX = 28
 private const val FOOTER_BOTTOM_GAP_PX = 28
-private const val BOTTOM_FEED_MARGIN_PX = 800
+private const val BOTTOM_FEED_MARGIN_PX = 1200
+private const val POST_PRINT_FEED_LINES = 96
 
 class ThermalPrinterClient(
     private val settings: ThermalPrinterSettings,
@@ -72,6 +73,12 @@ class ThermalPrinterClient(
                 out.flush()
                 Log.d(TAG, "YK print packet flushed; waiting for printer completion/status")
                 readAvailable("RX final", input, 12_000)
+
+                val feedCommand = byteArrayOf(0x1B, 0x64, POST_PRINT_FEED_LINES.toByte())
+                logHex("TX post-print feed", feedCommand)
+                writeSliced(out, feedCommand)
+                out.flush()
+                readAvailable("RX after post-print feed", input, 1_000)
             } finally {
                 socket.close()
                 Log.d(TAG, "Socket closed")
@@ -270,6 +277,7 @@ class ThermalPrinterClient(
         } else {
             wrapFooterText(footer, image.width)
         }
+        Log.d(TAG, "Thermal footer text: ${footer.ifBlank { "<blank>" }} (${footerLines.size} rendered lines)")
         val textSize = (image.width * 0.06f).coerceIn(28f, 36f)
         val lineHeight = (textSize * 1.25f).roundToInt()
         val footerHeight = if (footerLines.isEmpty()) {
@@ -287,6 +295,11 @@ class ThermalPrinterClient(
         canvas.drawBitmap(image, 0f, 0f, null)
 
         if (footerLines.isNotEmpty()) {
+            val separatorPaint = Paint().apply {
+                color = Color.BLACK
+                style = Paint.Style.FILL
+            }
+            canvas.drawRect(0f, image.height.toFloat(), image.width.toFloat(), (image.height + 4).toFloat(), separatorPaint)
             val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.BLACK
                 this.textSize = textSize
