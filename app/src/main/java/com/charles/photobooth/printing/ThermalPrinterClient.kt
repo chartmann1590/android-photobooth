@@ -17,14 +17,14 @@ import kotlin.math.roundToInt
 
 private const val TAG = "ThermalPrinter"
 
-// Orgsta S002 / Xinye S002 printers are 203 DPI: 8 dots per mm.
+// Orgsta S002 / Xinye S002 printers use 57mm media, but the YK raster protocol
+// accepts a wider 576-dot image that fills the available thermal head.
 private const val DOTS_PER_MM = 8f
 private const val DEFAULT_PAPER_WIDTH_MM = 57f
-private const val MIN_PRINT_WIDTH_PX = 384
-private const val MAX_PRINT_WIDTH_PX = 576
+private const val S002_PRINT_WIDTH_PX = 576
 private const val FOOTER_TOP_GAP_PX = 18
 private const val FOOTER_BOTTOM_GAP_PX = 14
-private const val BOTTOM_FEED_MARGIN_PX = 36
+private const val BOTTOM_FEED_MARGIN_PX = 320
 
 class ThermalPrinterClient(
     private val settings: ThermalPrinterSettings,
@@ -245,12 +245,10 @@ class ThermalPrinterClient(
     }
 
     private fun printWidthPx(): Int {
-        val paperWidthMm = settings.paperWidthMm.takeIf { it > 0f } ?: DEFAULT_PAPER_WIDTH_MM
-        val rawDots = (paperWidthMm * DOTS_PER_MM).roundToInt()
-        return (rawDots / 8 * 8).coerceIn(MIN_PRINT_WIDTH_PX, MAX_PRINT_WIDTH_PX)
+        return S002_PRINT_WIDTH_PX
     }
 
-    private fun paperWidthMm(): Float = printWidthPx() / DOTS_PER_MM
+    private fun paperWidthMm(): Float = settings.paperWidthMm.takeIf { it > 0f } ?: DEFAULT_PAPER_WIDTH_MM
 
     private fun prepareForThermalPrint(src: Bitmap): Bitmap {
         val printWidthPx = printWidthPx()
