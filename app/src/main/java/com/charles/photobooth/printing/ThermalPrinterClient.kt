@@ -22,9 +22,9 @@ private const val TAG = "ThermalPrinter"
 private const val DOTS_PER_MM = 8f
 private const val DEFAULT_PAPER_WIDTH_MM = 57f
 private const val S002_PRINT_WIDTH_PX = 576
-private const val FOOTER_TOP_GAP_PX = 18
-private const val FOOTER_BOTTOM_GAP_PX = 14
-private const val BOTTOM_FEED_MARGIN_PX = 320
+private const val FOOTER_TOP_GAP_PX = 28
+private const val FOOTER_BOTTOM_GAP_PX = 28
+private const val BOTTOM_FEED_MARGIN_PX = 800
 
 class ThermalPrinterClient(
     private val settings: ThermalPrinterSettings,
@@ -270,7 +270,7 @@ class ThermalPrinterClient(
         } else {
             wrapFooterText(footer, image.width)
         }
-        val textSize = (image.width * 0.045f).coerceIn(18f, 26f)
+        val textSize = (image.width * 0.06f).coerceIn(28f, 36f)
         val lineHeight = (textSize * 1.25f).roundToInt()
         val footerHeight = if (footerLines.isEmpty()) {
             0
@@ -291,7 +291,7 @@ class ThermalPrinterClient(
                 color = Color.BLACK
                 this.textSize = textSize
                 textAlign = Paint.Align.CENTER
-                isFakeBoldText = false
+                isFakeBoldText = true
             }
             val metrics = paint.fontMetrics
             var baseline = image.height + FOOTER_TOP_GAP_PX - metrics.ascent
@@ -306,7 +306,7 @@ class ThermalPrinterClient(
 
     private fun wrapFooterText(text: String, widthPx: Int): List<String> {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            textSize = (widthPx * 0.045f).coerceIn(18f, 26f)
+            textSize = (widthPx * 0.06f).coerceIn(28f, 36f)
         }
         val maxWidth = widthPx * 0.9f
         val words = text.split(Regex("\\s+")).filter { it.isNotBlank() }

@@ -224,7 +224,11 @@ class GalleryViewModel(
                         bitmap.recycle()
                     }
                 }
-                val result = ThermalPrinterClient(appSettings.thermalPrinter, getApplication()).print(printable)
+                val thermalSettings = appSettings.thermalPrinter.copy(
+                    footerText = appSettings.thermalPrinter.footerText
+                        .ifBlank { listOf(photo.eventName, appSettings.event.eventDate).filter { it.isNotBlank() }.joinToString(" - ") }
+                )
+                val result = ThermalPrinterClient(thermalSettings, getApplication()).print(printable)
                 printable.recycle()
                 result.fold(
                     onSuccess = { _actionState.value = GalleryActionState.Idle },
