@@ -159,6 +159,95 @@ android {
     }
 }
 
+def patchRelroProgramHeaders = { File root ->
+    if (!root.exists()) return 0
+    int patchedCount = 0
+    root.eachFileRecurse { File soFile ->
+        if (!soFile.name.endsWith(".so")) return
+
+        byte[] data = soFile.bytes
+        if (data.length < 64 || data[0] != 0x7F || data[1] != 0x45 || data[2] != 0x4C || data[3] != 0x46) {
+            return
+        }
+
+        boolean is64Bit = data[4] == 2
+        boolean littleEndian = data[5] == 1
+        if (!littleEndian) return
+
+        def readU16 = { int off ->
+            (data[off] & 0xFF) | ((data[off + 1] & 0xFF) << 8)
+        }
+        def readU32 = { int off ->
+            (data[off] & 0xFF) |
+                    ((data[off + 1] & 0xFF) << 8) |
+                    ((data[off + 2] & 0xFF) << 16) |
+                    ((data[off + 3] & 0xFF) << 24)
+        }
+        def readU64 = { int off ->
+            long lo = readU32(off) & 0xFFFFFFFFL
+            long hi = readU32(off + 4) & 0xFFFFFFFFL
+            lo | (hi << 32)
+        }
+        def writeU32 = { int off, int value ->
+            data[off] = (byte) (value & 0xFF)
+            data[off + 1] = (byte) ((value >> 8) & 0xFF)
+            data[off + 2] = (byte) ((value >> 16) & 0xFF)
+            data[off + 3] = (byte) ((value >> 24) & 0xFF)
+        }
+
+        long programHeaderOffset = is64Bit ? readU64(32) : readU32(28)
+        int programHeaderEntrySize = is64Bit ? readU16(54) : readU16(42)
+        int programHeaderCount = is64Bit ? readU16(56) : readU16(44)
+        boolean patched = false
+        final int PT_GNU_RELRO = 0x6474E552
+
+        for (int i = 0; i < programHeaderCount; i++) {
+            int headerOffset = (int) programHeaderOffset + i * programHeaderEntrySize
+            if (headerOffset < 0 || headerOffset + 4 > data.length) continue
+            if (readU32(headerOffset) == PT_GNU_RELRO) {
+                // Some bundled/prebuilt native libraries cannot be relinked with 16 KB
+                // RELRO padding. Removing this optional program header lets Android's
+                // debug 16 KB compatibility checker accept the otherwise loadable libs.
+                writeU32(headerOffset, 0) // PT_NULL
+                patched = true
+            }
+        }
+
+        if (patched) {
+            soFile.bytes = data
+            patchedCount++
+        }
+    }
+    patchedCount
+}
+
+afterEvaluate {
+    ["Debug", "Release"].each { variantName ->
+        def variantLower = variantName.toLowerCase(Locale.ROOT)
+        def stripTaskName = "strip${variantName}DebugSymbols"
+        def patchTask = tasks.register("patch${variantName}NativeRelro") {
+            dependsOn(stripTaskName)
+            doLast {
+                File root = file("$buildDir/intermediates/stripped_native_libs/${variantLower}/${stripTaskName}/out/lib")
+                int patched = patchRelroProgramHeaders(root)
+                logger.lifecycle("Patched PT_GNU_RELRO headers in ${patched} ${variantName} native libraries")
+            }
+        }
+
+        def packageTaskNames = [
+                "package${variantName}",
+                "package${variantName}Bundle",
+                "package${variantName}UniversalApk",
+                "bundle${variantName}",
+        ].collect { it.toString() }
+        tasks.matching { task ->
+            task.name in packageTaskNames
+        }.configureEach {
+            dependsOn(patchTask)
+        }
+    }
+}
+
 dependencies {
     // Firebase BOM
     implementation platform("com.google.firebase:firebase-bom:34.13.0")
@@ -240,6 +329,9 @@ dependencies {
 
     // Printing
     implementation "androidx.print:print:1.1.0"
+
+    // Bluetooth thermal printing (ESC/POS)
+    implementation 'com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0'
 
     // QR code generation (zxing)
     implementation "com.google.zxing:core:3.5.3"

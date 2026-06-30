@@ -56,9 +56,16 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.charles.photobooth.data.TemplateEntity
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.content.ContextCompat
+import com.charles.photobooth.printing.BluetoothDevicePickerDialog
+import com.charles.photobooth.printing.BluetoothDeviceInfo
 import com.charles.photobooth.settings.AllSettings
 import com.charles.photobooth.settings.CaptureModeSettings
 import com.charles.photobooth.settings.ShareSettings
+import com.charles.photobooth.settings.ThermalPrinterSettings
 import com.charles.photobooth.settings.WatermarkSettings
 import com.charles.photobooth.BuildConfig
 import com.charles.photobooth.template.BuiltInTemplates
@@ -225,6 +232,13 @@ fun SettingsScreen(
             )
             UploadSettingsSection(state, onUploadChange = vm::updateUpload, textFieldColors = textFieldColors)
             ShareSettingsSection(state, onShareChange = vm::updateShare)
+            ThermalPrinterSettingsSection(
+                state = state,
+                onThermalPrinterChange = vm::updateThermalPrinter,
+                onTestConnection = vm::testThermalPrinterConnection,
+                onTestPrint = vm::testThermalPrint,
+                textFieldColors = textFieldColors,
+            )
             SmsSettingsSection(
                 state,
                 onSmsChange = vm::updateSms,
@@ -423,6 +437,140 @@ private fun ShareSettingsSection(
             checked = state.share.enablePrintShare,
             onCheckedChange = { onShareChange { copy(enablePrintShare = it) } },
         )
+    }
+}
+
+@Composable
+private fun ThermalPrinterSettingsSection(
+    state: AllSettings,
+    onThermalPrinterChange: (ThermalPrinterSettings.() -> ThermalPrinterSettings) -> Unit,
+    onTestConnection: () -> Unit,
+    onTestPrint: () -> Unit,
+    textFieldColors: androidx.compose.material3.TextFieldColors,
+) {
+    val context = LocalContext.current
+    val settings = state.thermalPrinter
+    var showPicker by remember { mutableStateOf(false) }
+    var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    val btPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        arrayOf(Manifest.permission.BLUETOOTH_CONNECT)
+    } else {
+        arrayOf(Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN)
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        if (results.values.all { it }) {
+            pendingAction?.invoke()
+        }
+        pendingAction = null
+    }
+
+    fun withBtPermissions(action: () -> Unit) {
+        val allGranted = btPermissions.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        }
+        if (allGranted) {
+            action()
+        } else {
+            pendingAction = action
+            permissionLauncher.launch(btPermissions)
+        }
+    }
+
+    if (showPicker) {
+        BluetoothDevicePickerDialog(
+            onDeviceSelected = { device: BluetoothDeviceInfo ->
+                onThermalPrinterChange { copy(deviceAddress = device.address, deviceName = device.name) }
+                showPicker = false
+            },
+            onDismiss = { showPicker = false },
+        )
+    }
+
+    SettingsCard(
+        title = "Bluetooth Thermal Printer",
+        iconRes = android.R.drawable.ic_menu_send,
+    ) {
+        StyledSwitch(
+            label = "Enable thermal printer",
+            checked = settings.enabled,
+            onCheckedChange = { onThermalPrinterChange { copy(enabled = it) } },
+        )
+
+        if (settings.enabled) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (settings.deviceName.isNotBlank()) settings.deviceName else "No printer selected",
+                        color = if (settings.deviceName.isNotBlank()) Color.White else TextSecondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    if (settings.deviceAddress.isNotBlank()) {
+                        Text(
+                            text = settings.deviceAddress,
+                            color = TextSecondary,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+                Spacer(Modifier.width(8.dp))
+                ElevatedButton(
+                    onClick = { withBtPermissions { showPicker = true } },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.elevatedButtonColors(
+                        containerColor = Rose,
+                        contentColor = Color.White,
+                    ),
+                ) {
+                    Text("Scan & Select")
+                }
+            }
+
+            if (settings.deviceAddress.isNotBlank()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ElevatedButton(
+                        onClick = { withBtPermissions(onTestConnection) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.elevatedButtonColors(
+                            containerColor = Gold,
+                            contentColor = Color.Black,
+                        ),
+                    ) {
+                        Text("Test Connection", fontWeight = FontWeight.Medium)
+                    }
+                    ElevatedButton(
+                        onClick = { withBtPermissions(onTestPrint) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.elevatedButtonColors(
+                            containerColor = Rose,
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Text("Test Print", fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
+
+            StyledSwitch(
+                label = "Auto-print after each capture",
+                checked = settings.autoPrintAfterCapture,
+                onCheckedChange = { onThermalPrinterChange { copy(autoPrintAfterCapture = it) } },
+            )
+
+            StableTextField(
+                value = settings.footerText,
+                onValueChange = { onThermalPrinterChange { copy(footerText = it) } },
+                label = "Footer text (optional)",
+                modifier = Modifier.fillMaxWidth(),
+                colors = textFieldColors,
+            )
+        }
     }
 }
 

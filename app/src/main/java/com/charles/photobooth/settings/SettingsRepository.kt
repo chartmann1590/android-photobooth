@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
@@ -80,6 +81,13 @@ class SettingsRepository(private val context: Context) {
         val VIDEO_CAPTURE_ENABLED = stringPreferencesKey("video_capture_enabled")
         val SELECTED_FILTER = stringPreferencesKey("selected_filter")
         val SELECTED_TEMPLATE = stringPreferencesKey("selected_template")
+
+        val THERMAL_PRINTER_ENABLED = stringPreferencesKey("thermal_printer_enabled")
+        val THERMAL_PRINTER_ADDRESS = stringPreferencesKey("thermal_printer_address")
+        val THERMAL_PRINTER_NAME = stringPreferencesKey("thermal_printer_name")
+        val THERMAL_PRINTER_AUTO_PRINT = stringPreferencesKey("thermal_printer_auto_print")
+        val THERMAL_PRINTER_FOOTER = stringPreferencesKey("thermal_printer_footer")
+        val THERMAL_PRINTER_PAPER_WIDTH = floatPreferencesKey("thermal_printer_paper_width")
     }
 
     private object SecureKeys {
@@ -200,6 +208,19 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
+    suspend fun updateThermalPrinterSettings(block: (ThermalPrinterSettings) -> ThermalPrinterSettings) {
+        context.dataStore.edit { prefs ->
+            val current = prefs.toAllSettings().thermalPrinter
+            val updated = block(current)
+            prefs[Keys.THERMAL_PRINTER_ENABLED] = updated.enabled.toString()
+            prefs[Keys.THERMAL_PRINTER_ADDRESS] = updated.deviceAddress
+            prefs[Keys.THERMAL_PRINTER_NAME] = updated.deviceName
+            prefs[Keys.THERMAL_PRINTER_AUTO_PRINT] = updated.autoPrintAfterCapture.toString()
+            prefs[Keys.THERMAL_PRINTER_FOOTER] = updated.footerText
+            prefs[Keys.THERMAL_PRINTER_PAPER_WIDTH] = updated.paperWidthMm
+        }
+    }
+
     suspend fun updateSmtpSettings(block: (SmtpSettings) -> SmtpSettings) {
         context.dataStore.edit { prefs ->
             val current = prefs.toAllSettings().smtp
@@ -286,6 +307,15 @@ class SettingsRepository(private val context: Context) {
             defaultBodyTemplate = this[Keys.SMTP_BODY_TEMPLATE] ?: SmtpSettings().defaultBodyTemplate,
         )
 
+        val thermalPrinter = ThermalPrinterSettings(
+            enabled = (this[Keys.THERMAL_PRINTER_ENABLED] ?: "false").toBooleanStrictOrNull() ?: false,
+            deviceAddress = this[Keys.THERMAL_PRINTER_ADDRESS] ?: "",
+            deviceName = this[Keys.THERMAL_PRINTER_NAME] ?: "",
+            autoPrintAfterCapture = (this[Keys.THERMAL_PRINTER_AUTO_PRINT] ?: "false").toBooleanStrictOrNull() ?: false,
+            footerText = this[Keys.THERMAL_PRINTER_FOOTER] ?: "",
+            paperWidthMm = this[Keys.THERMAL_PRINTER_PAPER_WIDTH] ?: 57f,
+        )
+
         return AllSettings(
             event = event,
             upload = upload,
@@ -295,6 +325,7 @@ class SettingsRepository(private val context: Context) {
             watermark = watermark,
             captureMode = captureMode,
             share = share,
+            thermalPrinter = thermalPrinter,
         )
     }
 }

@@ -10,6 +10,7 @@ import com.charles.photobooth.settings.AllSettings
 import com.charles.photobooth.settings.CaptureModeSettings
 import com.charles.photobooth.settings.SettingsRepository
 import com.charles.photobooth.settings.ShareSettings
+import com.charles.photobooth.settings.ThermalPrinterSettings
 import com.charles.photobooth.settings.WatermarkSettings
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -175,6 +176,54 @@ class SettingsViewModel(
     fun updateShare(block: (ShareSettings) -> ShareSettings) {
         viewModelScope.launch {
             repo.updateShareSettings(block)
+        }
+    }
+
+    fun updateThermalPrinter(block: (ThermalPrinterSettings) -> ThermalPrinterSettings) {
+        viewModelScope.launch {
+            repo.updateThermalPrinterSettings(block)
+        }
+    }
+
+    fun testThermalPrinterConnection() {
+        viewModelScope.launch {
+            val settings = repo.getCurrentSettings().thermalPrinter
+            if (settings.deviceAddress.isBlank()) {
+                _testStatus.value = "Select a printer first"
+                return@launch
+            }
+            _testStatus.value = "Connecting to ${settings.deviceName.ifBlank { settings.deviceAddress }}…"
+            try {
+                val result = com.charles.photobooth.printing.ThermalPrinterClient(settings, getApplication()).testConnection()
+                _testStatus.value = if (result.isSuccess) {
+                    "Printer connection ok"
+                } else {
+                    "Connection failed: ${result.exceptionOrNull()?.message}"
+                }
+            } catch (e: Exception) {
+                _testStatus.value = "Connection error: ${e.message}"
+            }
+        }
+    }
+
+    fun testThermalPrint() {
+        viewModelScope.launch {
+            val settings = repo.getCurrentSettings().thermalPrinter
+            if (settings.deviceAddress.isBlank()) {
+                _testStatus.value = "Select a printer first"
+                return@launch
+            }
+            _testStatus.value = "Sending thermal test print to ${settings.deviceName.ifBlank { settings.deviceAddress }}..."
+            try {
+                val result = com.charles.photobooth.printing.ThermalPrinterClient(settings, getApplication()).testPrint()
+                _testStatus.value = if (result.isSuccess) {
+                    "Test print sent - paper should have fed"
+                } else {
+                    "Test print failed: ${result.exceptionOrNull()?.message}"
+                }
+            } catch (e: Exception) {
+                _testStatus.value = "Test print error: ${e.message}"
+            }
         }
     }
 

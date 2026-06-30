@@ -1,6 +1,7 @@
 package com.charles.photobooth.gallery
 
 import android.app.Application
+import android.graphics.BitmapFactory
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.charles.photobooth.data.AppDatabase
@@ -11,8 +12,11 @@ import com.charles.photobooth.network.ImmichUploader
 import com.charles.photobooth.network.ImageUploader
 import com.charles.photobooth.network.SmtpEmailClient
 import com.charles.photobooth.network.SmsGatewayClient
+import com.charles.photobooth.printing.ThermalPrinterClient
 import com.charles.photobooth.settings.ShareSettings
 import com.charles.photobooth.settings.SettingsRepository
+import com.charles.photobooth.settings.ThermalPrinterSettings
+import com.charles.photobooth.template.renderSimple4x6
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -39,11 +43,16 @@ enum class GalleryAction {
     EMAIL,
     SMS,
     PRINT,
+    THERMAL_PRINT,
     ANDROID_SHARE,
     DELETE,
 }
 
-fun availableGalleryActions(photo: PhotoEntity, shareSettings: ShareSettings): Set<GalleryAction> {
+fun availableGalleryActions(
+    photo: PhotoEntity,
+    shareSettings: ShareSettings,
+    thermalPrinterSettings: ThermalPrinterSettings = ThermalPrinterSettings(),
+): Set<GalleryAction> {
     val actions = mutableSetOf(GalleryAction.UPLOAD, GalleryAction.DELETE)
     if (photo.uploadedUrl != null) {
         actions.add(GalleryAction.QR_CODE)
@@ -55,6 +64,9 @@ fun availableGalleryActions(photo: PhotoEntity, shareSettings: ShareSettings): S
     if (shareSettings.enableEmailShare) actions.add(GalleryAction.EMAIL)
     if (shareSettings.enableSmsShare) actions.add(GalleryAction.SMS)
     if (shareSettings.enablePrintShare) actions.add(GalleryAction.PRINT)
+    if (thermalPrinterSettings.enabled && thermalPrinterSettings.deviceAddress.isNotBlank()) {
+        actions.add(GalleryAction.THERMAL_PRINT)
+    }
     return actions
 }
 
@@ -90,6 +102,15 @@ class GalleryViewModel(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = ShareSettings(),
+            )
+
+    val thermalPrinterSettings: StateFlow<ThermalPrinterSettings> =
+        settingsRepo.settingsFlow
+            .map { it.thermalPrinter }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = ThermalPrinterSettings(),
             )
 
     private val _actionState = MutableStateFlow<GalleryActionState>(GalleryActionState.Idle)
@@ -173,6 +194,48 @@ class GalleryViewModel(
                 if (file.exists()) file.delete()
                 photoDao.deleteById(photo.id)
             } catch (_: Exception) {
+            }
+        }
+    }
+
+    fun printPhotoThermal(photo: PhotoEntity) {
+        if (_actionState.value is GalleryActionState.Uploading || _actionState.value is GalleryActionState.Sending) return
+        viewModelScope.launch {
+            try {
+                _actionState.value = GalleryActionState.Sending
+                val file = File(photo.localPath)
+                if (!file.exists()) {
+                    _actionState.value = GalleryActionState.Error("Photo file not found")
+                    return@launch
+                }
+                val bitmap = BitmapFactory.decodeFile(photo.localPath)
+                    ?: run {
+                        _actionState.value = GalleryActionState.Error("Failed to load photo for printing")
+                        return@launch
+                    }
+                val appSettings = settingsRepo.getCurrentSettings()
+                val frameOverlayPath = appSettings.event.selectedFrameId?.let { id ->
+                    db.templateDao().getTemplateByIdSync(id)?.backgroundImagePath
+                }
+                val printable = if (frameOverlayPath.isNullOrBlank()) {
+                    bitmap
+                } else {
+                    renderSimple4x6(bitmap, frameOverlayPath, watermark = null).also {
+                        bitmap.recycle()
+                    }
+                }
+                val thermalSettings = appSettings.thermalPrinter.copy(
+                    footerText = appSettings.thermalPrinter.footerText
+                        .ifBlank { listOf(photo.eventName, appSettings.event.eventDate).filter { it.isNotBlank() }.joinToString(" - ") }
+                )
+                val result = ThermalPrinterClient(thermalSettings, getApplication()).print(printable)
+                printable.recycle()
+                result.fold(
+                    onSuccess = { _actionState.value = GalleryActionState.Idle },
+                    onFailure = { _actionState.value = GalleryActionState.Error(it.message ?: "Thermal print failed") },
+                )
+            } catch (e: Exception) {
+                _actionState.value = GalleryActionState.Error(e.message ?: "Thermal print failed")
             }
         }
     }
