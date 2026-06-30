@@ -24,9 +24,9 @@ private const val DEFAULT_PAPER_WIDTH_MM = 57f
 private const val S002_PRINT_WIDTH_PX = 576
 private const val FOOTER_TOP_GAP_PX = 28
 private const val FOOTER_BOTTOM_GAP_PX = 28
-private const val BOTTOM_FEED_MARGIN_PX = 2400
-private const val POST_PRINT_FEED_LINES = 255
-private const val POST_PRINT_FEED_COMMANDS = 2
+private const val BOTTOM_FEED_MARGIN_PX = 1600
+private const val POST_PRINT_FEED_LINES = 128
+private const val POST_PRINT_FEED_COMMANDS = 1
 
 class ThermalPrinterClient(
     private val settings: ThermalPrinterSettings,
