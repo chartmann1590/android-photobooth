@@ -16,6 +16,7 @@ import com.charles.photobooth.printing.ThermalPrinterClient
 import com.charles.photobooth.settings.ShareSettings
 import com.charles.photobooth.settings.SettingsRepository
 import com.charles.photobooth.settings.ThermalPrinterSettings
+import com.charles.photobooth.template.renderSimple4x6
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -212,9 +213,19 @@ class GalleryViewModel(
                         _actionState.value = GalleryActionState.Error("Failed to load photo for printing")
                         return@launch
                     }
-                val settings = settingsRepo.getCurrentSettings().thermalPrinter
-                val result = ThermalPrinterClient(settings, getApplication()).print(bitmap)
-                bitmap.recycle()
+                val appSettings = settingsRepo.getCurrentSettings()
+                val frameOverlayPath = appSettings.event.selectedFrameId?.let { id ->
+                    db.templateDao().getTemplateByIdSync(id)?.backgroundImagePath
+                }
+                val printable = if (frameOverlayPath.isNullOrBlank()) {
+                    bitmap
+                } else {
+                    renderSimple4x6(bitmap, frameOverlayPath, watermark = null).also {
+                        bitmap.recycle()
+                    }
+                }
+                val result = ThermalPrinterClient(appSettings.thermalPrinter, getApplication()).print(printable)
+                printable.recycle()
                 result.fold(
                     onSuccess = { _actionState.value = GalleryActionState.Idle },
                     onFailure = { _actionState.value = GalleryActionState.Error(it.message ?: "Thermal print failed") },

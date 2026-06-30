@@ -236,6 +236,7 @@ fun SettingsScreen(
                 state = state,
                 onThermalPrinterChange = vm::updateThermalPrinter,
                 onTestConnection = vm::testThermalPrinterConnection,
+                onTestPrint = vm::testThermalPrint,
                 textFieldColors = textFieldColors,
             )
             SmsSettingsSection(
@@ -444,6 +445,7 @@ private fun ThermalPrinterSettingsSection(
     state: AllSettings,
     onThermalPrinterChange: (ThermalPrinterSettings.() -> ThermalPrinterSettings) -> Unit,
     onTestConnection: () -> Unit,
+    onTestPrint: () -> Unit,
     textFieldColors: androidx.compose.material3.TextFieldColors,
 ) {
     val context = LocalContext.current
@@ -452,7 +454,7 @@ private fun ThermalPrinterSettingsSection(
     var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     val btPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN)
+        arrayOf(Manifest.permission.BLUETOOTH_CONNECT)
     } else {
         arrayOf(Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN)
     }
@@ -531,15 +533,27 @@ private fun ThermalPrinterSettingsSection(
             }
 
             if (settings.deviceAddress.isNotBlank()) {
-                ElevatedButton(
-                    onClick = { withBtPermissions(onTestConnection) },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.elevatedButtonColors(
-                        containerColor = Gold,
-                        contentColor = Color.Black,
-                    ),
-                ) {
-                    Text("Test Connection", fontWeight = FontWeight.Medium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ElevatedButton(
+                        onClick = { withBtPermissions(onTestConnection) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.elevatedButtonColors(
+                            containerColor = Gold,
+                            contentColor = Color.Black,
+                        ),
+                    ) {
+                        Text("Test Connection", fontWeight = FontWeight.Medium)
+                    }
+                    ElevatedButton(
+                        onClick = { withBtPermissions(onTestPrint) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.elevatedButtonColors(
+                            containerColor = Rose,
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Text("Test Print", fontWeight = FontWeight.Medium)
+                    }
                 }
             }
 

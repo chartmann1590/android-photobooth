@@ -206,6 +206,27 @@ class SettingsViewModel(
         }
     }
 
+    fun testThermalPrint() {
+        viewModelScope.launch {
+            val settings = repo.getCurrentSettings().thermalPrinter
+            if (settings.deviceAddress.isBlank()) {
+                _testStatus.value = "Select a printer first"
+                return@launch
+            }
+            _testStatus.value = "Sending thermal test print to ${settings.deviceName.ifBlank { settings.deviceAddress }}..."
+            try {
+                val result = com.charles.photobooth.printing.ThermalPrinterClient(settings, getApplication()).testPrint()
+                _testStatus.value = if (result.isSuccess) {
+                    "Test print sent - paper should have fed"
+                } else {
+                    "Test print failed: ${result.exceptionOrNull()?.message}"
+                }
+            } catch (e: Exception) {
+                _testStatus.value = "Test print error: ${e.message}"
+            }
+        }
+    }
+
     fun updateSms(
         baseUrl: String,
         username: String,
