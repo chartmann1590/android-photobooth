@@ -27,6 +27,9 @@ sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object Capture : Screen("capture")
     data object Gallery : Screen("gallery")
+    data object GalleryPhoto : Screen("gallery/{photoId}") {
+        fun createRoute(photoId: Long): String = "gallery/$photoId"
+    }
     data object Settings : Screen("settings")
     data object FrameDesigner : Screen("frame_designer")
     data object Tutorial : Screen("tutorial")
@@ -75,13 +78,16 @@ fun NavGraph(
         composable(Screen.Capture.route) {
             CaptureScreen(
                 onBack = { navController.popBackStack() },
-                onFinishedCapture = { _ ->
+                onFinishedCapture = { photoId ->
                     navController.navigate(
-                        Screen.Gallery.route,
+                        photoId?.let(Screen.GalleryPhoto::createRoute) ?: Screen.Gallery.route,
                         NavOptions.Builder()
                             .setPopUpTo(Screen.Capture.route, inclusive = true)
                             .build(),
                     )
+                },
+                onOpenShareOptions = { photoId ->
+                    navController.navigate(Screen.GalleryPhoto.createRoute(photoId))
                 },
                 quotaState = quotaState,
                 rewardedAdState = rewardedAdState,
@@ -95,6 +101,12 @@ fun NavGraph(
         composable(Screen.Gallery.route) {
             GalleryScreen(
                 onBack = { navController.popBackStack() },
+            )
+        }
+        composable(Screen.GalleryPhoto.route) { backStackEntry ->
+            GalleryScreen(
+                onBack = { navController.popBackStack() },
+                initialSelectedPhotoId = backStackEntry.arguments?.getString("photoId")?.toLongOrNull(),
             )
         }
         composable(Screen.Settings.route) {

@@ -113,6 +113,7 @@ import java.util.Locale
 fun CaptureScreen(
     onBack: () -> Unit,
     onFinishedCapture: (Long?) -> Unit,
+    onOpenShareOptions: (Long) -> Unit = {},
     quotaState: PhotoQuotaState = PhotoQuotaState(),
     rewardedAdState: RewardedAdState = RewardedAdState(),
     billingState: BillingUiState = BillingUiState(),
@@ -950,6 +951,9 @@ fun CaptureScreen(
                 onThermalPrint = {
                     captureViewModel.printPhotoThermal(preview.photoId, thermalPrinterSettings)
                 },
+                onOpenShareOptions = {
+                    onOpenShareOptions(preview.photoId)
+                },
                 onDone = {
                     captureViewModel.resetToIdle()
                     onFinishedCapture(preview.photoId)
@@ -981,6 +985,7 @@ private fun PostCapturePreviewOverlay(
     preview: CaptureUiState.Preview,
     thermalPrinterSettings: ThermalPrinterSettings,
     onThermalPrint: () -> Unit,
+    onOpenShareOptions: () -> Unit,
     onDone: () -> Unit,
 ) {
     var minPreviewElapsed by remember(preview.photoId) { mutableStateOf(false) }
@@ -1098,6 +1103,24 @@ private fun PostCapturePreviewOverlay(
             Spacer(modifier = Modifier.height(20.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (BuildConfig.WEDDING_MODE && preview.mediaType == MediaType.IMAGE) {
+                    FilledTonalButton(
+                        onClick = onOpenShareOptions,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = Color.White,
+                            contentColor = Color.Black,
+                        ),
+                    ) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_menu_share),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("SMS / Email / Print", fontWeight = FontWeight.Medium)
+                    }
+                }
                 if (
                     preview.mediaType == MediaType.IMAGE &&
                     thermalPrinterSettings.enabled &&

@@ -98,6 +98,7 @@ import com.charles.photobooth.ui.theme.TextSecondary
 @Composable
 fun GalleryScreen(
     onBack: () -> Unit,
+    initialSelectedPhotoId: Long? = null,
 ) {
     val context = LocalContext.current
     val vm: GalleryViewModel = viewModel()
@@ -105,7 +106,7 @@ fun GalleryScreen(
     val actionState by vm.actionState.collectAsState()
     val shareSettings by vm.shareSettings.collectAsState()
     val thermalPrinterSettings by vm.thermalPrinterSettings.collectAsState()
-    var selectedPhotoId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var selectedPhotoId by rememberSaveable(initialSelectedPhotoId) { mutableStateOf(initialSelectedPhotoId) }
     val selected = remember(photos, selectedPhotoId) {
         selectedPhotoId?.let { id -> photos.firstOrNull { it.id == id } }
     }
