@@ -106,6 +106,26 @@ class CaptureViewModel(
         }
     }
 
+    fun printPhotoThermal(photoId: Long, thermalPrinterSettings: ThermalPrinterSettings) {
+        if (!thermalPrinterSettings.enabled || thermalPrinterSettings.deviceAddress.isBlank()) return
+        viewModelScope.launch {
+            try {
+                val photo = photoDao.getPhotosByIds(listOf(photoId)).firstOrNull()
+                if (photo == null || photo.mediaType != MediaType.IMAGE) return@launch
+                withContext(Dispatchers.IO) {
+                    val bitmap = BitmapFactory.decodeFile(photo.localPath) ?: return@withContext
+                    try {
+                        ThermalPrinterClient(thermalPrinterSettings, getApplication()).print(bitmap)
+                    } finally {
+                        bitmap.recycle()
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.value = CaptureUiState.Error(e.message ?: "Thermal print failed")
+            }
+        }
+    }
+
     private fun updatePreviewStatus(photoId: Long, status: UploadStatus) {
         val current = _uiState.value
         if (current is CaptureUiState.Preview && current.photoId == photoId) {

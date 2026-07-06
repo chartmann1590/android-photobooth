@@ -946,6 +946,10 @@ fun CaptureScreen(
         (uiState as? CaptureUiState.Preview)?.let { preview ->
             PostCapturePreviewOverlay(
                 preview = preview,
+                thermalPrinterSettings = thermalPrinterSettings,
+                onThermalPrint = {
+                    captureViewModel.printPhotoThermal(preview.photoId, thermalPrinterSettings)
+                },
                 onDone = {
                     captureViewModel.resetToIdle()
                     onFinishedCapture(preview.photoId)
@@ -975,6 +979,8 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 @Composable
 private fun PostCapturePreviewOverlay(
     preview: CaptureUiState.Preview,
+    thermalPrinterSettings: ThermalPrinterSettings,
+    onThermalPrint: () -> Unit,
     onDone: () -> Unit,
 ) {
     var minPreviewElapsed by remember(preview.photoId) { mutableStateOf(false) }
@@ -1091,15 +1097,39 @@ private fun PostCapturePreviewOverlay(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            FilledTonalButton(
-                onClick = onDone,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = Rose,
-                    contentColor = Color.White,
-                ),
-            ) {
-                Text(stringResource(R.string.capture_preview_done), fontWeight = FontWeight.Medium)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (
+                    preview.mediaType == MediaType.IMAGE &&
+                    thermalPrinterSettings.enabled &&
+                    thermalPrinterSettings.deviceAddress.isNotBlank()
+                ) {
+                    FilledTonalButton(
+                        onClick = onThermalPrint,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = Gold,
+                            contentColor = Color.Black,
+                        ),
+                    ) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_menu_send),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Thermal Print", fontWeight = FontWeight.Medium)
+                    }
+                }
+                FilledTonalButton(
+                    onClick = onDone,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = Rose,
+                        contentColor = Color.White,
+                    ),
+                ) {
+                    Text(stringResource(R.string.capture_preview_done), fontWeight = FontWeight.Medium)
+                }
             }
         }
     }
