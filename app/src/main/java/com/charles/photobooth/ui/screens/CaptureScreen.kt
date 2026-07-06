@@ -79,6 +79,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import androidx.lifecycle.LifecycleEventObserver
+import com.charles.photobooth.BuildConfig
 import com.charles.photobooth.R
 import com.charles.photobooth.data.MediaType
 import com.charles.photobooth.camera.CameraCaptureManager
@@ -180,8 +181,8 @@ fun CaptureScreen(
     LaunchedEffect(Unit) {
         val settings = settingsRepo.settingsFlow.first()
         useFrontCamera = settings.camera.useFrontCamera
-        eventName = settings.event.eventName
-        eventDate = settings.event.eventDate
+        eventName = if (BuildConfig.WEDDING_MODE) context.getString(R.string.wedding_event_name) else settings.event.eventName
+        eventDate = if (BuildConfig.WEDDING_MODE) context.getString(R.string.wedding_event_date) else settings.event.eventDate
         selectedFrameId = settings.event.selectedFrameId
         watermarkConfig = if (settings.watermark.enabled && settings.watermark.imagePath.isNotBlank()) {
             WatermarkConfig(
@@ -190,7 +191,11 @@ fun CaptureScreen(
                 sizePercent = settings.watermark.sizePercent,
             )
         } else null
-        uploadSettings = settings.upload
+        uploadSettings = if (BuildConfig.WEDDING_MODE) {
+            settings.upload.copy(autoUploadEnabled = true, useAnonymousHost = true)
+        } else {
+            settings.upload
+        }
         boothMode = settings.captureMode.boothMode
         gifModeEnabled = settings.captureMode.gifModeEnabled
         videoCaptureEnabled = settings.captureMode.videoCaptureEnabled
@@ -1048,6 +1053,16 @@ private fun PostCapturePreviewOverlay(
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White,
                     )
+                    if (BuildConfig.WEDDING_MODE) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = stringResource(R.string.wedding_gallery_password_label, BuildConfig.WEDDING_GALLERY_PASSWORD),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Gold,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
                 status is UploadStatus.Failed -> {
                     Text(

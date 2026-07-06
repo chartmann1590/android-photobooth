@@ -8,11 +8,13 @@ import android.os.Environment
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.charles.photobooth.data.AppDatabase
+import com.charles.photobooth.BuildConfig
 import com.charles.photobooth.data.MediaType
 import com.charles.photobooth.data.PhotoEntity
 import com.charles.photobooth.network.AnonymousUploader
 import com.charles.photobooth.network.ImageUploader
 import com.charles.photobooth.network.ImmichUploader
+import com.charles.photobooth.network.WeddingUploaderProvider
 import com.charles.photobooth.printing.ThermalPrinterClient
 import com.charles.photobooth.settings.ThermalPrinterSettings
 import com.charles.photobooth.settings.UploadSettings
@@ -112,7 +114,9 @@ class CaptureViewModel(
     }
 
     private fun uploaderFor(uploadSettings: UploadSettings): ImageUploader =
-        if (!uploadSettings.useAnonymousHost && uploadSettings.isImmichConfigured) {
+        if (BuildConfig.WEDDING_MODE) {
+            WeddingUploaderProvider.uploaderOrNull() ?: AnonymousUploader()
+        } else if (!uploadSettings.useAnonymousHost && uploadSettings.isImmichConfigured) {
             ImmichUploader(uploadSettings)
         } else {
             AnonymousUploader()

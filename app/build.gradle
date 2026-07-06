@@ -44,6 +44,10 @@ def vName = project.hasProperty("versionName")
         ? project.property("versionName")
         : versionProps["VERSION_NAME"]
 
+def localString = { String key, String fallback = "" ->
+    (localProperties[key] ?: fallback).toString().trim()
+}
+
 android {
     namespace "com.charles.photobooth"
     compileSdk 36
@@ -67,7 +71,10 @@ android {
             def n = tn.toLowerCase()
             n.contains("release") || n.contains("bundlerelease")
         }
-        if (isReleaseTask) {
+        def isWeddingTask = gradle.startParameter.taskNames.any { tn ->
+            tn.toLowerCase(Locale.ROOT).contains("wedding")
+        }
+        if (isReleaseTask && !isWeddingTask) {
             if (admobAppId.isEmpty()) {
                 throw new GradleException("ADMOB_APP_ID is not set for a release build. Add it to local.properties or to the ADMOB_APP_ID repo secret.")
             }
@@ -80,6 +87,10 @@ android {
         }
         manifestPlaceholders["admobAppId"] = admobAppId
         buildConfigField "String", "ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID", "\"${admobRewardedInterstitialAdUnitId}\""
+        buildConfigField "boolean", "WEDDING_MODE", "false"
+        buildConfigField "String", "WEDDING_GALLERY_URL", "\"\""
+        buildConfigField "String", "WEDDING_GALLERY_PASSWORD", "\"\""
+        buildConfigField "String", "WEDDING_UPLOAD_TOKEN", "\"\""
 
         def githubApiToken = (localProperties["github.api.token"] ?: "").trim()
         def githubRepoOwner = (localProperties["github.repo.owner"] ?: "").trim()
@@ -126,6 +137,26 @@ android {
         }
         debug {
             minifyEnabled false
+        }
+    }
+
+    flavorDimensions "edition"
+    productFlavors {
+        play {
+            dimension "edition"
+            buildConfigField "boolean", "WEDDING_MODE", "false"
+            buildConfigField "String", "WEDDING_GALLERY_URL", "\"\""
+            buildConfigField "String", "WEDDING_GALLERY_PASSWORD", "\"\""
+            buildConfigField "String", "WEDDING_UPLOAD_TOKEN", "\"\""
+        }
+        wedding {
+            dimension "edition"
+            applicationId "com.hartmann.weddingbooth"
+            versionNameSuffix "-wedding"
+            buildConfigField "boolean", "WEDDING_MODE", "true"
+            buildConfigField "String", "WEDDING_GALLERY_URL", "\"${localString("wedding.gallery.url")}\""
+            buildConfigField "String", "WEDDING_GALLERY_PASSWORD", "\"${localString("wedding.gallery.password", "Hartmann0822!")}\""
+            buildConfigField "String", "WEDDING_UPLOAD_TOKEN", "\"${localString("wedding.upload.token")}\""
         }
     }
 
@@ -222,7 +253,14 @@ def patchRelroProgramHeaders = { File root ->
 }
 
 afterEvaluate {
-    ["Debug", "Release"].each { variantName ->
+    tasks.matching { task ->
+        task.name.startsWith("processWedding") && task.name.endsWith("GoogleServices")
+    }.configureEach {
+        enabled = false
+    }
+
+    android.applicationVariants.all { variant ->
+        def variantName = variant.name.capitalize()
         def variantLower = variantName.toLowerCase(Locale.ROOT)
         def stripTaskName = "strip${variantName}DebugSymbols"
         def patchTask = tasks.register("patch${variantName}NativeRelro") {
@@ -261,9 +299,9 @@ dependencies {
     // Firebase Performance Monitoring
     implementation("com.google.firebase:firebase-perf")
 
-    // Google Mobile Ads and Play Billing
-    implementation "com.google.android.gms:play-services-ads:24.7.0"
-    implementation "com.android.billingclient:billing-ktx:8.3.0"
+    // Google Mobile Ads and Play Billing are Play-store flavor only.
+    playImplementation "com.google.android.gms:play-services-ads:24.7.0"
+    playImplementation "com.android.billingclient:billing-ktx:8.3.0"
 
     implementation "androidx.core:core-ktx:1.18.0"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.10.0"

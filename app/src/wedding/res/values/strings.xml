@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hartmann Wedding Booth</string>
+    <string name="home_title">CHARLES &amp; JESSICA</string>
+    <string name="home_tagline">August 22, 2026</string>
+    <string name="start_photobooth">Start Wedding Booth</string>
+    <string name="view_gallery">View Wedding Gallery</string>
+    <string name="settings">Wedding Booth Settings</string>
+    <string name="tutorial_home_button">How It Works</string>
+    <string name="paywall_menu_button">Wedding Gallery</string>
+    <string name="default_event_name">Charles &amp; Jessica Hartmann Wedding</string>
+    <string name="permissions_rationale">Hartmann Wedding Booth needs access to your camera, microphone, and storage to capture and save photos and videos.</string>
+    <string name="capture_counter_remaining">Wedding booth ready</string>
+    <string name="capture_counter_unlimited">Wedding booth ready</string>
+    <string name="paywall_title">Wedding booth ready</string>
+    <string name="paywall_remaining">Wedding booth ready</string>
+    <string name="paywall_unlimited_owned">Wedding booth ready.</string>
+    <string name="paywall_body">The wedding booth is ready for guests.</string>
+    <string name="paywall_watch_ad">Continue</string>
+    <string name="paywall_ad_loading">Preparing...</string>
+    <string name="paywall_buy_unlimited">Continue</string>
+    <string name="paywall_skip">Close</string>
+    <string name="paywall_ad_limit_reached">Wedding booth ready.</string>
+    <string name="capture_scan_to_get_photo">Scan to download your wedding photo</string>
+    <string name="gallery_title">Wedding Gallery</string>
+    <string name="gallery_empty_subtitle">Start capturing to fill the wedding gallery</string>
+    <string name="about_website_caption">Open the Charles &amp; Jessica wedding gallery.</string>
+    <string name="about_visit_website">Open Wedding Gallery</string>
+    <string name="settings_debug_caption">Wedding debug tools are hidden in this private build.</string>
+    <string name="settings_debug_reset_quota">Wedding booth ready</string>
+    <string name="tutorial_title">Hartmann Wedding Booth</string>
+    <string name="tutorial_done">Start</string>
+    <string name="tutorial_step_welcome_title">Welcome</string>
+    <string name="tutorial_step_welcome_body">This private booth is for **Charles &amp; Jessica Hartmann\'s wedding** on **August 22, 2026**. Guests can take photos, scan the QR code, and download from the wedding gallery.</string>
+    <string name="tutorial_step_permissions_body">The app asks for **camera** access to take photos, **microphone** access for videos, and **media** access to save captures. Wedding photos are uploaded to the private gallery after capture.</string>
+    <string name="tutorial_step_home_body">Use **Start Wedding Booth** for the camera, **View Wedding Gallery** for finished photos, **Wedding Booth Settings** for setup, and **How It Works** to replay these instructions.</string>
+    <string name="tutorial_step_capture_body">Position everyone in the live preview and tap the round **Capture** button. A three-second countdown plays, the app says Smile, flashes the screen, saves the photo, and prepares the QR code.</string>
+    <string name="tutorial_step_quota_title">Wedding Booth Access</string>
+    <string name="tutorial_step_quota_body">This private wedding booth is ready for Charles &amp; Jessica\'s guests.</string>
+    <string name="tutorial_step_gallery_body">The **Wedding Gallery** stores captured photos, GIFs, and videos. Tap an item to preview it, download it, print it, or share it.</string>
+    <string name="tutorial_step_upload_title">Wedding Gallery Upload</string>
+    <string name="tutorial_step_upload_body">New captures upload automatically to the private Charles &amp; Jessica wedding gallery.</string>
+    <string name="tutorial_step_qr_body">After upload succeeds, the screen shows a **QR code** and the gallery password so guests can open and download their photo.</string>
+    <string name="tutorial_step_settings_body">Settings control the event details, camera, video capture, booth mode, GIF mode, filters, templates, frames, watermark, SMS, and email.</string>
+    <string name="tutorial_step_privacy_body">This is a private wedding build. Captures are saved locally on this device and uploaded to the password-protected Charles &amp; Jessica wedding gallery.</string>
+    <string name="tutorial_step_support_body">Open **Wedding Booth Settings** and tap **Open Wedding Gallery** to visit the online gallery.</string>
+</resources>

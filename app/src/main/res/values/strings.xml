@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Photobooth</string>
+    <string name="wedding_event_name">Charles &amp; Jessica Hartmann Wedding</string>
+    <string name="wedding_event_date">August 22, 2026</string>
+    <string name="wedding_gallery_password_label">Gallery password: %1$s</string>
 
     <!-- Permission screen -->
     <string name="permissions_required">Permissions Required</string>

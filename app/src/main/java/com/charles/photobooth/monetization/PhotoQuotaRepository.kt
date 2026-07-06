@@ -28,6 +28,12 @@ class PhotoQuotaRepository(
     val state: Flow<PhotoQuotaState> = context.photoQuotaDataStore.data.map { prefs ->
         val today = todayKey()
         val storedDate = prefs[dateKey]
+        if (BuildConfig.WEDDING_MODE) {
+            return@map PhotoQuotaState(
+                dateKey = today,
+                hasUnlimitedPhotos = true,
+            )
+        }
         PhotoQuotaState(
             dateKey = today,
             photosUsedToday = if (storedDate == today) prefs[photosUsedKey] ?: 0 else 0,
@@ -37,6 +43,7 @@ class PhotoQuotaRepository(
     }
 
     suspend fun reservePhotos(photoCount: Int): Boolean {
+        if (BuildConfig.WEDDING_MODE) return photoCount > 0
         var reserved = false
         context.photoQuotaDataStore.edit { prefs ->
             val current = prefs.toQuotaState()
@@ -73,6 +80,7 @@ class PhotoQuotaRepository(
     }
 
     suspend fun refundPhotos(photoCount: Int) {
+        if (BuildConfig.WEDDING_MODE) return
         context.photoQuotaDataStore.edit { prefs ->
             val next = PhotoQuotaPolicy.refund(prefs.toQuotaState(), photoCount)
             prefs[dateKey] = next.dateKey
@@ -83,6 +91,7 @@ class PhotoQuotaRepository(
     }
 
     suspend fun grantAdReward(): Boolean {
+        if (BuildConfig.WEDDING_MODE) return false
         var granted = false
         context.photoQuotaDataStore.edit { prefs ->
             val current = prefs.toQuotaState()

@@ -14,6 +14,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.charles.photobooth.BuildConfig
 import com.charles.photobooth.monetization.MonetizationViewModel
 import com.charles.photobooth.ui.screens.CaptureScreen
 import com.charles.photobooth.ui.screens.FrameDesignerScreen
@@ -100,7 +101,10 @@ fun NavGraph(
             SettingsScreen(
                 onBack = { navController.popBackStack() },
                 onOpenFrameDesigner = { navController.navigate(Screen.FrameDesigner.route) },
-                onOpenWebsite = { uriHandler.openUri("https://chartmann1590.github.io/android-photobooth/") },
+                onOpenWebsite = {
+                    val weddingUrl = BuildConfig.WEDDING_GALLERY_URL
+                    uriHandler.openUri(if (BuildConfig.WEDDING_MODE && weddingUrl.isNotBlank()) weddingUrl else "https://chartmann1590.github.io/android-photobooth/")
+                },
             )
         }
         composable(Screen.FrameDesigner.route) {

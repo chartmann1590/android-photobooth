@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.charles.photobooth.BuildConfig
 import com.charles.photobooth.R
 import com.charles.photobooth.monetization.BillingUiState
 import com.charles.photobooth.monetization.PhotoQuotaState
@@ -287,7 +288,7 @@ fun HomeScreen(
                         )
                     }
 
-                    if (!quotaState.hasUnlimitedPhotos) {
+                    if (!BuildConfig.WEDDING_MODE && !quotaState.hasUnlimitedPhotos) {
                         Spacer(modifier = Modifier.height(12.dp))
 
                         FilledTonalButton(
@@ -317,7 +318,7 @@ fun HomeScreen(
             }
         }
 
-        if (showPaywall) {
+        if (!BuildConfig.WEDDING_MODE && showPaywall) {
             PaywallDialog(
                 quotaState = quotaState,
                 billingState = billingState,

@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.charles.photobooth.BuildConfig
 import com.charles.photobooth.R
 import com.charles.photobooth.ui.theme.CardSurface
 import com.charles.photobooth.ui.theme.CardSurfaceLight
@@ -63,7 +64,7 @@ private data class TutorialStep(
     val bodyRes: Int,
 )
 
-private val tutorialSteps = listOf(
+private val tutorialSteps = listOfNotNull(
     TutorialStep(
         titleRes = R.string.tutorial_step_welcome_title,
         iconRes = android.R.drawable.ic_menu_camera,
@@ -84,7 +85,7 @@ private val tutorialSteps = listOf(
         iconRes = android.R.drawable.ic_menu_camera,
         bodyRes = R.string.tutorial_step_capture_body,
     ),
-    TutorialStep(
+    if (BuildConfig.WEDDING_MODE) null else TutorialStep(
         titleRes = R.string.tutorial_step_quota_title,
         iconRes = android.R.drawable.ic_dialog_info,
         bodyRes = R.string.tutorial_step_quota_body,

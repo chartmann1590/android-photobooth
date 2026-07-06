@@ -1,0 +1,4 @@
+project_id = "charles-jessica-wedding-photobooth"
+
+[functions.wedding-gallery]
+verify_jwt = false

@@ -5,8 +5,8 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
+import com.charles.photobooth.monetization.AdsInitializer
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.google.android.gms.ads.MobileAds
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
@@ -21,10 +21,14 @@ class PhotoboothApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        MobileAds.initialize(this) {}
-        val consent = runBlocking { getConsentStatus() }
-        FirebaseCrashlytics.getInstance()
-            .setCrashlyticsCollectionEnabled(consent == ConsentStatus.GRANTED)
+        if (!BuildConfig.WEDDING_MODE) {
+            AdsInitializer.initialize(this)
+        }
+        if (!BuildConfig.WEDDING_MODE) {
+            val consent = runBlocking { getConsentStatus() }
+            FirebaseCrashlytics.getInstance()
+                .setCrashlyticsCollectionEnabled(consent == ConsentStatus.GRANTED)
+        }
     }
 
     suspend fun getConsentStatus(): ConsentStatus {
@@ -43,7 +47,9 @@ class PhotoboothApp : Application() {
         consentDataStore.edit { prefs ->
             prefs[key] = granted
         }
-        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(granted)
+        if (!BuildConfig.WEDDING_MODE) {
+            FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(granted)
+        }
     }
 
     suspend fun needsConsent(): Boolean {

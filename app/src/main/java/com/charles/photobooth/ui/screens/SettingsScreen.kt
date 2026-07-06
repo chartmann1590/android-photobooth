@@ -230,7 +230,9 @@ fun SettingsScreen(
                 onWatermarkChange = vm::updateWatermark,
                 textFieldColors = textFieldColors,
             )
-            UploadSettingsSection(state, onUploadChange = vm::updateUpload, textFieldColors = textFieldColors)
+            if (!BuildConfig.WEDDING_MODE) {
+                UploadSettingsSection(state, onUploadChange = vm::updateUpload, textFieldColors = textFieldColors)
+            }
             ShareSettingsSection(state, onShareChange = vm::updateShare)
             ThermalPrinterSettingsSection(
                 state = state,
@@ -247,23 +249,25 @@ fun SettingsScreen(
                 textFieldColors = textFieldColors,
             )
             SmtpSettingsSection(state, onSmtpChange = vm::updateSmtp, onTestEmail = vm::testEmail, textFieldColors = textFieldColors)
-            SupportAndFeedbackSection(
-                bugReports = bugReports,
-                isSubmitting = isSubmitting,
-                submitError = submitError,
-                submitSuccess = submitSuccess,
-                comments = comments,
-                commentsLoading = commentsLoading,
-                commentsError = commentsError,
-                issueDetails = issueDetails,
-                onSubmitBugReport = vm::submitBugReport,
-                onLoadIssue = vm::loadIssueDetailsAndComments,
-                onPostReply = vm::postReply,
-                onClearSubmitStatus = vm::clearSubmitStatus,
-                textFieldColors = textFieldColors,
-            )
+            if (!BuildConfig.WEDDING_MODE) {
+                SupportAndFeedbackSection(
+                    bugReports = bugReports,
+                    isSubmitting = isSubmitting,
+                    submitError = submitError,
+                    submitSuccess = submitSuccess,
+                    comments = comments,
+                    commentsLoading = commentsLoading,
+                    commentsError = commentsError,
+                    issueDetails = issueDetails,
+                    onSubmitBugReport = vm::submitBugReport,
+                    onLoadIssue = vm::loadIssueDetailsAndComments,
+                    onPostReply = vm::postReply,
+                    onClearSubmitStatus = vm::clearSubmitStatus,
+                    textFieldColors = textFieldColors,
+                )
+            }
             AboutSection(onOpenWebsite = onOpenWebsite)
-            if (BuildConfig.DEBUG) {
+            if (BuildConfig.DEBUG && !BuildConfig.WEDDING_MODE) {
                 DebugSection(onResetQuota = vm::resetDailyPhotoQuota)
             }
             Spacer(modifier = Modifier.height(16.dp))

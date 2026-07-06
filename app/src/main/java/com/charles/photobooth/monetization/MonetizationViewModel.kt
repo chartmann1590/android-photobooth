@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.charles.photobooth.BuildConfig
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -25,8 +26,10 @@ class MonetizationViewModel(
     val billingState: StateFlow<BillingUiState> = billingRepository.state
 
     init {
-        rewardedAdManager.loadAd()
-        billingRepository.startConnection()
+        if (!BuildConfig.WEDDING_MODE) {
+            rewardedAdManager.loadAd()
+            billingRepository.startConnection()
+        }
     }
 
     suspend fun reservePhotos(photoCount: Int): Boolean = quotaRepository.reservePhotos(photoCount)
@@ -38,6 +41,7 @@ class MonetizationViewModel(
     }
 
     fun watchRewardedAd(activity: Activity) {
+        if (BuildConfig.WEDDING_MODE) return
         rewardedAdManager.showAd(activity) {
             viewModelScope.launch {
                 quotaRepository.grantAdReward()
@@ -46,10 +50,12 @@ class MonetizationViewModel(
     }
 
     fun loadRewardedAd() {
+        if (BuildConfig.WEDDING_MODE) return
         rewardedAdManager.loadAd()
     }
 
     fun buyUnlimited(activity: Activity) {
+        if (BuildConfig.WEDDING_MODE) return
         billingRepository.launchUnlimitedPurchase(activity)
     }
 }

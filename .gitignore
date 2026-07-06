@@ -69,6 +69,9 @@ google-services.json
 # Heap dumps
 *.hprof
 
+# Supabase local link/cache metadata
+supabase/.temp/
+
 # Gradle distribution zips
 gradle-*-bin.zip
 gradle-*-all.zip
