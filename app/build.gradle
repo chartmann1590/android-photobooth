@@ -36,13 +36,17 @@ if (versionPropsFile.exists()) {
     versionProps["VERSION_NAME"] = "1.0.0"
 }
 
-// Allow CI override via -PversionCode=X -PversionName=X
-def vCode = project.hasProperty("versionCode")
-        ? project.property("versionCode").toInteger()
-        : versionProps["VERSION_CODE"].toInteger()
-def vName = project.hasProperty("versionName")
-        ? project.property("versionName")
-        : versionProps["VERSION_NAME"]
+// Version precedence: env var > -P property > version.properties
+def vCode = (System.getenv("ANDROID_VERSION_CODE") != null && !System.getenv("ANDROID_VERSION_CODE").isEmpty())
+        ? System.getenv("ANDROID_VERSION_CODE").toInteger()
+        : project.hasProperty("versionCode")
+            ? project.property("versionCode").toInteger()
+            : versionProps["VERSION_CODE"].toInteger()
+def vName = (System.getenv("ANDROID_VERSION_NAME") != null && !System.getenv("ANDROID_VERSION_NAME").isEmpty())
+        ? System.getenv("ANDROID_VERSION_NAME")
+        : project.hasProperty("versionName")
+            ? project.property("versionName")
+            : versionProps["VERSION_NAME"]
 
 def localString = { String key, String fallback = "" ->
     (localProperties[key] ?: fallback).toString().trim()

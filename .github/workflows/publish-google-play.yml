@@ -1,0 +1,158 @@
+name: Publish to Google Play
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_play_publish:
+        description: 'Type "publish" to confirm submission to Google Play production'
+        required: true
+        type: string
+      release_notes:
+        description: 'Release notes (leave blank to auto-generate from recent commits)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Require explicit publish confirmation
+        if: github.event.inputs.confirm_play_publish != 'publish'
+        run: |
+          echo "::error::confirm_play_publish must be 'publish' to proceed. Got: '${{ github.event.inputs.confirm_play_publish }}'"
+          exit 1
+
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Compute version
+        id: version
+        run: |
+          VERSION_CODE="$(date -u +'%y%j%H%M')"
+          VERSION_NAME="1.0.$(date -u +'%Y%m%d.%H%M')"
+          echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+          echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
+          echo "ANDROID_VERSION_CODE=${VERSION_CODE}" >> "$GITHUB_ENV"
+          echo "ANDROID_VERSION_NAME=${VERSION_NAME}" >> "$GITHUB_ENV"
+          echo "::notice title=Version::Building v${VERSION_NAME} (code ${VERSION_CODE})"
+
+      - name: Restore google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
+
+      - name: Write keystore.properties for CI
+        run: |
+          cat > keystore.properties << EOF
+          keyAlias=${{ secrets.RELEASE_KEY_ALIAS }}
+          keyPassword=${{ secrets.RELEASE_KEY_PASSWORD }}
+          storeFile=app/release.keystore
+          storePassword=${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          EOF
+
+      - name: Decode release keystore
+        run: echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 -d > app/release.keystore
+
+      - name: Write local.properties
+        env:
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID: ${{ secrets.ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID }}
+          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
+          GH_REPO_OWNER: ${{ secrets.GH_REPO_OWNER }}
+          GH_REPO_NAME: ${{ secrets.GH_REPO_NAME }}
+        run: |
+          : > local.properties
+          if [ -n "$ADMOB_APP_ID" ]; then
+            echo "ADMOB_APP_ID=$ADMOB_APP_ID" >> local.properties
+          fi
+          if [ -n "$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID" ]; then
+            echo "ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID=$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID" >> local.properties
+          fi
+          if [ -n "$GH_API_TOKEN" ]; then
+            echo "github.api.token=$GH_API_TOKEN" >> local.properties
+          fi
+          if [ -n "$GH_REPO_OWNER" ]; then
+            echo "github.repo.owner=$GH_REPO_OWNER" >> local.properties
+          fi
+          if [ -n "$GH_REPO_NAME" ]; then
+            echo "github.repo.name=$GH_REPO_NAME" >> local.properties
+          fi
+
+      - name: Run unit tests
+        run: ./gradlew testPlayDebugUnitTest
+
+      - name: Run lint
+        run: ./gradlew lintPlayRelease
+
+      - name: Build Play release AAB
+        run: ./gradlew bundlePlayRelease
+
+      - name: Generate release notes
+        run: |
+          mkdir -p distribution/whatsnew
+          WHATSNEW="distribution/whatsnew/whatsnew-en-US"
+          RELEASE_NOTES="${{ github.event.inputs.release_notes }}"
+          if [ -n "$RELEASE_NOTES" ]; then
+            echo "$RELEASE_NOTES" > "$WHATSNEW"
+          else
+            PREV_TAG=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+            if [ -n "$PREV_TAG" ]; then
+              git log --oneline --no-merges "${PREV_TAG}..HEAD" > "$WHATSNEW" 2>/dev/null || true
+            fi
+            if [ ! -s "$WHATSNEW" ]; then
+              echo "Bug fixes and performance improvements." > "$WHATSNEW"
+            fi
+          fi
+          echo "::notice title=Release Notes::$(head -c 500 "$WHATSNEW")"
+
+      - name: Verify service account JSON
+        run: |
+          if [ -z "$SERVICE_ACCOUNT_JSON" ]; then
+            echo "::error::GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret is not set"
+            exit 1
+          fi
+        env:
+          SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: photobooth-play-aab-v${{ steps.version.outputs.version_name }}
+          path: app/build/outputs/bundle/playRelease/app-play-release.aab
+          retention-days: 90
+
+      - name: Upload mapping file artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: photobooth-play-mapping-v${{ steps.version.outputs.version_name }}
+          path: app/build/outputs/mapping/playRelease/mapping.txt
+          retention-days: 90
+
+      - name: Publish to Google Play
+        uses: r0adkll/upload-google-play@v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.charles.photobooth
+          releaseFiles: app/build/outputs/bundle/playRelease/app-play-release.aab
+          track: production
+          status: completed
+          whatsNewDirectory: distribution/whatsnew
+          mappingFile: app/build/outputs/mapping/playRelease/mapping.txt
+
+      - name: Cleanup secrets
+        if: always()
+        run: rm -f app/google-services.json keystore.properties app/release.keystore local.properties
