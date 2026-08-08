@@ -126,6 +126,13 @@ fun CaptureScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
+    val weddingEventNameRes = stringResource(R.string.wedding_event_name)
+    val weddingEventDateRes = stringResource(R.string.wedding_event_date)
+    val captureSmileRes = stringResource(R.string.capture_smile)
+    val captureVideoSaveFailedRes = stringResource(R.string.capture_video_save_failed)
+    val captureVideoUnavailableRes = stringResource(R.string.capture_video_unavailable)
+    val captureTemplateFailedRes = stringResource(R.string.capture_template_failed)
+    val captureErrorRes = stringResource(R.string.capture_error)
     val captureViewModel: CaptureViewModel = viewModel()
     val settingsRepo = remember { SettingsRepository(context) }
 
@@ -184,8 +191,8 @@ fun CaptureScreen(
     LaunchedEffect(Unit) {
         val settings = settingsRepo.settingsFlow.first()
         useFrontCamera = settings.camera.useFrontCamera
-        eventName = if (BuildConfig.WEDDING_MODE) context.getString(R.string.wedding_event_name) else settings.event.eventName
-        eventDate = if (BuildConfig.WEDDING_MODE) context.getString(R.string.wedding_event_date) else settings.event.eventDate
+        eventName = if (BuildConfig.WEDDING_MODE) weddingEventNameRes else settings.event.eventName
+        eventDate = if (BuildConfig.WEDDING_MODE) weddingEventDateRes else settings.event.eventDate
         selectedFrameId = settings.event.selectedFrameId
         watermarkConfig = if (settings.watermark.enabled && settings.watermark.imagePath.isNotBlank()) {
             WatermarkConfig(
@@ -297,7 +304,7 @@ fun CaptureScreen(
     LaunchedEffect(countdown) {
         if (countdown > 0) {
             if (countdown == 1) {
-                tts?.speak(context.getString(R.string.capture_smile), TextToSpeech.QUEUE_FLUSH, null, "SMILE_PROMPT")
+                tts?.speak(captureSmileRes, TextToSpeech.QUEUE_FLUSH, null, "SMILE_PROMPT")
             }
             delay(1000)
             val next = countdown - 1
@@ -309,7 +316,7 @@ fun CaptureScreen(
             val outputDir = videoOutputDir(context.applicationContext as Application)
             if (outputDir == null) {
                 captureViewModel.resetToIdle()
-                Toast.makeText(context, context.getString(R.string.capture_video_save_failed), Toast.LENGTH_LONG).show()
+                Toast.makeText(context, captureVideoSaveFailedRes, Toast.LENGTH_LONG).show()
                 return@LaunchedEffect
             }
             val videoFile = java.io.File(outputDir, "video_${System.currentTimeMillis()}.mp4")
@@ -351,7 +358,7 @@ fun CaptureScreen(
                         )
                         runCatching { videoFile.delete() }
                         captureViewModel.resetToIdle()
-                        Toast.makeText(context, event.cause?.message ?: context.getString(R.string.capture_video_save_failed), Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, event.cause?.message ?: captureVideoSaveFailedRes, Toast.LENGTH_LONG).show()
                         return@startRecordingToFile
                     }
                     val savedFile = path?.let { java.io.File(it) } ?: videoFile
@@ -367,7 +374,7 @@ fun CaptureScreen(
                 restoreVideoBrightness()
                 pendingVideoPath = null
                 captureViewModel.resetToIdle()
-                Toast.makeText(context, context.getString(R.string.capture_video_unavailable), Toast.LENGTH_LONG).show()
+                Toast.makeText(context, captureVideoUnavailableRes, Toast.LENGTH_LONG).show()
             }
         } else if (uiState is CaptureUiState.Capturing) {
             previewView ?: return@LaunchedEffect
@@ -449,7 +456,7 @@ fun CaptureScreen(
                                         if (compositeId == null) {
                                             Toast.makeText(
                                                 context,
-                                                context.getString(R.string.capture_template_failed),
+                                                captureTemplateFailedRes,
                                                 Toast.LENGTH_LONG,
                                             ).show()
                                         }
@@ -482,7 +489,7 @@ fun CaptureScreen(
                 if (refundCount > 0) onRefundPhotos(refundCount)
                 quotaReservedForSession = 0
                 captureViewModel.resetToIdle()
-                Toast.makeText(context, context.getString(R.string.capture_error) + ": ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, captureErrorRes + ": ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }

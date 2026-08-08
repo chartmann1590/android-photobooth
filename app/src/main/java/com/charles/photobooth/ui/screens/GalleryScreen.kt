@@ -102,6 +102,8 @@ fun GalleryScreen(
     initialSelectedPhotoId: Long? = null,
 ) {
     val context = LocalContext.current
+    val printJobNameRes = stringResource(R.string.print_job_name)
+    val galleryShareViaRes = stringResource(R.string.gallery_share_via)
     val vm: GalleryViewModel = viewModel()
     val photos by vm.photos.collectAsState()
     val actionState by vm.actionState.collectAsState()
@@ -591,7 +593,7 @@ fun GalleryScreen(
                                             val helper = PrintHelper(context)
                                             helper.scaleMode = PrintHelper.SCALE_MODE_FIT
                                             BitmapFactory.decodeFile(photo.localPath)?.let { bitmap ->
-                                                helper.printBitmap(context.getString(R.string.print_job_name), bitmap)
+                                                helper.printBitmap(printJobNameRes, bitmap)
                                             }
                                         },
                                         enabled = actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
@@ -641,7 +643,7 @@ fun GalleryScreen(
                                 FilledTonalButton(
                                     onClick = {
                                         vm.getShareIntent(photo)?.let { shareIntent ->
-                                            context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.gallery_share_via)))
+                                            context.startActivity(Intent.createChooser(shareIntent, galleryShareViaRes))
                                         }
                                     },
                                     enabled = actionState !is GalleryActionState.Uploading && actionState !is GalleryActionState.Sending,
