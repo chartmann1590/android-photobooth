@@ -135,7 +135,8 @@ fun CaptureScreen(
     var tts by remember { mutableStateOf<TextToSpeech?>(null) }
     var countdown by rememberSaveable { mutableIntStateOf(0) }
     var useFrontCamera by rememberSaveable { mutableStateOf(true) }
-    var eventName by rememberSaveable { mutableStateOf(context.getString(R.string.default_event_name)) }
+    val defaultEventName = stringResource(R.string.default_event_name)
+    var eventName by rememberSaveable { mutableStateOf(defaultEventName) }
     var eventDate by rememberSaveable { mutableStateOf("") }
     var selectedFrameId by rememberSaveable { mutableStateOf<Long?>(null) }
     var watermarkConfig by remember { mutableStateOf<WatermarkConfig?>(null) }
