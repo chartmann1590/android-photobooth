@@ -60,7 +60,7 @@ jobs:
           cat > keystore.properties << EOF
           keyAlias=${{ secrets.RELEASE_KEY_ALIAS }}
           keyPassword=${{ secrets.RELEASE_KEY_PASSWORD }}
-          storeFile=app/release.keystore
+          storeFile=release.keystore
           storePassword=${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           EOF
 
