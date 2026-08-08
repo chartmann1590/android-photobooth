@@ -85,6 +85,7 @@ import com.charles.photobooth.data.MediaType
 import com.charles.photobooth.camera.CameraCaptureManager
 import com.charles.photobooth.camera.CaptureUiState
 import com.charles.photobooth.camera.CaptureViewModel
+import com.charles.photobooth.review.ReviewPrompter
 import com.charles.photobooth.camera.MAX_VIDEO_DURATION_SECONDS
 import com.charles.photobooth.camera.PhotoFilter
 import com.charles.photobooth.monetization.BillingUiState
@@ -945,6 +946,9 @@ fun CaptureScreen(
         }
 
         (uiState as? CaptureUiState.Preview)?.let { preview ->
+            LaunchedEffect(preview.photoId) {
+                (context as? Activity)?.let { ReviewPrompter.maybeRequestReview(it) }
+            }
             PostCapturePreviewOverlay(
                 preview = preview,
                 thermalPrinterSettings = thermalPrinterSettings,

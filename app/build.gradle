@@ -305,6 +305,10 @@ dependencies {
 
     // Google Mobile Ads and Play Billing are Play-store flavor only.
     playImplementation "com.google.android.gms:play-services-ads:24.7.0"
+    // Plain implementation (not playImplementation): CaptureScreen.kt is shared across all
+    // flavors. The library no-ops gracefully off-Play, so this is safe for wedding too.
+    implementation "com.google.android.play:review-ktx:2.0.2"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0"
     playImplementation "com.android.billingclient:billing-ktx:8.3.0"
 
     implementation "androidx.core:core-ktx:1.18.0"
