@@ -95,6 +95,7 @@ import com.charles.photobooth.ui.theme.Gold
 import com.charles.photobooth.ui.theme.Rose
 import com.charles.photobooth.ui.theme.TextSecondary
 
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 @Composable
 fun GalleryScreen(
     onBack: () -> Unit,
