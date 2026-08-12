@@ -1,0 +1,80 @@
+# Built application files
+*.apk
+*.aab
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+release/
+
+# Gradle files
+.gradle/
+build/
+local.properties
+
+# Signing files
+.signing/
+keystore.properties
+
+# Proguard folder
+proguard/
+
+# Log Files
+*.log
+
+# IntelliJ
+*.iml
+.idea/
+
+# Keystore files
+*.jks
+*.keystore
+
+# External native build folder
+.externalNativeBuild
+.cxx/
+
+# Firebase crashlytics keystore
+firebase-crashlytics-keystore.properties
+
+# Android Test results
+test-results/
+androidTest-results/
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# Firebase config (contains API keys)
+app/google-services.json
+google-services.json
+
+# Heap dumps
+*.hprof
+
+# Supabase local link/cache metadata
+supabase/.temp/
+
+# Gradle distribution zips
+gradle-*-bin.zip
+gradle-*-all.zip
+
+# Claude Code
+CLAUDE.md

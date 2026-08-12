@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="photobooth_primary">#FFE91E63</color>
+    <color name="photobooth_secondary">#FFFFD54F</color>
+    <color name="photobooth_background">#FF0F0F1A</color>
+    <color name="photobooth_surface">#FF1A1A2E</color>
+</resources>

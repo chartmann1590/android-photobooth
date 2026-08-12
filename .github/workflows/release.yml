@@ -1,0 +1,203 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - version.properties
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: temurin
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Android NDK for native library checks
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;28.2.13676358"
+
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
+
+      - name: Restore google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
+
+      - name: Write keystore.properties for CI
+        run: |
+          cat > keystore.properties << EOF
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          storeFile=release.keystore
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          EOF
+
+      - name: Write local.properties (AdMob & GitHub IDs)
+        env:
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID: ${{ secrets.ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID }}
+          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
+          GH_REPO_OWNER: ${{ secrets.GH_REPO_OWNER }}
+          GH_REPO_NAME: ${{ secrets.GH_REPO_NAME }}
+        run: |
+          # Inject real AdMob IDs from repo secrets when set. If either secret
+          # is missing, build.gradle falls back to Google's published test IDs
+          # so MobileAdsInitProvider can still initialize without crashing.
+          : > local.properties
+          if [ -n "$ADMOB_APP_ID" ]; then
+            echo "ADMOB_APP_ID=$ADMOB_APP_ID" >> local.properties
+          fi
+          if [ -n "$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID" ]; then
+            echo "ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID=$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID" >> local.properties
+          fi
+          if [ -n "$GH_API_TOKEN" ]; then
+            echo "github.api.token=$GH_API_TOKEN" >> local.properties
+          fi
+          if [ -n "$GH_REPO_OWNER" ]; then
+            echo "github.repo.owner=$GH_REPO_OWNER" >> local.properties
+          fi
+          if [ -n "$GH_REPO_NAME" ]; then
+            echo "github.repo.name=$GH_REPO_NAME" >> local.properties
+          fi
+
+      - name: Bump version
+        id: bump
+        run: |
+          if [ -f version.properties ]; then
+            CODE=$(grep 'VERSION_CODE' version.properties | cut -d= -f2 | tr -d ' ')
+            NAME=$(grep 'VERSION_NAME' version.properties | cut -d= -f2 | tr -d ' ')
+          else
+            CODE=1
+            NAME="1.0.0"
+          fi
+
+          NEW_CODE=$((CODE + 1))
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$NAME"
+          NEW_PATCH=$((PATCH + 1))
+          NEW_NAME="${MAJOR}.${MINOR}.${NEW_PATCH}"
+
+          echo "version_code=${NEW_CODE}" >> "$GITHUB_OUTPUT"
+          echo "version_name=${NEW_NAME}" >> "$GITHUB_OUTPUT"
+
+          cat > version.properties << EOF
+          # This file is auto-updated by CI. Do not edit manually.
+          VERSION_CODE=${NEW_CODE}
+          VERSION_NAME=${NEW_NAME}
+          EOF
+
+          echo "::notice title=Version::Building v${NEW_NAME} (code ${NEW_CODE})"
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Build signed APK and AAB
+        run: |
+          ./gradlew assemblePlayRelease bundlePlayRelease \
+            -PversionCode=${{ steps.bump.outputs.version_code }} \
+            -PversionName=${{ steps.bump.outputs.version_name }}
+
+      - name: Verify APK 16 KB page-size compliance
+        run: |
+          APK="app/build/outputs/apk/playRelease/app-play-release.apk"
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 -v 4 "$APK"
+
+          rm -rf apk-native-check
+          mkdir apk-native-check
+          unzip -q "$APK" 'lib/**/*.so' -d apk-native-check
+
+          OBJDUMP="$ANDROID_HOME/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-objdump"
+          failed=0
+          while IFS= read -r so; do
+            while IFS= read -r line; do
+              if [[ "$line" =~ align\ 2\*\*([0-9]+) ]] && [ "${BASH_REMATCH[1]}" -lt 14 ]; then
+                echo "::error file=$so::Non-compliant ELF LOAD alignment: $line"
+                failed=1
+              fi
+            done < <("$OBJDUMP" -p "$so" | grep LOAD)
+          done < <(find apk-native-check -name '*.so' -type f)
+
+          if [ "$failed" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Rename artifacts
+        run: |
+          mv app/build/outputs/apk/playRelease/app-play-release.apk \
+             app/build/outputs/apk/playRelease/photobooth-v${{ steps.bump.outputs.version_name }}.apk
+          mv app/build/outputs/bundle/playRelease/app-play-release.aab \
+             app/build/outputs/bundle/playRelease/photobooth-v${{ steps.bump.outputs.version_name }}.aab
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: photobooth-apk-v${{ steps.bump.outputs.version_name }}
+          path: app/build/outputs/apk/release/photobooth-v${{ steps.bump.outputs.version_name }}.apk
+          retention-days: 90
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: photobooth-aab-v${{ steps.bump.outputs.version_name }}
+          path: app/build/outputs/bundle/release/photobooth-v${{ steps.bump.outputs.version_name }}.aab
+          retention-days: 90
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: test-results-v${{ steps.bump.outputs.version_name }}
+          path: app/build/reports/tests/
+          retention-days: 14
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.properties
+          git diff --cached --quiet || git commit -m "chore: bump version to v${{ steps.bump.outputs.version_name }} (${{ steps.bump.outputs.version_code }})"
+          git push
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: v${{ steps.bump.outputs.version_name }}
+          name: Photobooth v${{ steps.bump.outputs.version_name }}
+          body: |
+            ## Photobooth v${{ steps.bump.outputs.version_name }}
+
+            **Version Code:** ${{ steps.bump.outputs.version_code }}
+            **Commit:** ${{ github.sha }}
+
+            ### Downloads
+            - **APK** - Install directly on Android devices
+            - **AAB** - Upload to Google Play Console
+
+            ### Compliance
+            Release APK passed Android 16 KB page-size zip alignment and ELF LOAD segment checks.
+          files: |
+            app/build/outputs/apk/release/photobooth-v${{ steps.bump.outputs.version_name }}.apk
+            app/build/outputs/bundle/release/photobooth-v${{ steps.bump.outputs.version_name }}.aab
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup signing files
+        if: always()
+        run: rm -f app/release.keystore app/google-services.json keystore.properties local.properties

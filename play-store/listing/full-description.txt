@@ -1,0 +1,42 @@
+﻿Make every event easier to remember with Photobooth Event Camera.
+
+Turn your Android phone or tablet into a self-serve photo booth for weddings, parties, school events, fundraisers, company events, reunions, pop-ups, and family celebrations. Set it up once, start the booth, and let guests capture moments with a clean full-screen camera experience.
+
+Photobooth is made for real events: quick capture, simple sharing, custom frames, GIFs, QR codes, email, SMS, and wireless printing from one Android device.
+
+What you can do with Photobooth:
+
+â€¢ Create a self-serve event photo station
+â€¢ Capture photos with a clear three-second countdown
+â€¢ Use booth mode for multi-photo sessions
+â€¢ Make animated GIFs from booth captures
+â€¢ Add event frames and transparent PNG overlays
+â€¢ Apply photo filters like sepia, vintage, warm, cool, vivid, black and white, and grayscale
+â€¢ Choose event layouts including single photo, 2x2 grid, and vertical photo strip
+â€¢ Add a watermark or logo for branded events
+â€¢ Save every capture in the local gallery
+â€¢ Upload photos and show QR codes for quick guest access
+â€¢ Send photos by email with SMTP setup
+â€¢ Send photos by SMS with your gateway setup
+â€¢ Share through Android apps already on the device
+â€¢ Print wirelessly with Android print support
+â€¢ Configure event name, filenames, camera, filters, templates, frames, sharing, and upload settings
+
+Perfect for:
+
+â€¢ Weddings and receptions
+â€¢ Birthday parties
+â€¢ Graduation events
+â€¢ School dances and fundraisers
+â€¢ Corporate events
+â€¢ Church and community events
+â€¢ Pop-up booths
+â€¢ Family reunions
+â€¢ DIY party photo stations
+â€¢ Branded event activations
+
+Photobooth keeps the experience simple for guests and flexible for hosts. Guests tap to capture, smile for the countdown, and the finished photo or GIF is ready in the gallery for sharing, uploading, QR code access, or printing.
+
+Privacy matters at events. Photos are saved locally on your device unless you choose to upload, share, email, text, or print them. Optional service credentials are configured on your device for the services you choose to use.
+
+Bring a photo booth feel to your next event with the Android device you already have.
