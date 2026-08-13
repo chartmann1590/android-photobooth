@@ -92,6 +92,9 @@ jobs:
             echo "github.repo.name=$GH_REPO_NAME" >> local.properties
           fi
 
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
       - name: Run unit tests
         run: ./gradlew testPlayDebugUnitTest
 
