@@ -110,6 +110,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenFrameDesigner: () -> Unit = {},
     onOpenWebsite: () -> Unit = {},
+    onOpenMoreApps: () -> Unit = {},
 ) {
     val vm: SettingsViewModel = viewModel()
     val state by vm.settings.collectAsState()
@@ -270,6 +271,7 @@ fun SettingsScreen(
                 )
             }
             AboutSection(onOpenWebsite = onOpenWebsite)
+            MoreAppsSection(onOpenMoreApps = onOpenMoreApps)
             if (BuildConfig.DEBUG && !BuildConfig.WEDDING_MODE) {
                 DebugSection(onResetQuota = vm::resetDailyPhotoQuota)
             }
@@ -1271,6 +1273,32 @@ private fun AboutSection(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(R.string.about_visit_website), fontWeight = FontWeight.Medium)
+        }
+    }
+}
+
+@Composable
+private fun MoreAppsSection(
+    onOpenMoreApps: () -> Unit,
+) {
+    SettingsCard(
+        title = "More Apps",
+        iconRes = android.R.drawable.ic_menu_view,
+    ) {
+        Text(
+            text = "Check out our other privacy-first apps.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextSecondary,
+        )
+        ElevatedButton(
+            onClick = onOpenMoreApps,
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.elevatedButtonColors(
+                containerColor = Gold,
+                contentColor = Color.Black,
+            ),
+        ) {
+            Text("More apps from this developer", fontWeight = FontWeight.Medium)
         }
     }
 }

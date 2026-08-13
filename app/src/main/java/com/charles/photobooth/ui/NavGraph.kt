@@ -31,6 +31,7 @@ sealed class Screen(val route: String) {
         fun createRoute(photoId: Long): String = "gallery/$photoId"
     }
     data object Settings : Screen("settings")
+    data object MoreApps : Screen("more_apps")
     data object FrameDesigner : Screen("frame_designer")
     data object Tutorial : Screen("tutorial")
 }
@@ -117,7 +118,11 @@ fun NavGraph(
                     val weddingUrl = BuildConfig.WEDDING_GALLERY_URL
                     uriHandler.openUri(if (BuildConfig.WEDDING_MODE && weddingUrl.isNotBlank()) weddingUrl else "https://chartmann1590.github.io/android-photobooth/")
                 },
+                onOpenMoreApps = { navController.navigate(Screen.MoreApps.route) },
             )
+        }
+        composable(Screen.MoreApps.route) {
+            com.charles.photobooth.ui.screens.MoreAppsScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.FrameDesigner.route) {
             FrameDesignerScreen(
