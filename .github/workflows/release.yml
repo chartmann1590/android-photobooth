@@ -147,14 +147,14 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: photobooth-apk-v${{ steps.bump.outputs.version_name }}
-          path: app/build/outputs/apk/release/photobooth-v${{ steps.bump.outputs.version_name }}.apk
+          path: app/build/outputs/apk/playRelease/photobooth-v${{ steps.bump.outputs.version_name }}.apk
           retention-days: 90
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v7
         with:
           name: photobooth-aab-v${{ steps.bump.outputs.version_name }}
-          path: app/build/outputs/bundle/release/photobooth-v${{ steps.bump.outputs.version_name }}.aab
+          path: app/build/outputs/bundle/playRelease/photobooth-v${{ steps.bump.outputs.version_name }}.aab
           retention-days: 90
 
       - name: Upload test results
@@ -201,3 +201,4 @@ jobs:
       - name: Cleanup signing files
         if: always()
         run: rm -f app/release.keystore app/google-services.json keystore.properties local.properties
+
