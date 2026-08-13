@@ -69,7 +69,7 @@ class GitHubServiceTest {
 
         val recordedRequest = server.takeRequest()
         assertEquals("POST", recordedRequest.method)
-        assertTrue(recordedRequest.path!!.endsWith("/issues"))
+        assertTrue(recordedRequest.path!!.endsWith("/issue"))
         val requestBody = recordedRequest.body.readString(Charsets.UTF_8)
         assertTrue(requestBody.contains("Bug Report"))
         assertTrue(requestBody.contains("This is a bug description"))
@@ -100,7 +100,7 @@ class GitHubServiceTest {
 
         val recordedRequest = server.takeRequest()
         assertEquals("GET", recordedRequest.method)
-        assertTrue(recordedRequest.path!!.endsWith("/issues/42"))
+        assertTrue(recordedRequest.path!!.endsWith("/issue/42"))
     }
 
     @Test
@@ -139,7 +139,7 @@ class GitHubServiceTest {
 
         val recordedRequest = server.takeRequest()
         assertEquals("GET", recordedRequest.method)
-        assertTrue(recordedRequest.path!!.endsWith("/issues/42/comments"))
+        assertTrue(recordedRequest.path!!.endsWith("/issue/42/comments"))
     }
 
     @Test
@@ -166,7 +166,7 @@ class GitHubServiceTest {
 
         val recordedRequest = server.takeRequest()
         assertEquals("POST", recordedRequest.method)
-        assertTrue(recordedRequest.path!!.endsWith("/issues/42/comments"))
+        assertTrue(recordedRequest.path!!.endsWith("/issue/42/comments"))
         val requestBody = recordedRequest.body.readString(Charsets.UTF_8)
         assertTrue(requestBody.contains("New reply"))
     }
@@ -191,8 +191,8 @@ class GitHubServiceTest {
         )
 
         val recordedRequest = server.takeRequest()
-        assertEquals("PUT", recordedRequest.method)
-        assertTrue(recordedRequest.path!!.endsWith("/contents/feedback-assets/screenshot.png"))
+        assertEquals("POST", recordedRequest.method)
+        assertTrue(recordedRequest.path!!.endsWith("/upload-image"))
         val requestBody = recordedRequest.body.readString(Charsets.UTF_8)
         assertTrue(requestBody.contains("iVBORw0KGgoAAA..."))
     }
