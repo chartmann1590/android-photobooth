@@ -96,18 +96,6 @@ android {
         buildConfigField "String", "WEDDING_GALLERY_PASSWORD", "\"\""
         buildConfigField "String", "WEDDING_UPLOAD_TOKEN", "\"\""
 
-        def githubApiToken = (localProperties["github.api.token"] ?: "").trim()
-        def githubRepoOwner = (localProperties["github.repo.owner"] ?: "").trim()
-        def githubRepoName = (localProperties["github.repo.name"] ?: "").trim()
-
-        if (githubApiToken.isEmpty()) githubApiToken = "dummy_token"
-        if (githubRepoOwner.isEmpty()) githubRepoOwner = "chartmann1590"
-        if (githubRepoName.isEmpty()) githubRepoName = "android-photobooth"
-
-        buildConfigField "String", "GITHUB_API_TOKEN", "\"${githubApiToken}\""
-        buildConfigField "String", "GITHUB_REPO_OWNER", "\"${githubRepoOwner}\""
-        buildConfigField "String", "GITHUB_REPO_NAME", "\"${githubRepoName}\""
-
         // Export Room schemas under app/schemas/ so future migrations have a
         // diffable source of truth. Commit the generated JSON.
         javaCompileOptions {

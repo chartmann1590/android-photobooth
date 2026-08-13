@@ -1,6 +1,5 @@
 package com.charles.photobooth.network
 
-import com.charles.photobooth.BuildConfig
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -46,8 +45,8 @@ private data class GitHubCommentRequest(
 
 @Serializable
 private data class GitHubUploadRequest(
-    val message: String,
-    val content: String
+    val filename: String,
+    val contentBase64: String
 )
 
 @Serializable
@@ -60,6 +59,14 @@ private data class GitHubContentDetail(
     @SerialName("download_url") val downloadUrl: String
 )
 
+/**
+ * Talks to the cloudflare-worker/ feedback relay, not api.github.com directly — the
+ * Worker holds the GitHub token as a server-side secret and hardcodes this app's own
+ * repo, so no owner/repo/credential ever needs to travel through this app. Previously
+ * embedded BuildConfig.GITHUB_API_TOKEN client-side as a Bearer header, which shipped a
+ * real repo-write PAT in every release build (extractable from the APK). See
+ * cloudflare-worker/src/index.ts.
+ */
 class GitHubService(
     private val client: OkHttpClient = OkHttpClient()
 ) {
@@ -68,24 +75,20 @@ class GitHubService(
         coerceInputValues = true
     }
 
-    private val apiBaseUrl = "https://api.github.com"
-    private val token = BuildConfig.GITHUB_API_TOKEN
-    private val owner = BuildConfig.GITHUB_REPO_OWNER
-    private val repo = BuildConfig.GITHUB_REPO_NAME
+    private val apiBaseUrl = "https://android-photobooth-github-feedback.charles-h-hartmann1.workers.dev"
 
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
     private fun newRequestBuilder(url: String): Request.Builder {
         return Request.Builder()
             .url(url)
-            .header("Authorization", "Bearer $token")
             .header("Accept", "application/vnd.github+json")
             .header("X-GitHub-Api-Version", "2022-11-28")
             .header("User-Agent", "Android-Photobooth-App")
     }
 
     fun createIssue(title: String, body: String): Result<GitHubIssue> {
-        val url = "$apiBaseUrl/repos/$owner/$repo/issues"
+        val url = "$apiBaseUrl/issue"
         val requestBodyJson = json.encodeToString(GitHubIssueRequest.serializer(), GitHubIssueRequest(title, body))
         val request = newRequestBuilder(url)
             .post(requestBodyJson.toRequestBody(jsonMediaType))
@@ -103,7 +106,7 @@ class GitHubService(
     }
 
     fun getIssue(number: Int): Result<GitHubIssue> {
-        val url = "$apiBaseUrl/repos/$owner/$repo/issues/$number"
+        val url = "$apiBaseUrl/issue/$number"
         val request = newRequestBuilder(url)
             .get()
             .build()
@@ -120,7 +123,7 @@ class GitHubService(
     }
 
     fun getComments(number: Int): Result<List<GitHubComment>> {
-        val url = "$apiBaseUrl/repos/$owner/$repo/issues/$number/comments"
+        val url = "$apiBaseUrl/issue/$number/comments"
         val request = newRequestBuilder(url)
             .get()
             .build()
@@ -137,7 +140,7 @@ class GitHubService(
     }
 
     fun postComment(number: Int, body: String): Result<GitHubComment> {
-        val url = "$apiBaseUrl/repos/$owner/$repo/issues/$number/comments"
+        val url = "$apiBaseUrl/issue/$number/comments"
         val requestBodyJson = json.encodeToString(GitHubCommentRequest.serializer(), GitHubCommentRequest(body))
         val request = newRequestBuilder(url)
             .post(requestBodyJson.toRequestBody(jsonMediaType))
@@ -155,10 +158,13 @@ class GitHubService(
     }
 
     fun uploadAsset(filename: String, base64Data: String): Result<String> {
-        val url = "$apiBaseUrl/repos/$owner/$repo/contents/feedback-assets/$filename"
-        val requestBodyJson = json.encodeToString(GitHubUploadRequest.serializer(), GitHubUploadRequest("Upload feedback asset $filename", base64Data))
+        val url = "$apiBaseUrl/upload-image"
+        val requestBodyJson = json.encodeToString(
+            GitHubUploadRequest.serializer(),
+            GitHubUploadRequest(filename = filename, contentBase64 = base64Data),
+        )
         val request = newRequestBuilder(url)
-            .put(requestBodyJson.toRequestBody(jsonMediaType))
+            .post(requestBodyJson.toRequestBody(jsonMediaType))
             .build()
 
         return runCatching {

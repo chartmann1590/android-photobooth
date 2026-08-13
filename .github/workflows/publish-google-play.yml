@@ -71,9 +71,6 @@ jobs:
         env:
           ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
           ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID: ${{ secrets.ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID }}
-          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
-          GH_REPO_OWNER: ${{ secrets.GH_REPO_OWNER }}
-          GH_REPO_NAME: ${{ secrets.GH_REPO_NAME }}
         run: |
           : > local.properties
           if [ -n "$ADMOB_APP_ID" ]; then
@@ -81,15 +78,6 @@ jobs:
           fi
           if [ -n "$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID" ]; then
             echo "ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID=$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID" >> local.properties
-          fi
-          if [ -n "$GH_API_TOKEN" ]; then
-            echo "github.api.token=$GH_API_TOKEN" >> local.properties
-          fi
-          if [ -n "$GH_REPO_OWNER" ]; then
-            echo "github.repo.owner=$GH_REPO_OWNER" >> local.properties
-          fi
-          if [ -n "$GH_REPO_NAME" ]; then
-            echo "github.repo.name=$GH_REPO_NAME" >> local.properties
           fi
 
       - name: Make gradlew executable
