@@ -191,8 +191,8 @@ jobs:
             ### Compliance
             Release APK passed Android 16 KB page-size zip alignment and ELF LOAD segment checks.
           files: |
-            app/build/outputs/apk/release/photobooth-v${{ steps.bump.outputs.version_name }}.apk
-            app/build/outputs/bundle/release/photobooth-v${{ steps.bump.outputs.version_name }}.aab
+            app/build/outputs/apk/playRelease/photobooth-v${{ steps.bump.outputs.version_name }}.apk
+            app/build/outputs/bundle/playRelease/photobooth-v${{ steps.bump.outputs.version_name }}.aab
           draft: false
           prerelease: false
         env:
