@@ -85,10 +85,19 @@
       if (res.status === 401) { lock.classList.remove('hidden'); return; }
       const { photo } = await res.json();
       single.classList.remove('hidden');
-      single.innerHTML = media(photo) + '<p><a class="download" download href="' + photo.url + '">Download photo</a></p>';
+      single.innerHTML = media(photo) + '<p><a class="download" download href="' + escapeAttr(safeUrl(photo.url)) + '">Download photo</a></p>';
     }
-    function card(p) { return '<article class="tile">' + media(p) + '<footer><span>' + new Date(p.createdAt).toLocaleDateString() + '</span><a class="download" download href="' + p.url + '">Download</a></footer></article>'; }
-    function media(p) { return p.mimeType.startsWith('video/') ? '<video controls src="' + p.url + '"></video>' : '<img alt="Wedding photobooth photo" src="' + p.url + '" />'; }
+    function card(p) { return '<article class="tile">' + media(p) + '<footer><span>' + new Date(p.createdAt).toLocaleDateString() + '</span><a class="download" download href="' + escapeAttr(safeUrl(p.url)) + '">Download</a></footer></article>'; }
+    function media(p) { const url = escapeAttr(safeUrl(p.url)); return p.mimeType.startsWith('video/') ? '<video controls src="' + url + '"></video>' : '<img alt="Wedding photobooth photo" src="' + url + '" />'; }
+    // Only http(s) URLs from the API may ever land in an href/src — blocks javascript: and
+    // similar schemes if a malicious or malformed photo.url ever comes back from the API.
+    function safeUrl(u) {
+      try {
+        const parsed = new URL(u, location.href);
+        return (parsed.protocol === 'https:' || parsed.protocol === 'http:') ? parsed.href : '';
+      } catch { return ''; }
+    }
+    function escapeAttr(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   </script>
 </body>
 </html>
