@@ -176,6 +176,17 @@ number of shots back-to-back (with a countdown between each), then writes a
 single composite JPEG to the gallery. You can also set a default in
 **Settings → Capture Mode → Template Layout**.
 
+## Printable Guest Guides
+
+Running a self-serve booth at an event? These print-ready templates explain the app to guests in big, simple text — no editing required, though the source HTML is included if you want to customize them (add your event name, swap colors, etc.).
+
+| Guide | What it covers |
+|---|---|
+| [📄 Photobooth Guest Guide](docs/print/photobooth-guest-guide.pdf) ([source](docs/print/photobooth-guest-guide.html)) | 5-page walkthrough with real app screenshots: starting a photo, the countdown, and getting your photo by QR code, SMS, email, or print |
+| [📄 Bluetooth Remote Card](docs/print/bluetooth-remote-card.pdf) ([source](docs/print/bluetooth-remote-card.html)) | A fold-into-a-table-tent card explaining the optional Bluetooth shutter remote (power switch, button, returning it when done) |
+
+Print the guide double-sided as a small booklet or single pages, and fold the remote card in half along the dashed line so it stands up on the table.
+
 ## Architecture
 
 This app uses modern Android development practices:

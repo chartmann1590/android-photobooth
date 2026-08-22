@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Photobooth Guest Guide</title>
+<style>
+  @page { size: 8.5in 11in; margin: 0; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #23213a;
+    background: #fff;
+  }
+  .page {
+    width: 8.5in;
+    height: 11in;
+    padding: 0.6in 0.7in;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  .band {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 0.35in;
+    background: linear-gradient(90deg, #E91E63, #FF5C8D);
+  }
+  .band.bottom { top: auto; bottom: 0; }
+
+  h1 {
+    font-size: 46pt;
+    margin: 0 0 0.1in 0;
+    color: #E91E63;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+  h2 {
+    font-size: 30pt;
+    margin: 0 0 0.25in 0;
+    color: #AD1457;
+    font-weight: 800;
+  }
+  .subtitle {
+    font-size: 20pt;
+    color: #555;
+    margin-bottom: 0.4in;
+  }
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.85in;
+    height: 0.85in;
+    border-radius: 50%;
+    background: #E91E63;
+    color: #fff;
+    font-size: 34pt;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .step-row {
+    display: flex;
+    align-items: center;
+    gap: 0.3in;
+    margin-bottom: 0.35in;
+  }
+  .step-text {
+    font-size: 22pt;
+    line-height: 1.25;
+    font-weight: 600;
+  }
+  .body-text {
+    font-size: 20pt;
+    line-height: 1.4;
+  }
+  .shot {
+    display: block;
+    width: 100%;
+    border-radius: 18px;
+    border: 6px solid #23213a;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    margin: 0.2in 0;
+  }
+  .shot-row { display: flex; gap: 0.25in; align-items: flex-start; }
+  .shot-row .shot { width: auto; height: 2.5in; border-width: 5px; }
+  .callout {
+    background: #FFF3E0;
+    border-left: 8px solid #FFD54F;
+    padding: 0.18in 0.25in;
+    font-size: 17pt;
+    border-radius: 6px;
+    margin: 0.15in 0;
+    line-height: 1.3;
+  }
+  .center { text-align: center; }
+  .cover-icon { font-size: 100pt; margin-bottom: 0.15in; }
+  .cover-names { font-size: 20pt; color: #AD1457; font-weight: 600; margin-bottom: 0.5in; }
+  .three-up {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.3in;
+    margin-top: 0.4in;
+  }
+  .three-up .item {
+    flex: 1;
+    text-align: center;
+    background: #FBEAF0;
+    border-radius: 16px;
+    padding: 0.35in 0.15in;
+  }
+  .three-up .item .emoji { font-size: 44pt; display: block; margin-bottom: 0.1in; }
+  .three-up .item .label { font-size: 17pt; font-weight: 700; color: #AD1457; }
+  .footer-note {
+    position: absolute;
+    bottom: 0.55in;
+    left: 0.7in;
+    right: 0.7in;
+    font-size: 14pt;
+    color: #888;
+    text-align: center;
+  }
+  ul.tips { font-size: 19pt; line-height: 1.6; padding-left: 0.4in; }
+  ul.tips li { margin-bottom: 0.15in; }
+  .page-label {
+    position: absolute;
+    top: 0.55in;
+    right: 0.7in;
+    font-size: 13pt;
+    color: #bbb;
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: COVER -->
+<div class="page center" style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
+  <div class="band"></div>
+  <div class="cover-icon">📸</div>
+  <h1 style="font-size:56pt;">Photobooth Guide</h1>
+  <div class="cover-names">Welcome to the photobooth!</div>
+  <div class="subtitle" style="max-width:6in;">It's self-serve and super easy.<br>Just follow these 3 steps:</div>
+  <div class="three-up" style="max-width:6.5in;">
+    <div class="item"><span class="emoji">👉</span><span class="label">1. Tap to Start</span></div>
+    <div class="item"><span class="emoji">😄</span><span class="label">2. Smile!</span></div>
+    <div class="item"><span class="emoji">📲</span><span class="label">3. Get Your Photo</span></div>
+  </div>
+  <div class="footer-note">Have fun — take as many photos as you like! 🎉</div>
+  <div class="band bottom"></div>
+</div>
+
+<!-- PAGE 2: START + POSE -->
+<div class="page">
+  <div class="page-label">STEP 1</div>
+  <h2>Start &amp; Choose Your Photo</h2>
+  <div class="step-row">
+    <div class="step-num">1</div>
+    <div class="step-text">From the main screen, tap <b>"Start Photobooth."</b></div>
+  </div>
+  <img class="shot" src="../guest_screens/02_capture_idle.jpg" alt="Capture screen">
+  <div class="callout">👆 <b>Tap the big pink button</b> at the bottom to take your photo. That's it!</div>
+  <div class="callout">🖼️ Optional: tap a layout at the top like <b>2x2</b> or <b>Strip</b> for a fun multi-photo frame — or leave it on <b>Single</b> for one photo.</div>
+</div>
+
+<!-- PAGE 3: COUNTDOWN -->
+<div class="page">
+  <div class="page-label">STEP 2</div>
+  <h2>Get Ready &amp; Smile!</h2>
+  <div class="step-row">
+    <div class="step-num">2</div>
+    <div class="step-text">After you tap the button, a countdown appears. Look at the camera and strike a pose!</div>
+  </div>
+  <img class="shot" src="../guest_screens/03_countdown.jpg" alt="Countdown screen">
+  <div class="callout">⏱️ You'll see <b>3&nbsp;…&nbsp;2&nbsp;…&nbsp;1&nbsp;…</b> then the screen flashes — that's your photo being taken!</div>
+  <div class="callout">🖼️ If you picked a multi-photo layout, it repeats the countdown for each shot automatically. Just keep smiling!</div>
+</div>
+
+<!-- PAGE 4: GET YOUR PHOTO -->
+<div class="page">
+  <div class="page-label">STEP 3</div>
+  <h2>Get Your Photo</h2>
+  <div class="step-row">
+    <div class="step-num">3</div>
+    <div class="step-text">Once your photo is ready, send it straight to your phone!</div>
+  </div>
+  <div class="shot-row">
+    <img class="shot" src="../guest_screens/05_gallery_detail_cropped.png" alt="SMS and Email options">
+    <img class="shot" src="../guest_screens/06_gallery_detail_scrolled_cropped.png" alt="Upload and Print options">
+  </div>
+  <div class="callout">📱 <b>Scan the QR code</b> shown on screen with your phone's camera to download your photo instantly (if the host has upload enabled).</div>
+  <div class="callout">💬 Or type your <b>phone number</b> and tap <b>Send SMS</b> — or your <b>email</b> and tap <b>Send Email</b>.</div>
+  <div class="callout">🖨️ Tap <b>Print</b> to print a copy right there at the booth (if a printer is connected)!</div>
+</div>
+
+<!-- PAGE 5: TIPS -->
+<div class="page">
+  <div class="band"></div>
+  <h2 style="margin-top:0.5in;">A Few Friendly Tips</h2>
+  <ul class="tips">
+    <li>📸 Take as many photos as you'd like — the more, the merrier!</li>
+    <li>👯 Grab your friends and family for group shots.</li>
+    <li>🤳 There's also a small Bluetooth remote at the booth — see the little card next to it for how to use it hands-free.</li>
+    <li>🙋 Need help? Ask a member of the event staff.</li>
+    <li>💖 Thanks for stopping by the photobooth — enjoy!</li>
+  </ul>
+  <div class="footer-note" style="position:static; margin-top:0.6in;">Powered by Android Photobooth</div>
+  <div class="band bottom"></div>
+</div>
+
+</body>
+</html>

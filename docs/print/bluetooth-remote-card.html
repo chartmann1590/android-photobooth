@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bluetooth Remote Card</title>
+<style>
+  @page { size: 8.5in 11in; margin: 0; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #23213a;
+    background: #fff;
+  }
+  /* Table-tent card: top half is upside-down (fold line in the middle),
+     so it reads right-side-up from both sides of the table when folded. */
+  .page {
+    width: 8.5in;
+    height: 11in;
+    position: relative;
+  }
+  .half {
+    width: 8.5in;
+    height: 5.5in;
+    padding: 0.28in 0.55in;
+    position: relative;
+    overflow: hidden;
+  }
+  .half.top { transform: rotate(180deg); border-bottom: 2px dashed #ccc; }
+  .fold-label {
+    position: absolute;
+    left: 50%;
+    top: 5.5in;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    color: #aaa;
+    font-size: 11pt;
+    padding: 0 0.15in;
+    letter-spacing: 1px;
+  }
+  .band { position: absolute; top: 0; left: 0; right: 0; height: 0.2in; background: linear-gradient(90deg, #E91E63, #FF5C8D); }
+  h1 {
+    font-size: 25pt;
+    color: #E91E63;
+    font-weight: 800;
+    margin: 0.2in 0 0.04in 0;
+    text-align: center;
+  }
+  .sub {
+    text-align: center;
+    font-size: 12pt;
+    color: #666;
+    margin-bottom: 0.12in;
+  }
+  .content-row {
+    display: flex;
+    align-items: center;
+    gap: 0.35in;
+    max-width: 7in;
+    margin: 0 auto;
+  }
+  .remote-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 1.4in;
+  }
+  .remote {
+    width: 0.72in;
+    height: 1.5in;
+    border-radius: 0.3in;
+    background: linear-gradient(180deg, #2E2E4A, #23213a);
+    border: 3px solid #111;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    flex-shrink: 0;
+  }
+  .remote .btn {
+    position: absolute;
+    top: 0.18in;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0.44in;
+    height: 0.44in;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #FF5C8D, #E91E63);
+    border: 2px solid #fff;
+  }
+  .remote .switch-track {
+    position: absolute;
+    right: -0.09in;
+    top: 0.82in;
+    width: 0.17in;
+    height: 0.4in;
+    background: #444;
+    border-radius: 0.09in;
+    border: 1.5px solid #111;
+  }
+  .remote .switch-knob {
+    position: absolute;
+    right: -0.09in;
+    top: 0.82in;
+    width: 0.17in;
+    height: 0.19in;
+    background: #FFD54F;
+    border-radius: 0.09in;
+    border: 1.5px solid #111;
+  }
+  .switch-caption {
+    margin-top: 0.08in;
+    font-size: 8pt;
+    font-weight: 700;
+    color: #AD1457;
+    text-align: center;
+    line-height: 1.05;
+  }
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.07in;
+    font-size: 13pt;
+    line-height: 1.15;
+    flex: 1;
+  }
+  .steps .row { display: flex; align-items: center; gap: 0.13in; }
+  .steps .num {
+    flex-shrink: 0;
+    width: 0.28in; height: 0.28in;
+    border-radius: 50%;
+    background: #E91E63;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 11pt;
+  }
+  .warn {
+    margin-top: 0.1in;
+    background: #FFF3E0;
+    border-left: 5px solid #FFD54F;
+    padding: 0.08in 0.16in;
+    font-size: 11pt;
+    border-radius: 5px;
+    max-width: 7in;
+    margin-left: auto; margin-right: auto;
+    line-height: 1.15;
+  }
+  .no-remote {
+    margin-top: 0.08in;
+    text-align: center;
+    font-size: 9.5pt;
+    color: #777;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOP HALF (printed upside-down so it reads correctly when folded into a tent) -->
+  <div class="half top">
+    <div class="band"></div>
+    <h1>Using the Remote 🤳</h1>
+    <div class="sub">Hands-free photos — great for group shots!</div>
+    <div class="content-row">
+      <div class="remote-diagram">
+        <div class="remote">
+          <div class="btn"></div>
+          <div class="switch-track"></div>
+          <div class="switch-knob"></div>
+        </div>
+        <div class="switch-caption">ON/OFF switch<br>on the side</div>
+      </div>
+      <div class="steps">
+        <div class="row"><div class="num">1</div><div><b>Turn it ON</b> — flip the side switch before you start.</div></div>
+        <div class="row"><div class="num">2</div><div>Get everyone in frame and <b>smile!</b></div></div>
+        <div class="row"><div class="num">3</div><div><b>Press the button</b> to snap the photo.</div></div>
+        <div class="row"><div class="num">4</div><div>When done, <b>turn the switch OFF.</b></div></div>
+      </div>
+    </div>
+    <div class="warn">🙏 Please <b>return the remote to the table</b> when you're finished so the next guests can use it too!</div>
+    <div class="no-remote">Don't see the remote, or it's in use? No problem — just tap the big pink button on screen instead.</div>
+  </div>
+
+  <div class="fold-label">✂ fold here ✂</div>
+
+  <!-- BOTTOM HALF (right-side-up) -->
+  <div class="half bottom">
+    <div class="band"></div>
+    <h1>Using the Remote 🤳</h1>
+    <div class="sub">Hands-free photos — great for group shots!</div>
+    <div class="content-row">
+      <div class="remote-diagram">
+        <div class="remote">
+          <div class="btn"></div>
+          <div class="switch-track"></div>
+          <div class="switch-knob"></div>
+        </div>
+        <div class="switch-caption">ON/OFF switch<br>on the side</div>
+      </div>
+      <div class="steps">
+        <div class="row"><div class="num">1</div><div><b>Turn it ON</b> — flip the side switch before you start.</div></div>
+        <div class="row"><div class="num">2</div><div>Get everyone in frame and <b>smile!</b></div></div>
+        <div class="row"><div class="num">3</div><div><b>Press the button</b> to snap the photo.</div></div>
+        <div class="row"><div class="num">4</div><div>When done, <b>turn the switch OFF.</b></div></div>
+      </div>
+    </div>
+    <div class="warn">🙏 Please <b>return the remote to the table</b> when you're finished so the next guests can use it too!</div>
+    <div class="no-remote">Don't see the remote, or it's in use? No problem — just tap the big pink button on screen instead.</div>
+  </div>
+
+</div>
+</body>
+</html>
