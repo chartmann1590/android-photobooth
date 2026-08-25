@@ -26,6 +26,23 @@
     .tile img, .tile video { aspect-ratio:4/3; object-fit:cover; }
     .single img, .single video { max-height:72vh; object-fit:contain; border-radius:6px; background:#111; }
     .tile footer { padding:12px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .email { background:#6f5360; }
+    .like { background:#f2e9e2; color:var(--rose); }
+    .like.liked { background:var(--rose); color:white; }
+    .guestbook-btn { background:var(--gold); }
+    .modal { position:fixed; inset:0; background:rgba(36,23,25,.55); display:flex; align-items:center; justify-content:center; padding:20px; z-index:50; }
+    .modal-card { background:white; border-radius:10px; max-width:560px; width:100%; max-height:85vh; overflow:auto; padding:24px; box-shadow:0 24px 80px rgba(36,23,25,.3); }
+    .modal-tabs { display:flex; gap:8px; margin-bottom:16px; align-items:center; }
+    .tab { background:#f2e9e2; color:var(--ink); }
+    .tab.active { background:var(--rose); color:white; }
+    .modal-close { margin-left:auto; background:transparent; color:var(--ink); font-size:22px; padding:0 8px; }
+    textarea { width:100%; border:1px solid #d8c9bd; padding:14px 16px; margin:12px 0; font:inherit; border-radius:8px; resize:vertical; }
+    .visibility { display:flex; flex-direction:column; gap:8px; margin:12px 0; font-size:14px; }
+    .gb-entry { border-bottom:1px solid var(--line); padding:12px 0; }
+    .gb-entry:last-child { border-bottom:0; }
+    .gb-name { font-weight:800; }
+    .gb-private { color:#8a7a72; font-style:italic; }
     .error { color:#8f1d2c; font-weight:700; }
     .hidden { display:none; }
   </style>
@@ -46,11 +63,33 @@
       <p id="error" class="error"></p>
     </div>
     <section id="gallery" class="hidden">
-      <div class="bar"><div><div class="date">Wedding Gallery</div><h2>Photo Downloads</h2></div><button id="refresh">Refresh</button></div>
+      <div class="bar"><div><div class="date">Wedding Gallery</div><h2>Photo Downloads</h2></div><div class="actions"><button id="guestbookBtn" class="guestbook-btn">Sign our Guestbook</button><button id="refresh">Refresh</button></div></div>
       <div id="items" class="grid"></div>
     </section>
     <section id="single" class="single hidden"></section>
   </main>
+  <div id="guestbookModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-tabs">
+        <button id="tabSign" class="tab active">Sign</button>
+        <button id="tabView" class="tab">View messages</button>
+        <button id="closeGuestbook" class="modal-close">&times;</button>
+      </div>
+      <div id="guestbookSign">
+        <input id="gbName" placeholder="Your name" maxlength="80" />
+        <textarea id="gbMessage" placeholder="Leave a message for Charles & Jessica" maxlength="1000" rows="4"></textarea>
+        <div class="visibility">
+          <label><input type="radio" name="gbVisibility" value="public" checked /> Public — everyone can read this on the gallery</label>
+          <label><input type="radio" name="gbVisibility" value="private" /> Private — only emailed to Charles &amp; Jessica; the site just shows that you signed</label>
+        </div>
+        <button id="gbSubmit">Sign the guestbook</button>
+        <p id="gbError" class="error"></p>
+      </div>
+      <div id="guestbookView" class="hidden">
+        <div id="gbEntries"></div>
+      </div>
+    </div>
+  </div>
   <script>
     const apiBase = 'https://szmkkkeaxkwkppxlrfzf.supabase.co/functions/v1/wedding-gallery';
     const tokenKey = 'hartmannGalleryToken';
@@ -85,9 +124,20 @@
       if (res.status === 401) { lock.classList.remove('hidden'); return; }
       const { photo } = await res.json();
       single.classList.remove('hidden');
-      single.innerHTML = media(photo) + '<p><a class="download" download href="' + escapeAttr(safeUrl(photo.url)) + '">Download photo</a></p>';
+      single.innerHTML = media(photo) + '<p class="actions">' + likeButton(photo) + '<a class="download" download href="' + escapeAttr(safeUrl(photo.url)) + '">Download photo</a><button class="email" onclick="emailPhoto(\'' + escapeAttr(photo.id) + '\')">Email photo</button></p>';
     }
-    function card(p) { return '<article class="tile">' + media(p) + '<footer><span>' + new Date(p.createdAt).toLocaleDateString() + '</span><a class="download" download href="' + escapeAttr(safeUrl(p.url)) + '">Download</a></footer></article>'; }
+    function card(p) { return '<article class="tile">' + media(p) + '<footer><span>' + new Date(p.createdAt).toLocaleDateString() + '</span><span class="actions">' + likeButton(p) + '<a class="download" download href="' + escapeAttr(safeUrl(p.url)) + '">Download</a><button class="email" onclick="emailPhoto(\'' + escapeAttr(p.id) + '\')">Email</button></span></footer></article>'; }
+    function likeButton(p) {
+      return '<button class="like' + (p.liked ? ' liked' : '') + '" onclick="toggleLike(\'' + escapeAttr(p.id) + '\', this)">' + (p.liked ? '♥' : '♡') + ' ' + p.likeCount + '</button>';
+    }
+    async function toggleLike(id, btn) {
+      const res = await fetch(apiBase + '/api/photo/' + encodeURIComponent(id) + '/like', { method:'POST', headers:{ authorization:'Bearer ' + token() } });
+      if (res.status === 401) { lock.classList.remove('hidden'); return; }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return;
+      btn.classList.toggle('liked', data.liked);
+      btn.textContent = (data.liked ? '♥' : '♡') + ' ' + data.likeCount;
+    }
     function media(p) { const url = escapeAttr(safeUrl(p.url)); return p.mimeType.startsWith('video/') ? '<video controls src="' + url + '"></video>' : '<img alt="Wedding photobooth photo" src="' + url + '" />'; }
     // Only http(s) URLs from the API may ever land in an href/src — blocks javascript: and
     // similar schemes if a malicious or malformed photo.url ever comes back from the API.
@@ -98,6 +148,64 @@
       } catch { return ''; }
     }
     function escapeAttr(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    async function emailPhoto(id) {
+      const email = prompt('Enter your email address:');
+      if (!email) return;
+      const res = await fetch(apiBase + '/api/email', { method:'POST', headers:{'authorization':'Bearer ' + token(), 'content-type':'application/json'}, body:JSON.stringify({photoId:id, email}) });
+      const data = await res.json().catch(() => ({}));
+      alert(res.ok ? 'Photo emailed. Check your inbox.' : (data.error || 'The photo could not be emailed.'));
+    }
+    const guestbookBtn = document.getElementById('guestbookBtn');
+    const guestbookModal = document.getElementById('guestbookModal');
+    const tabSign = document.getElementById('tabSign');
+    const tabView = document.getElementById('tabView');
+    const guestbookSignView = document.getElementById('guestbookSign');
+    const guestbookListView = document.getElementById('guestbookView');
+    guestbookBtn.onclick = () => { guestbookModal.classList.remove('hidden'); showGuestbookTab('sign'); };
+    document.getElementById('closeGuestbook').onclick = () => guestbookModal.classList.add('hidden');
+    tabSign.onclick = () => showGuestbookTab('sign');
+    tabView.onclick = () => showGuestbookTab('view');
+    function showGuestbookTab(which) {
+      tabSign.classList.toggle('active', which === 'sign');
+      tabView.classList.toggle('active', which === 'view');
+      guestbookSignView.classList.toggle('hidden', which !== 'sign');
+      guestbookListView.classList.toggle('hidden', which !== 'view');
+      if (which === 'view') loadGuestbook();
+    }
+    document.getElementById('gbSubmit').onclick = submitGuestbook;
+    async function submitGuestbook() {
+      const name = document.getElementById('gbName').value.trim();
+      const message = document.getElementById('gbMessage').value.trim();
+      const visibility = document.querySelector('input[name="gbVisibility"]:checked').value;
+      const errorEl = document.getElementById('gbError');
+      errorEl.textContent = '';
+      if (!name || !message) { errorEl.textContent = 'Enter your name and a message'; return; }
+      const submitBtn = document.getElementById('gbSubmit');
+      submitBtn.disabled = true;
+      try {
+        const res = await fetch(apiBase + '/api/guestbook', { method:'POST', headers:{ authorization:'Bearer ' + token(), 'content-type':'application/json' }, body: JSON.stringify({ name, message, visibility }) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { errorEl.textContent = data.error || 'Could not sign the guestbook'; return; }
+        document.getElementById('gbName').value = '';
+        document.getElementById('gbMessage').value = '';
+        showGuestbookTab('view');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+    async function loadGuestbook() {
+      const res = await fetch(apiBase + '/api/guestbook', { headers:{ authorization:'Bearer ' + token() } });
+      if (res.status === 401) { guestbookModal.classList.add('hidden'); lock.classList.remove('hidden'); return; }
+      const data = await res.json();
+      document.getElementById('gbEntries').innerHTML = (data.entries || []).map(gbEntry).join('') || '<p>No messages yet.</p>';
+    }
+    function gbEntry(e) {
+      const name = escapeAttr(e.name);
+      if (e.visibility === 'private') {
+        return '<div class="gb-entry"><div class="gb-name">' + name + '</div><div class="gb-private">— signed privately —</div></div>';
+      }
+      return '<div class="gb-entry"><div class="gb-name">' + name + '</div><div>' + escapeAttr(e.message).replace(/\n/g, '<br/>') + '</div></div>';
+    }
   </script>
 </body>
 </html>
