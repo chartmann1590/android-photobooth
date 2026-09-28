@@ -385,8 +385,8 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3"
 
     // SMTP (JavaMail for Android)
-    implementation "com.sun.mail:android-mail:1.6.7"
-    implementation "com.sun.mail:android-activation:1.6.7"
+    implementation "com.sun.mail:android-mail:1.6.8"
+    implementation "com.sun.mail:android-activation:1.6.8"
 
     // EXIF
     implementation "androidx.exifinterface:exifinterface:1.4.2"
