@@ -245,14 +245,14 @@ fun TutorialScreen(
                             .background(Rose.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center,
                     ) {
-                        runCatching { painterResource(id = step.iconRes) }.getOrNull()?.let { icon ->
-                            Icon(
-                                painter = icon,
-                                contentDescription = null,
-                                tint = Rose,
-                                modifier = Modifier.size(32.dp),
-                            )
-                        }
+                        // Composable calls can't be wrapped in runCatching (a compile error since
+                        // Kotlin 2.4); every step uses a framework drawable, so load it directly.
+                        Icon(
+                            painter = painterResource(id = step.iconRes),
+                            contentDescription = null,
+                            tint = Rose,
+                            modifier = Modifier.size(32.dp),
+                        )
                     }
 
                     Text(
