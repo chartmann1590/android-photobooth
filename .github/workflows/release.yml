@@ -92,7 +92,7 @@ jobs:
           echo "::notice title=Version::Building v${NEW_NAME} (code ${NEW_CODE})"
 
       - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
+        run: ./gradlew testPlayDebugUnitTest
 
       - name: Build signed APK and AAB
         run: |
