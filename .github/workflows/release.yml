@@ -102,12 +102,26 @@ jobs:
 
       - name: Verify APK 16 KB page-size compliance
         run: |
-          APK="app/build/outputs/apk/playRelease/app-play-release.apk"
-          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 -v 4 "$APK"
+          # AGP writes flavored APKs to apk/<flavor>/<buildType>/ (bundles stay in bundle/playRelease/).
+          APK=$(find app/build/outputs/apk -type f -name 'app-play-release*.apk' ! -name '*unsigned*' -print -quit)
+          if [ -z "$APK" ]; then
+            echo "::error::No signed play release APK found. APKs present:"
+            find app/build/outputs -name '*.apk' -o -name '*.aab'
+            exit 1
+          fi
+          echo "Checking $APK"
+          echo "RELEASE_APK=$APK" >> "$GITHUB_ENV"
+          if ! "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 -v 4 "$APK" > zipalign.log 2>&1; then
+            grep -v '(OK' zipalign.log | tail -n 40
+            echo "::error::zipalign -P 16 check failed for $APK"
+            exit 1
+          fi
+          echo "zipalign -P 16: OK"
 
           rm -rf apk-native-check
           mkdir apk-native-check
-          unzip -q "$APK" 'lib/**/*.so' -d apk-native-check
+          # exit 11 = no native libraries in the APK, which is compliant
+          unzip -q "$APK" 'lib/*.so' -d apk-native-check || [ $? -eq 11 ]
 
           OBJDUMP="$ANDROID_HOME/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-objdump"
           failed=0
@@ -123,10 +137,12 @@ jobs:
           if [ "$failed" -ne 0 ]; then
             exit 1
           fi
+          echo "ELF LOAD alignment: all $(find apk-native-check -name '*.so' -type f | wc -l) native libraries are 16 KB aligned"
 
       - name: Rename artifacts
         run: |
-          mv app/build/outputs/apk/playRelease/app-play-release.apk \
+          mkdir -p app/build/outputs/apk/playRelease
+          mv "$RELEASE_APK" \
              app/build/outputs/apk/playRelease/photobooth-v${{ steps.bump.outputs.version_name }}.apk
           mv app/build/outputs/bundle/playRelease/app-play-release.aab \
              app/build/outputs/bundle/playRelease/photobooth-v${{ steps.bump.outputs.version_name }}.aab
