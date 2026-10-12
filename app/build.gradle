@@ -333,7 +333,7 @@ dependencies {
     // flavors. The library no-ops gracefully off-Play, so this is safe for wedding too.
     implementation "com.google.android.play:review-ktx:2.0.2"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.11.0"
-    playImplementation "com.android.billingclient:billing-ktx:8.3.0"
+    playImplementation "com.android.billingclient:billing-ktx:9.1.0"
 
     implementation "androidx.core:core-ktx:1.19.1"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.10.0"
