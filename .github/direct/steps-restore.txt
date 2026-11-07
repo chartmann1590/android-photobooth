@@ -18,6 +18,10 @@ tap (?i)^restore purchases$
 wait 3
 shot 21-restore-email
 type hartmannstudios@mail.tab.bot
+wait 1
+back
+wait 2
+shot 11b-email-filled
 tap (?i)^continue$
 wait 15
 shot 22-after-restore

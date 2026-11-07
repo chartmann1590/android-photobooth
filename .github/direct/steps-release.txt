@@ -30,6 +30,10 @@ tap (?i)^buy unlimited
 wait 3
 shot 11-email
 type hartmannstudios@mail.tab.bot
+wait 1
+back
+wait 2
+shot 11b-email-filled
 tap (?i)^continue$
 wait 25
 shot 12-stripe-checkout
