@@ -207,10 +207,12 @@
     <string name="tutorial_step_permissions_title">Permissions</string>
     <string name="tutorial_step_permissions_body">The app asks for **camera** access to take photos, **microphone** access for videos, and **media** access to save captures. Photos and videos stay on this device unless you upload or share them.</string>
     <string name="tutorial_step_home_title">Home Screen</string>
+    <string name="tutorial_step_home_body_ads_only">Use **Start Photobooth** for the camera, **View Gallery** for finished photos, **Settings** for event setup, and **Tutorial** to replay these instructions any time. **Get More Photos** opens rewarded ads for extra photos.</string>
     <string name="tutorial_step_home_body">Use **Start Photobooth** for the camera, **View Gallery** for finished photos, **Settings** for event setup, and **Tutorial** to replay these instructions any time. If you have not unlocked unlimited photos, **Get More Photos** opens ad rewards and purchase options.</string>
     <string name="tutorial_step_capture_title">Taking Photos</string>
     <string name="tutorial_step_capture_body">Position everyone in the live preview and tap the round **Capture** button. A three-second countdown plays, the app says Smile, flashes the screen, saves the photo, and updates your daily photo counter.</string>
     <string name="tutorial_step_quota_title">Daily Photo Limit</string>
+    <string name="tutorial_step_quota_body_ads_only">Each day starts with **15 free photos**. Watch a rewarded ad to add **15 more photos**, up to **75 total photos per day**.</string>
     <string name="tutorial_step_quota_body">Each day starts with **15 free photos**. Watch a rewarded ad to add **15 more photos**, up to **75 total photos per day**. Buy **Unlimited Photos** once for $9.99 to remove the daily limit and hide the counter.</string>
     <string name="tutorial_step_booth_title">Booth Mode</string>
     <string name="tutorial_step_booth_body">Enable **Booth Mode** in Settings to take 2 to 8 photos in one session. The camera pauses briefly between shots and shows the session count on screen.</string>

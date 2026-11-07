@@ -1,34 +1,52 @@
 launch
 wait 15
 shot 01-launch
-taploop (?i)^(next|continue|get started|skip|allow|allow all|while using the app|only this time|ok|accept|agree|got it|start|not now|later|maybe later|no thanks|done|grant permissions)$
-wait 3
-shot 02-home
+tap (?i)^no thanks$
+wait 2
+taploop (?i)^(allow|while using the app|only this time|ok)$
+taploop (?i)^next$
+taploop (?i)^next$
+taploop (?i)^next$
+shot 02-tutorial-end
+tap (?i)^get started$
+wait 4
+adclose
+taploop (?i)^(allow|while using the app|only this time|ok|not now|got it)$
+shot 03-home
 tap (?i)^get more photos$
 wait 4
-shot 03-get-more-photos
+shot 04-get-more-photos
 tap (?i)^not now$
 wait 2
 tap (?i)^view gallery$
 wait 4
-shot 04-gallery
+adclose
+shot 05-gallery
 back
 tap (?i)^settings$
 wait 4
-shot 05-settings
+adclose
+shot 06-settings
 swipeup
 swipeup
-shot 06-settings-bottom
-tap (?i)more apps|other apps|our apps
+shot 07-settings-mid
+scrollto (?i)more apps|other apps|our apps
 wait 4
-shot 07-more-apps
+shot 08-more-apps
 back
+wait 2
+swipeup
+swipeup
+swipeup
+shot 09-settings-bottom
 back
 wait 2
 tap (?i)^start photobooth$
 wait 6
-taploop (?i)^(next|continue|get started|skip|allow|allow all|while using the app|only this time|ok|accept|agree|got it|start|not now|later|maybe later|no thanks|done|grant permissions)$
-shot 08-capture
+taploop (?i)^(allow|while using the app|only this time|ok)$
+adclose
+shot 10-capture
 back
 wait 2
-shot 09-back-home
+adclose
+shot 11-back-home

@@ -78,7 +78,8 @@ private val tutorialSteps = listOfNotNull(
     TutorialStep(
         titleRes = R.string.tutorial_step_home_title,
         iconRes = android.R.drawable.ic_menu_manage,
-        bodyRes = R.string.tutorial_step_home_body,
+        // Amazon Appstore build: no purchase wording (free + rewarded ads only).
+        bodyRes = if (com.charles.photobooth.BuildConfig.STORE == "amazon") R.string.tutorial_step_home_body_ads_only else R.string.tutorial_step_home_body,
     ),
     TutorialStep(
         titleRes = R.string.tutorial_step_capture_title,
@@ -88,7 +89,7 @@ private val tutorialSteps = listOfNotNull(
     if (BuildConfig.WEDDING_MODE) null else TutorialStep(
         titleRes = R.string.tutorial_step_quota_title,
         iconRes = android.R.drawable.ic_dialog_info,
-        bodyRes = R.string.tutorial_step_quota_body,
+        bodyRes = if (com.charles.photobooth.BuildConfig.STORE == "amazon") R.string.tutorial_step_quota_body_ads_only else R.string.tutorial_step_quota_body,
     ),
     TutorialStep(
         titleRes = R.string.tutorial_step_booth_title,
