@@ -1,0 +1,141 @@
+name: Direct download build (Stripe) + emulator test
+# Direct-download build of this app (GitHub Releases / charleshartmann.com): same code, built with -Pstore=direct
+# (Stripe Checkout instead of Google Play Billing, no Google Play links, no Play review prompt).
+# Branch builds only make a DRAFT release; nothing is uploaded to any store.
+on:
+  push:
+    branches: [direct-stripe]
+  workflow_dispatch:
+    inputs:
+      steps:
+        description: steps file under .github/direct (steps-release.txt or steps-restore.txt)
+        default: steps-release.txt
+permissions:
+  contents: write
+concurrency:
+  group: direct-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  direct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Set up JDK 17
+      uses: actions/setup-java@v6
+      with:
+        java-version: '17'
+        distribution: temurin
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+    - name: Install Android NDK for native library checks
+      run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;28.2.13676358"
+    - name: Decode keystore
+      run: printf '%s' "${{ secrets.KEYSTORE_BASE64 }}" | tr -cd 'A-Za-z0-9+/=' | base64 -d > app/release.keystore
+    - name: Restore google-services.json
+      run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
+    - name: Write keystore.properties for CI
+      run: |
+        cat > keystore.properties << EOF
+        keyAlias=${{ secrets.KEY_ALIAS }}
+        keyPassword=${{ secrets.KEY_PASSWORD }}
+        storeFile=release.keystore
+        storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+        EOF
+    - name: Write local.properties (AdMob & GitHub IDs)
+      env:
+        ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+        ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID: ${{ secrets.ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID }}
+      run: |
+        # Inject real AdMob IDs from repo secrets when set. If either secret
+        # is missing, build.gradle falls back to Google's published test IDs
+        # so MobileAdsInitProvider can still initialize without crashing.
+        : > local.properties
+        if [ -n "$ADMOB_APP_ID" ]; then
+          echo "ADMOB_APP_ID=$ADMOB_APP_ID" >> local.properties
+        fi
+        if [ -n "$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID" ]; then
+          echo "ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID=$ADMOB_REWARDED_INTERSTITIAL_AD_UNIT_ID" >> local.properties
+        fi
+    - name: Bump version
+      id: bump
+      run: |
+        if [ -f version.properties ]; then
+          CODE=$(grep 'VERSION_CODE' version.properties | cut -d= -f2 | tr -d ' ')
+          NAME=$(grep 'VERSION_NAME' version.properties | cut -d= -f2 | tr -d ' ')
+        else
+          CODE=1
+          NAME="1.0.0"
+        fi
+
+        NEW_CODE=$((CODE + 1))
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$NAME"
+        NEW_PATCH=$((PATCH + 1))
+        NEW_NAME="${MAJOR}.${MINOR}.${NEW_PATCH}"
+
+        echo "version_code=${NEW_CODE}" >> "$GITHUB_OUTPUT"
+        echo "version_name=${NEW_NAME}" >> "$GITHUB_OUTPUT"
+
+        cat > version.properties << EOF
+        # This file is auto-updated by CI. Do not edit manually.
+        VERSION_CODE=${NEW_CODE}
+        VERSION_NAME=${NEW_NAME}
+        EOF
+
+        echo "::notice title=Version::Building v${NEW_NAME} (code ${NEW_CODE})"
+    - name: Build direct APK (store=direct)
+      env: {}
+      run: |
+        set -o pipefail
+        ./gradlew assemblePlayRelease -Pstore=direct  \
+          -PversionCode=${{ steps.bump.outputs.version_code }} \
+          -PversionName=${{ steps.bump.outputs.version_name }} 2>&1 | tee -a /tmp/dsk-build.log
+        cd "$GITHUB_WORKSPACE"
+        mkdir -p dsk-apk
+        A=$(find . -path "*/build/outputs/apk/*release*/*.apk" ! -name "*unsigned*" | head -1); [ -z "$A" ] && A=$(find . -path "*/build/outputs/apk/*release*/*.apk" | head -1)
+        cp "$A" dsk-apk/Photobooth-direct-release.apk
+        ls -la dsk-apk
+        BT=$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools | sort -V | tail -1)
+        $BT/apksigner verify --print-certs dsk-apk/Photobooth-direct-release.apk | head -3 || true
+        $BT/aapt2 dump badging dsk-apk/Photobooth-direct-release.apk | head -3 || true
+        echo "--- Play Store URL strings left in the direct release dex:"; unzip -p dsk-apk/Photobooth-direct-release.apk "classes*.dex" | strings | grep -E "play\.google\.com/store|market://" | head || true
+    - name: Ship build log tail to the private drop (on failure)
+      if: failure()
+      env:
+        DROP_KEY: ${{ secrets.DROP_KEY }}
+      run: |
+        tail -c 60000 /tmp/dsk-build.log 2>/dev/null | curl -s -m 60 -X PUT -H "X-Key: $DROP_KEY" --data-binary @- "https://hs-apk-drop.charles-h-hartmann1.workers.dev/c/dsklog_${{ github.event.repository.name }}_r${{ github.run_number }}/0" || true
+    - name: Enable KVM
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+    - name: Emulator test (phone, Google APIs, no Play Store)
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 30
+        profile: pixel_5
+        target: google_apis
+        arch: x86_64
+        ram-size: 3072M
+        disk-size: 4096M
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: STEPS_FILE=${{ github.event.inputs.steps || 'steps-release.txt' }} bash .github/direct/run-tests.sh
+    - name: Upload test results to Tab's private drop
+      if: always()
+      env:
+        DROP_KEY: ${{ secrets.DROP_KEY }}
+      run: |
+        bash .github/direct/direct-upload.sh /tmp/dsk-out dsk_Photobooth_r${{ github.run_number }}
+    - name: Draft release with the direct APK (not published)
+      if: success()
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: direct-${{ github.run_number }}
+        name: Direct build ${{ github.run_number }} (${{ github.sha }})
+        draft: true
+        files: dsk-apk/Photobooth-direct-release.apk

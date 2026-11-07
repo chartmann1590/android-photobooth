@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
+import com.hartmannstudios.direct.DirectBilling
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.charles.photobooth.R
@@ -55,6 +57,10 @@ fun PaywallDialog(
                 billingState.message?.takeIf { it.isNotBlank() }?.let {
                     Text(it, color = MaterialTheme.colorScheme.error)
                 }
+                if (DirectBilling.isDirect && !quotaState.hasUnlimitedPhotos) {
+                    // Direct (GitHub / charleshartmann.com) build: Stripe fine print
+                    Text("One-time purchase, billed securely by Stripe to the email you enter. Already bought it? Tap Restore purchases.", style = MaterialTheme.typography.bodySmall)
+                }
             }
         },
         confirmButton = {
@@ -83,6 +89,12 @@ fun PaywallDialog(
                         stringResource(R.string.paywall_watch_ad, PHOTOS_PER_REWARDED_AD)
                     }
                     Text(label)
+                }
+                if (DirectBilling.isDirect) {
+                    val activity = LocalContext.current as? android.app.Activity
+                    TextButton(onClick = { activity?.let { DirectBilling.restore(it) } }) {
+                        Text("Restore purchases")
+                    }
                 }
             }
         },

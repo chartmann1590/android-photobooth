@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import com.hartmannstudios.direct.DirectBilling
 
 const val UNLIMITED_PRODUCT_ID = "unlimited_photos"
 private const val TAG = "BillingRepository"
@@ -41,16 +42,38 @@ class BillingRepository(
 
     private var unlimitedProductDetails: ProductDetails? = null
 
-    private val billingClient: BillingClient = BillingClient.newBuilder(appContext)
+    // Lazy: direct (GitHub / charleshartmann.com) builds never create or connect a Google Play BillingClient.
+    private val billingClient: BillingClient by lazy { BillingClient.newBuilder(appContext)
         .setListener(this)
         .enablePendingPurchases(
             PendingPurchasesParams.newBuilder()
                 .enableOneTimeProducts()
                 .build(),
         )
-        .build()
+        .build() }
+
+    // Direct build: Stripe Checkout through DirectBilling (approved price $9.99 one-time).
+    init {
+        if (DirectBilling.isDirect) {
+            DirectBilling.init(appContext, "photobooth")
+            DirectBilling.addListener { syncDirect() }
+        }
+    }
+
+    private fun syncDirect() {
+        _state.value = _state.value.copy(isReady = true, price = "$9.99", isPurchasing = false)
+        if (DirectBilling.isEntitled(UNLIMITED_PRODUCT_ID)) {
+            scope.launch(Dispatchers.IO) { quotaRepository.setUnlimitedPhotos(true) }
+        }
+    }
+
+    /** Direct builds: look up a Stripe purchase by email (new phone, reinstall). */
+    fun restore(activity: Activity) {
+        if (DirectBilling.isDirect) DirectBilling.restore(activity) { syncDirect() } else startConnection()
+    }
 
     fun startConnection() {
+        if (DirectBilling.isDirect) { syncDirect(); return }
         if (billingClient.isReady) {
             queryProductDetails()
             queryExistingPurchases()
@@ -83,6 +106,11 @@ class BillingRepository(
     }
 
     fun launchUnlimitedPurchase(activity: Activity) {
+        if (DirectBilling.isDirect) {
+            _state.value = _state.value.copy(message = null)
+            DirectBilling.purchase(activity, UNLIMITED_PRODUCT_ID) { syncDirect() }
+            return
+        }
         val productDetails = unlimitedProductDetails
         if (!billingClient.isReady || productDetails == null) {
             _state.value = _state.value.copy(message = "Google Play purchase details are still loading.")

@@ -1,0 +1,39 @@
+launch
+wait 15
+shot 01-launch
+tap (?i)^no thanks$
+wait 2
+taploop (?i)^(allow|while using the app|only this time|ok)$
+taploop (?i)^next$
+taploop (?i)^next$
+taploop (?i)^next$
+tap (?i)^get started$
+wait 4
+adclose
+taploop (?i)^(allow|while using the app|only this time|ok|not now|got it)$
+shot 03-home
+tap (?i)^view gallery$
+wait 4
+adclose
+shot 05-gallery
+back
+tap (?i)^settings$
+wait 4
+adclose
+shot 06-settings
+back
+wait 2
+tap (?i)^get more photos$
+wait 4
+shot 08-paywall
+tap (?i)^buy unlimited
+wait 3
+shot 11-email
+type hartmannstudios@mail.tab.bot
+tap (?i)^continue$
+wait 25
+shot 12-stripe-checkout
+tap (?i)^close$
+wait 3
+shot 13-after-close
+sh logcat -d -s DirectBilling

@@ -53,10 +53,17 @@ def localString = { String key, String fallback = "" ->
 }
 
 android {
+    // DirectBilling: real Stripe client in direct builds, a no-op stub in Play builds
+    def hsBillingDir = ((project.findProperty("store") ?: "play") == "direct") ? "src/hsdirect/java" : "src/hsplay/java"
+    sourceSets.main.java.srcDir(hsBillingDir)
+    sourceSets.main.kotlin.srcDir(hsBillingDir)
     namespace "com.charles.photobooth"
     compileSdk 37
 
     defaultConfig {
+        // Store this build is for: "play" (default) or "direct" (./gradlew ... -Pstore=direct, GitHub/charleshartmann.com APK).
+        // Direct builds use Stripe Checkout (DirectBilling) instead of Google Play Billing, and drop Play links + the Play review prompt.
+        buildConfigField "String", "STORE", "\"${project.findProperty("store") ?: "play"}\""
         applicationId "com.charles.photobooth"
         minSdk 24
         targetSdk 36

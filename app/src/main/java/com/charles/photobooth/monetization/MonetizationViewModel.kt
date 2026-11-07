@@ -58,4 +58,10 @@ class MonetizationViewModel(
         if (BuildConfig.WEDDING_MODE) return
         billingRepository.launchUnlimitedPurchase(activity)
     }
+
+    /** Direct (Stripe) builds: restore the unlimited unlock by checkout email. */
+    fun restorePurchases(activity: Activity) {
+        if (BuildConfig.WEDDING_MODE) return
+        billingRepository.restore(activity)
+    }
 }
