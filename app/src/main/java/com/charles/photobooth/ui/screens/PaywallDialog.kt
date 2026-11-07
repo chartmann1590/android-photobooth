@@ -91,7 +91,7 @@ fun PaywallDialog(
                     Text(label)
                 }
                 if (DirectBilling.isDirect) {
-                    val activity = LocalContext.current as? android.app.Activity
+                    val activity = LocalContext.current.let { c -> var x: android.content.Context? = c; while (x is android.content.ContextWrapper && x !is android.app.Activity) x = x.baseContext; x as? android.app.Activity }
                     TextButton(onClick = { activity?.let { DirectBilling.restore(it) } }) {
                         Text("Restore purchases")
                     }
