@@ -109,6 +109,11 @@ jobs:
         DROP_KEY: ${{ secrets.DROP_KEY }}
       run: |
         tail -c 60000 /tmp/dsk-build.log 2>/dev/null | curl -s -m 60 -X PUT -H "X-Key: $DROP_KEY" --data-binary @- "https://hs-apk-drop.charles-h-hartmann1.workers.dev/c/dsklog_${{ github.event.repository.name }}_r${{ github.run_number }}/0" || true
+    - name: Stop Gradle daemons + free runner disk before the emulator
+      if: success()
+      run: |
+        ./gradlew --stop 2>/dev/null || (cd android 2>/dev/null && ./gradlew --stop) || true
+        df -h / | tail -1
     - name: Enable KVM
       run: |
         echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -124,6 +129,7 @@ jobs:
         disk-size: 4096M
         emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
         disable-animations: true
+        emulator-boot-timeout: 1500
         script: STEPS_FILE=${{ github.event.inputs.steps || 'steps-release.txt' }} bash .github/direct/run-tests.sh
     - name: Upload test results to Tab's private drop
       if: always()
