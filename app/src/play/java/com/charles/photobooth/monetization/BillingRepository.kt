@@ -51,6 +51,8 @@ class BillingRepository(
         .build()
 
     fun startConnection() {
+        // Amazon Appstore build: no Google Play Billing (free + rewarded ads only).
+        if (com.charles.photobooth.BuildConfig.STORE == "amazon") return
         if (billingClient.isReady) {
             queryProductDetails()
             queryExistingPurchases()
@@ -83,6 +85,7 @@ class BillingRepository(
     }
 
     fun launchUnlimitedPurchase(activity: Activity) {
+        if (com.charles.photobooth.BuildConfig.STORE == "amazon") return // Amazon Appstore build: no Play purchases
         val productDetails = unlimitedProductDetails
         if (!billingClient.isReady || productDetails == null) {
             _state.value = _state.value.copy(message = "Google Play purchase details are still loading.")

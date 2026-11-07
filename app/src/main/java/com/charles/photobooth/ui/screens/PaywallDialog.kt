@@ -45,20 +45,29 @@ fun PaywallDialog(
                     stringResource(R.string.paywall_remaining, quotaState.remainingPhotos)
                 }
                 Text(remainingText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.paywall_body, MAX_FREE_AND_AD_PHOTOS_PER_DAY))
+                val amazonStore = com.charles.photobooth.BuildConfig.STORE == "amazon"
+                Text(
+                    if (amazonStore) {
+                        // Amazon Appstore build: no purchase, rewarded ads only.
+                        stringResource(R.string.paywall_body_ads_only, MAX_FREE_AND_AD_PHOTOS_PER_DAY)
+                    } else {
+                        stringResource(R.string.paywall_body, MAX_FREE_AND_AD_PHOTOS_PER_DAY)
+                    },
+                )
                 if (!quotaState.canEarnAdReward && !quotaState.hasUnlimitedPhotos) {
                     Text(stringResource(R.string.paywall_ad_limit_reached), color = Gold)
                 }
                 rewardedAdState.message?.takeIf { it.isNotBlank() }?.let {
                     Text(it, color = MaterialTheme.colorScheme.error)
                 }
-                billingState.message?.takeIf { it.isNotBlank() }?.let {
+                billingState.message?.takeIf { it.isNotBlank() && com.charles.photobooth.BuildConfig.STORE != "amazon" }?.let {
                     Text(it, color = MaterialTheme.colorScheme.error)
                 }
             }
         },
         confirmButton = {
             Column {
+                if (com.charles.photobooth.BuildConfig.STORE != "amazon") {
                 ElevatedButton(
                     onClick = onBuyUnlimited,
                     colors = ButtonDefaults.elevatedButtonColors(
@@ -69,6 +78,7 @@ fun PaywallDialog(
                     Text(stringResource(R.string.paywall_buy_unlimited, billingState.price))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
+                } // Amazon Appstore build: no "Buy unlimited" (no Play purchases)
                 ElevatedButton(
                     onClick = onWatchAd,
                     enabled = quotaState.canEarnAdReward && rewardedAdState.isReady,

@@ -123,7 +123,7 @@ fun MoreAppsScreen(onBack: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(CardSurface, RoundedCornerShape(12.dp))
-                        .clickable { uriHandler.openUri("https://play.google.com/store/apps/details?id=${app.packageName}") }
+                        .clickable { uriHandler.openUri(if (com.charles.photobooth.BuildConfig.STORE == "amazon") "https://www.amazon.com/gp/mas/dl/android?p=${app.packageName}" else "https://play.google.com/store/apps/details?id=${app.packageName}") }
                         .padding(16.dp),
                 ) {
                     Column(Modifier.fillMaxWidth()) {

@@ -95,6 +95,9 @@ android {
         buildConfigField "String", "WEDDING_GALLERY_URL", "\"\""
         buildConfigField "String", "WEDDING_GALLERY_PASSWORD", "\"\""
         buildConfigField "String", "WEDDING_UPLOAD_TOKEN", "\"\""
+        // Store this build is for: "play" (default) or "amazon" (./gradlew assemblePlayRelease -Pstore=amazon).
+        // Amazon builds drop Google Play purchases, Play links and the Play in-app review prompt.
+        buildConfigField "String", "STORE", "\"${project.findProperty('store') ?: 'play'}\""
 
         // Export Room schemas under app/schemas/ so future migrations have a
         // diffable source of truth. Commit the generated JSON.

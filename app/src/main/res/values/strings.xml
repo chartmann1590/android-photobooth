@@ -50,6 +50,7 @@
     <string name="paywall_remaining">%1$d photos left today</string>
     <string name="paywall_unlimited_owned">Unlimited photos are unlocked.</string>
     <string name="paywall_body">You get 15 free photos each day. Watch rewarded ads for 15 more photos each, up to %1$d total photos per day, or buy unlimited photos forever.</string>
+    <string name="paywall_body_ads_only">You get 15 free photos each day. Watch rewarded ads for 15 more photos each, up to %1$d total photos per day.</string>
     <string name="paywall_watch_ad">Watch ad for +%1$d photos</string>
     <string name="paywall_ad_loading">Loading ad...</string>
     <string name="paywall_buy_unlimited">Buy unlimited - %1$s</string>

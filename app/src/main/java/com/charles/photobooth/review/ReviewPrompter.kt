@@ -29,6 +29,7 @@ private const val PHOTOS_BEFORE_FIRST_ASK = 3
  */
 object ReviewPrompter {
     suspend fun maybeRequestReview(activity: Activity) {
+        if (com.charles.photobooth.BuildConfig.STORE == "amazon") return // Amazon Appstore build: no Play review prompt
         var shouldRequest = false
         activity.applicationContext.reviewPromptDataStore.edit { prefs ->
             val alreadyRequested = prefs[Keys.REQUESTED] ?: false
