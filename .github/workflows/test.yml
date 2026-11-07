@@ -2,7 +2,8 @@ name: Tests
 
 on:
   push:
-    branches: ['*']
+    # The amazon branch has its own workflow (amazon.yml); skip this one there.
+    branches: ['*', '!amazon']
   pull_request:
     branches: [main]
 

@@ -27,18 +27,19 @@ tap (?i)^settings$
 wait 4
 adclose
 shot 06-settings
-swipeup
-swipeup
+sh input swipe 960 950 960 300 500
+sh input swipe 960 950 960 300 500
 shot 07-settings-mid
-scrollto (?i)more apps|other apps|our apps
-wait 4
-shot 08-more-apps
+sh input swipe 960 950 960 300 500
+sh input swipe 960 950 960 300 500
+sh input swipe 960 950 960 300 500
+sh input swipe 960 950 960 300 500
+shot 08-settings-bottom
+tap (?i)more apps|other apps|our apps
+wait 5
+shot 09-more-apps
 back
 wait 2
-swipeup
-swipeup
-swipeup
-shot 09-settings-bottom
 back
 wait 2
 tap (?i)^start photobooth$
