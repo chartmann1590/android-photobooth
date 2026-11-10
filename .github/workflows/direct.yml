@@ -24,7 +24,7 @@ jobs:
       uses: actions/checkout@v6
       with:
         fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: [redacted] secrets.GITHUB_TOKEN }}
     - name: Set up JDK 17
       uses: actions/setup-java@v6
       with:
@@ -42,9 +42,9 @@ jobs:
       run: |
         cat > keystore.properties << EOF
         keyAlias=${{ secrets.KEY_ALIAS }}
-        keyPassword=${{ secrets.KEY_PASSWORD }}
+        keyPassword=[redacted] secrets.KEY_PASSWORD }}
         storeFile=release.keystore
-        storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+        storePassword=[redacted] secrets.KEYSTORE_PASSWORD }}
         EOF
     - name: Write local.properties (AdMob & GitHub IDs)
       env:
@@ -87,6 +87,12 @@ jobs:
         EOF
 
         echo "::notice title=Version::Building v${NEW_NAME} (code ${NEW_CODE})"
+    - name: Direct version (above every shipped code)
+      # Play/Amazon codes are yyDDDHHMM dates; a fresh UTC stamp is always above every earlier code, so each direct build is an update.
+      run: |
+        C=$(date -u +%y%j%H%M); N=1.0.39
+        { echo "ANDROID_VERSION_CODE=$C"; echo "ANDROID_VERSION_NAME=$N"; echo "VERSION_CODE=$C"; echo "VERSION_NAME=$N"; } >> "$GITHUB_ENV"
+        echo "::notice title=Direct version::$N ($C)"
     - name: Build direct APK (store=direct)
       env: {}
       run: |
