@@ -47,7 +47,10 @@ fun PaywallDialog(
                     stringResource(R.string.paywall_remaining, quotaState.remainingPhotos)
                 }
                 Text(remainingText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.paywall_body, MAX_FREE_AND_AD_PHOTOS_PER_DAY))
+                if (!quotaState.hasUnlimitedPhotos) {
+                    // Owned: no "or buy unlimited photos forever" pitch.
+                    Text(stringResource(R.string.paywall_body, MAX_FREE_AND_AD_PHOTOS_PER_DAY))
+                }
                 if (!quotaState.canEarnAdReward && !quotaState.hasUnlimitedPhotos) {
                     Text(stringResource(R.string.paywall_ad_limit_reached), color = Gold)
                 }
