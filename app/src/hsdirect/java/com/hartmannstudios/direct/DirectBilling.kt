@@ -52,6 +52,8 @@ object DirectBilling {
     private var prefs: SharedPreferences? = null
     private val main = Handler(Looper.getMainLooper())
     private val listeners = CopyOnWriteArrayList<() -> Unit>()
+    /** HTTP status of the last license-server call on this thread (0 = no answer). 429 = the server's per-email lookup limit. */
+    private val lastHttpCode = ThreadLocal<Int>()
 
     /** Call once from Application.onCreate (or the first Activity). [app] is the app key, e.g. "nightsay". */
     @JvmStatic
@@ -115,10 +117,11 @@ object DirectBilling {
             val dlg = progress(activity, "Checking your purchases…")
             Thread {
                 val ok = fetchByEmail(email)
+                val limited = !ok && lastHttpCode.get() == 429
                 main.post {
                     dlg.dismiss()
                     val owned = isEntitled()
-                    toast(activity, if (!ok) "Couldn't reach the license server. Try again." else if (owned) "Purchases restored. Thank you!" else "No purchases found for $email.")
+                    toast(activity, if (limited) "Too many restore attempts — try again later." else if (!ok) "Couldn't reach the license server. Try again." else if (owned) "Purchases restored. Thank you!" else "No purchases found for $email.")
                     onResult?.invoke(ok && owned)
                 }
             }.start()
@@ -266,6 +269,7 @@ object DirectBilling {
     private fun post(path: String, body: JSONObject): JSONObject? = http("POST", path, body)
     private fun http(method: String, path: String, body: JSONObject?): JSONObject? {
         var c: HttpURLConnection? = null
+        lastHttpCode.set(0)
         return try {
             c = (URL(BASE_URL + path).openConnection() as HttpURLConnection).apply {
                 requestMethod = method; connectTimeout = 15000; readTimeout = 20000
@@ -274,6 +278,7 @@ object DirectBilling {
             }
             if (body != null) c.outputStream.use { it.write(body.toString().toByteArray()) }
             val code = c.responseCode
+            lastHttpCode.set(code)
             val text = (if (code in 200..299) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() }.orEmpty()
             if (code !in 200..299) Log.w(TAG, "$method $path -> $code ${text.take(200)}")
             JSONObject(text.ifBlank { "{}" })

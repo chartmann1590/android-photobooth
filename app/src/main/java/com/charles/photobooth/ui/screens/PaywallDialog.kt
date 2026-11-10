@@ -65,6 +65,8 @@ fun PaywallDialog(
         },
         confirmButton = {
             Column {
+                // Once Unlimited is owned (bought or restored) there is nothing left to buy or earn here.
+                if (!quotaState.hasUnlimitedPhotos) {
                 ElevatedButton(
                     onClick = onBuyUnlimited,
                     colors = ButtonDefaults.elevatedButtonColors(
@@ -90,7 +92,8 @@ fun PaywallDialog(
                     }
                     Text(label)
                 }
-                if (DirectBilling.isDirect) {
+                }
+                if (DirectBilling.isDirect && !quotaState.hasUnlimitedPhotos) {
                     val activity = LocalContext.current.let { c -> var x: android.content.Context? = c; while (x is android.content.ContextWrapper && x !is android.app.Activity) x = x.baseContext; x as? android.app.Activity }
                     TextButton(onClick = { activity?.let { DirectBilling.restore(it) } }) {
                         Text("Restore purchases")
