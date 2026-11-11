@@ -90,7 +90,7 @@ jobs:
     - name: Direct version (above every shipped code)
       # Play/Amazon codes are yyDDDHHMM dates; a fresh UTC stamp is always above every earlier code, so each direct build is an update.
       run: |
-        C=$(date -u +%y%j%H%M); N=1.0.39
+        C=$(date -u +%y%j%H%M); N=1.0.40
         { echo "ANDROID_VERSION_CODE=$C"; echo "ANDROID_VERSION_NAME=$N"; echo "VERSION_CODE=$C"; echo "VERSION_NAME=$N"; } >> "$GITHUB_ENV"
         echo "::notice title=Direct version::$N ($C)"
     - name: Build direct APK (store=direct)

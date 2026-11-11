@@ -54,6 +54,8 @@ object DirectBilling {
     private val listeners = CopyOnWriteArrayList<() -> Unit>()
     /** HTTP status of the last license-server call on this thread (0 = no answer). 429 = the server's per-email lookup limit. */
     private val lastHttpCode = ThreadLocal<Int>()
+    /** The server's own sentence when it answers code "plan_limit" (its daily plan limit is hit); shown on Restore. */
+    private val lastServerNotice = ThreadLocal<String?>()
 
     /** Call once from Application.onCreate (or the first Activity). [app] is the app key, e.g. "nightsay". */
     @JvmStatic
@@ -116,12 +118,14 @@ object DirectBilling {
         askEmail(activity, "Restore purchases", "Enter the email you used at checkout.") { email ->
             val dlg = progress(activity, "Checking your purchases…")
             Thread {
+                lastServerNotice.set(null)
                 val ok = fetchByEmail(email)
                 val limited = !ok && lastHttpCode.get() == 429
+                val notice = if (ok) null else lastServerNotice.get()
                 main.post {
                     dlg.dismiss()
                     val owned = isEntitled()
-                    toast(activity, if (limited) "Too many restore attempts — try again later." else if (!ok) "Couldn't reach the license server. Try again." else if (owned) "Purchases restored. Thank you!" else "No purchases found for $email.")
+                    toast(activity, if (limited) "Too many restore attempts — try again later." else if (notice != null) notice else if (!ok) "Couldn't reach the license server. Try again." else if (owned) "Purchases restored. Thank you!" else "No purchases found for $email.")
                     onResult?.invoke(ok && owned)
                 }
             }.start()
@@ -213,7 +217,7 @@ object DirectBilling {
 
     private fun fetchByEmail(email: String): Boolean {
         val r = post("/v2/entitlement", JSONObject().put("app", appKey).put("email", email)) ?: return false
-        if (!r.has("entitlements")) return false
+        if (!r.has("entitlements")) { lastServerNotice.set(if (r.optString("code") == "plan_limit") r.optString("error").takeIf { it.isNotBlank() } else null); return false }
         save(r)
         return true
     }
